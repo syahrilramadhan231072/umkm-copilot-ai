@@ -1,8 +1,24 @@
 """
-Supabase Connection
+Database Connection
+===================
 
-Provides a singleton Supabase client for the application.
+Centralized Supabase connection.
+
+Responsibilities
+----------------
+- Create Supabase client
+- Validate configuration
+- Singleton connection
+- Health check
+
+This module MUST NOT know anything about database tables.
+Repositories are responsible for interacting with tables.
+
+Author:
+    UMKM Copilot AI
 """
+
+from __future__ import annotations
 
 from functools import lru_cache
 
@@ -18,49 +34,61 @@ settings = get_settings()
 def get_supabase() -> Client:
     """
     Return singleton Supabase client.
+
+    Returns
+    -------
+    Client
+        Configured Supabase client.
+
+    Raises
+    ------
+    RuntimeError
+        If Supabase configuration is invalid.
     """
 
-    if not settings.SUPABASE_URL:
-        raise ValueError("SUPABASE_URL is missing.")
+    settings.validate_supabase()
 
-    if not settings.SUPABASE_KEY:
-        raise ValueError("SUPABASE_KEY is missing.")
+    logger.info("Connecting to Supabase...")
 
     client = create_client(
-        settings.SUPABASE_URL,
-        settings.SUPABASE_KEY,
+        supabase_url=settings.SUPABASE_URL,
+        supabase_key=settings.supabase_key(),
     )
 
-    logger.success("Supabase client initialized.")
+    logger.success("Supabase connection established.")
 
     return client
 
 
-def check_connection() -> bool:
+def health_check() -> bool:
     """
-    Simple health check.
+    Verify that the Supabase client can be initialized.
 
-    Executes a lightweight query against the database.
+    This function intentionally does NOT query any tables.
+    Repository classes are responsible for database operations.
 
     Returns
     -------
     bool
-        True if connection works.
+        True if the client is initialized successfully.
     """
 
     try:
 
-        client = get_supabase()
+        get_supabase()
 
-        # replace with your first table
-        client.table("businesses").select("*").limit(1).execute()
-
-        logger.success("Supabase connection OK.")
+        logger.success("Supabase health check passed.")
 
         return True
 
-    except Exception as e:
+    except Exception as exc:
 
-        logger.exception(e)
+        logger.exception(exc)
 
         return False
+
+
+__all__ = [
+    "get_supabase",
+    "health_check",
+]
