@@ -1,0 +1,12 @@
+streamlit
+google-genai
+supabase
+python-dotenv
+pydantic
+pydantic-settings
+pandas
+plotly
+openpyxl
+pillow
+loguru
+pytest
