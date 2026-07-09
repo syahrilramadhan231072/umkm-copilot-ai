@@ -50,6 +50,9 @@ def get_supabase() -> Client:
 
     logger.info("Connecting to Supabase...")
 
+    logger.info(f"SUPABASE_URL = {settings.SUPABASE_URL}")
+    logger.info(f"SUPABASE_KEY prefix = {settings.supabase_key()[:20]}")
+
     client = create_client(
         supabase_url=settings.SUPABASE_URL,
         supabase_key=settings.supabase_key(),

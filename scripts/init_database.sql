@@ -2,14 +2,7 @@
 -- UMKM Copilot AI
 -- init_database.sql
 -- PostgreSQL 15+ / Supabase Compatible
---
--- Part 1
---   • Transaction
---   • Extensions
---   • ENUM Types
---   • Trigger Function
---   • business_profile
---   • products
+-- Final reviewed version
 -- ==========================================================
 
 BEGIN;
@@ -27,28 +20,20 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 DO
 $$
 BEGIN
-
     IF NOT EXISTS (
-        SELECT 1
-        FROM pg_type
-        WHERE typname = 'transaction_status'
+        SELECT 1 FROM pg_type WHERE typname = 'transaction_status'
     ) THEN
-
         CREATE TYPE transaction_status AS ENUM
         (
             'completed',
             'cancelled',
             'refunded'
         );
-
     END IF;
 
     IF NOT EXISTS (
-        SELECT 1
-        FROM pg_type
-        WHERE typname = 'payment_method_type'
+        SELECT 1 FROM pg_type WHERE typname = 'payment_method_type'
     ) THEN
-
         CREATE TYPE payment_method_type AS ENUM
         (
             'cash',
@@ -57,30 +42,22 @@ BEGIN
             'credit_card',
             'other'
         );
-
     END IF;
 
     IF NOT EXISTS (
-        SELECT 1
-        FROM pg_type
-        WHERE typname = 'conversation_role'
+        SELECT 1 FROM pg_type WHERE typname = 'conversation_role'
     ) THEN
-
         CREATE TYPE conversation_role AS ENUM
         (
             'user',
             'assistant',
             'system'
         );
-
     END IF;
 
     IF NOT EXISTS (
-        SELECT 1
-        FROM pg_type
-        WHERE typname = 'insight_type'
+        SELECT 1 FROM pg_type WHERE typname = 'insight_type'
     ) THEN
-
         CREATE TYPE insight_type AS ENUM
         (
             'sales',
@@ -89,9 +66,7 @@ BEGIN
             'customer',
             'general'
         );
-
     END IF;
-
 END
 $$;
 
@@ -104,11 +79,8 @@ RETURNS TRIGGER
 AS
 $$
 BEGIN
-
     NEW.updated_at = NOW();
-
     RETURN NEW;
-
 END;
 $$
 LANGUAGE plpgsql;
@@ -119,12 +91,12 @@ LANGUAGE plpgsql;
 
 CREATE TABLE IF NOT EXISTS business_profile
 (
-
     id UUID PRIMARY KEY
         DEFAULT gen_random_uuid(),
 
     business_name TEXT NOT NULL
-        UNIQUE,
+        UNIQUE
+        CHECK (LENGTH(TRIM(business_name)) > 0),
 
     owner_name TEXT,
 
@@ -136,8 +108,7 @@ CREATE TABLE IF NOT EXISTS business_profile
         CHECK
         (
             email IS NULL
-            OR
-            email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'
+            OR email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'
         ),
 
     address TEXT,
@@ -153,7 +124,6 @@ CREATE TABLE IF NOT EXISTS business_profile
 
     updated_at TIMESTAMPTZ NOT NULL
         DEFAULT NOW()
-
 );
 
 COMMENT ON TABLE business_profile IS
@@ -186,7 +156,6 @@ EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TABLE IF NOT EXISTS products
 (
-
     id UUID PRIMARY KEY
         DEFAULT gen_random_uuid(),
 
@@ -195,12 +164,12 @@ CREATE TABLE IF NOT EXISTS products
         ON UPDATE CASCADE
         ON DELETE CASCADE,
 
-    name TEXT NOT NULL,
+    name TEXT NOT NULL
+        CHECK (LENGTH(TRIM(name)) > 0),
 
     category TEXT,
 
-    sku TEXT
-        UNIQUE,
+    sku TEXT,
 
     description TEXT,
 
@@ -235,8 +204,7 @@ CREATE TABLE IF NOT EXISTS products
             )
         ),
 
-    barcode TEXT
-        UNIQUE,
+    barcode TEXT,
 
     image_url TEXT,
 
@@ -248,7 +216,6 @@ CREATE TABLE IF NOT EXISTS products
 
     updated_at TIMESTAMPTZ NOT NULL
         DEFAULT NOW()
-
 );
 
 COMMENT ON TABLE products IS
@@ -282,31 +249,11 @@ FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
 
 -- ==========================================================
--- INDEXES (PRODUCTS)
--- ==========================================================
-
-CREATE INDEX IF NOT EXISTS idx_products_business
-ON products(business_id);
-
-CREATE INDEX IF NOT EXISTS idx_products_name
-ON products(name);
-
-CREATE INDEX IF NOT EXISTS idx_products_category
-ON products(category);
-
-CREATE INDEX IF NOT EXISTS idx_products_active
-ON products(is_active);
-
-CREATE INDEX IF NOT EXISTS idx_products_stock
-ON products(stock);
-
--- ==========================================================
 -- TRANSACTIONS
 -- ==========================================================
 
 CREATE TABLE IF NOT EXISTS transactions
 (
-
     id UUID PRIMARY KEY
         DEFAULT gen_random_uuid(),
 
@@ -318,9 +265,10 @@ CREATE TABLE IF NOT EXISTS transactions
     product_id UUID
         REFERENCES products(id)
         ON UPDATE CASCADE
-        ON DELETE RESTRICT,
+        ON DELETE SET NULL,
 
-    product_name TEXT NOT NULL,
+    product_name TEXT NOT NULL
+        CHECK (LENGTH(TRIM(product_name)) > 0),
 
     quantity INTEGER NOT NULL
         CHECK (quantity > 0),
@@ -347,12 +295,7 @@ CREATE TABLE IF NOT EXISTS transactions
 
     updated_at TIMESTAMPTZ NOT NULL
         DEFAULT NOW()
-
 );
-
--- ==========================================================
--- COMMENTS
--- ==========================================================
 
 COMMENT ON TABLE transactions IS
 'Stores sales transaction history.';
@@ -361,7 +304,7 @@ COMMENT ON COLUMN transactions.business_id IS
 'Business that owns the transaction.';
 
 COMMENT ON COLUMN transactions.product_id IS
-'Referenced product. Historical records keep product_name even if the product changes later.';
+'Referenced product. Historical records keep product_name even if product_id becomes null.';
 
 COMMENT ON COLUMN transactions.product_name IS
 'Snapshot of the product name at transaction time.';
@@ -373,7 +316,7 @@ COMMENT ON COLUMN transactions.unit_price IS
 'Unit selling price when the transaction occurred.';
 
 COMMENT ON COLUMN transactions.total_price IS
-'Must equal quantity × unit_price.';
+'Must equal quantity x unit_price.';
 
 COMMENT ON COLUMN transactions.payment_method IS
 'Payment method used by customer.';
@@ -384,16 +327,6 @@ COMMENT ON COLUMN transactions.status IS
 COMMENT ON COLUMN transactions.transaction_date IS
 'Date and time when the transaction occurred.';
 
-COMMENT ON COLUMN transactions.created_at IS
-'Record creation timestamp.';
-
-COMMENT ON COLUMN transactions.updated_at IS
-'Record update timestamp.';
-
--- ==========================================================
--- TRIGGER
--- ==========================================================
-
 DROP TRIGGER IF EXISTS trg_transactions_updated
 ON transactions;
 
@@ -402,39 +335,6 @@ BEFORE UPDATE
 ON transactions
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
-
--- ==========================================================
--- INDEXES
--- ==========================================================
-
-CREATE INDEX IF NOT EXISTS idx_transactions_business
-ON transactions(business_id);
-
-CREATE INDEX IF NOT EXISTS idx_transactions_product
-ON transactions(product_id);
-
-CREATE INDEX IF NOT EXISTS idx_transactions_date
-ON transactions(transaction_date);
-
-CREATE INDEX IF NOT EXISTS idx_transactions_status
-ON transactions(status);
-
-CREATE INDEX IF NOT EXISTS idx_transactions_payment
-ON transactions(payment_method);
-
-CREATE INDEX IF NOT EXISTS idx_transactions_business_date
-ON transactions
-(
-    business_id,
-    transaction_date
-);
-
-CREATE INDEX IF NOT EXISTS idx_transactions_business_status
-ON transactions
-(
-    business_id,
-    status
-);
 
 -- ==========================================================
 -- MARKETING HISTORY
@@ -455,19 +355,19 @@ CREATE TABLE IF NOT EXISTS marketing_history
         ON UPDATE CASCADE
         ON DELETE SET NULL,
 
-    platform TEXT NOT NULL,
+    platform TEXT NOT NULL
+        CHECK (LENGTH(TRIM(platform)) > 0),
 
     prompt TEXT,
 
-    caption TEXT NOT NULL,
+    caption TEXT NOT NULL
+        CHECK (LENGTH(TRIM(caption)) > 0),
 
     hashtags TEXT,
 
     created_at TIMESTAMPTZ NOT NULL
         DEFAULT NOW()
 );
-
--------------------------------------------------------------
 
 COMMENT ON TABLE marketing_history IS
 'Stores AI-generated marketing content.';
@@ -479,7 +379,7 @@ COMMENT ON COLUMN marketing_history.product_id IS
 'Referenced product if applicable.';
 
 COMMENT ON COLUMN marketing_history.platform IS
-'Publishing platform (Instagram, TikTok, etc.).';
+'Publishing platform.';
 
 COMMENT ON COLUMN marketing_history.prompt IS
 'Prompt sent to AI model.';
@@ -510,13 +410,12 @@ CREATE TABLE IF NOT EXISTS ai_conversations
 
     agent TEXT,
 
-    message TEXT NOT NULL,
+    message TEXT NOT NULL
+        CHECK (LENGTH(TRIM(message)) > 0),
 
     created_at TIMESTAMPTZ NOT NULL
         DEFAULT NOW()
 );
-
--------------------------------------------------------------
 
 COMMENT ON TABLE ai_conversations IS
 'Conversation history between users and AI agents.';
@@ -528,7 +427,7 @@ COMMENT ON COLUMN ai_conversations.session_id IS
 'Conversation session identifier.';
 
 COMMENT ON COLUMN ai_conversations.role IS
-'Conversation role (user, assistant, system).';
+'Conversation role.';
 
 COMMENT ON COLUMN ai_conversations.agent IS
 'Responsible AI agent.';
@@ -553,15 +452,15 @@ CREATE TABLE IF NOT EXISTS insights
     insight_category insight_type NOT NULL
         DEFAULT 'general',
 
-    title TEXT NOT NULL,
+    title TEXT NOT NULL
+        CHECK (LENGTH(TRIM(title)) > 0),
 
-    content TEXT NOT NULL,
+    content TEXT NOT NULL
+        CHECK (LENGTH(TRIM(content)) > 0),
 
     created_at TIMESTAMPTZ NOT NULL
         DEFAULT NOW()
 );
-
--------------------------------------------------------------
 
 COMMENT ON TABLE insights IS
 'AI-generated business insights.';
@@ -582,10 +481,6 @@ COMMENT ON COLUMN insights.content IS
 -- INDEXES
 -- ==========================================================
 
--------------------------------------------------------------
--- PRODUCTS
--------------------------------------------------------------
-
 CREATE INDEX IF NOT EXISTS idx_products_business
 ON products(business_id);
 
@@ -601,9 +496,13 @@ ON products(is_active);
 CREATE INDEX IF NOT EXISTS idx_products_stock
 ON products(stock);
 
--------------------------------------------------------------
--- TRANSACTIONS
--------------------------------------------------------------
+CREATE UNIQUE INDEX IF NOT EXISTS idx_products_business_sku_unique
+ON products(business_id, sku)
+WHERE sku IS NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_products_business_barcode_unique
+ON products(business_id, barcode)
+WHERE barcode IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS idx_transactions_business
 ON transactions(business_id);
@@ -620,9 +519,14 @@ ON transactions(status);
 CREATE INDEX IF NOT EXISTS idx_transactions_payment
 ON transactions(payment_method);
 
--------------------------------------------------------------
--- MARKETING
--------------------------------------------------------------
+CREATE INDEX IF NOT EXISTS idx_transactions_business_date
+ON transactions(business_id, transaction_date);
+
+CREATE INDEX IF NOT EXISTS idx_transactions_business_status
+ON transactions(business_id, status);
+
+CREATE INDEX IF NOT EXISTS idx_transactions_business_product
+ON transactions(business_id, product_id);
 
 CREATE INDEX IF NOT EXISTS idx_marketing_business
 ON marketing_history(business_id);
@@ -633,10 +537,6 @@ ON marketing_history(product_id);
 CREATE INDEX IF NOT EXISTS idx_marketing_platform
 ON marketing_history(platform);
 
--------------------------------------------------------------
--- AI CONVERSATIONS
--------------------------------------------------------------
-
 CREATE INDEX IF NOT EXISTS idx_ai_business
 ON ai_conversations(business_id);
 
@@ -646,64 +546,110 @@ ON ai_conversations(session_id);
 CREATE INDEX IF NOT EXISTS idx_ai_role
 ON ai_conversations(role);
 
--------------------------------------------------------------
--- INSIGHTS
--------------------------------------------------------------
-
 CREATE INDEX IF NOT EXISTS idx_insights_business
 ON insights(business_id);
 
 CREATE INDEX IF NOT EXISTS idx_insights_category
 ON insights(insight_category);
 
--------------------------------------------------------------
--- SALES SUMMARY VIEW
--------------------------------------------------------------
+-- ==========================================================
+-- VIEWS
+-- ==========================================================
 
 CREATE OR REPLACE VIEW sales_summary AS
-
 SELECT
-
     business_id,
-
     DATE(transaction_date) AS sales_date,
-
     COUNT(*) AS total_transactions,
-
     SUM(quantity) AS total_items,
-
     SUM(total_price) AS total_revenue,
-
     AVG(total_price)::BIGINT AS average_transaction,
-
     MIN(total_price) AS minimum_transaction,
-
-    MAX(total_price) AS maximum_transaction
-
+    MAX(total_price) AS maximum_transaction,
+    COUNT(DISTINCT COALESCE(product_id::TEXT, product_name)) AS unique_products
 FROM transactions
-
 WHERE status = 'completed'
-
 GROUP BY
     business_id,
     DATE(transaction_date);
 
--------------------------------------------------------------
-
 COMMENT ON VIEW sales_summary IS
 'Daily sales summary used by dashboard, reporting, and AI insight generation.';
 
--------------------------------------------------------------
--- OPTIONAL FUTURE VIEWS
--------------------------------------------------------------
--- Example:
---
--- monthly_sales_summary
--- inventory_status
--- product_sales_summary
---
--- Can be added without modifying application code.
--------------------------------------------------------------
+CREATE OR REPLACE VIEW product_summary AS
+SELECT
+    t.business_id,
+    t.product_id,
+    COALESCE(p.name, t.product_name) AS product_name,
+    p.category,
+    COUNT(*) AS total_transactions,
+    SUM(t.quantity) AS total_quantity_sold,
+    SUM(t.total_price) AS total_revenue,
+    AVG(t.unit_price)::BIGINT AS average_unit_price,
+    MIN(t.transaction_date) AS first_sold_at,
+    MAX(t.transaction_date) AS last_sold_at
+FROM transactions t
+LEFT JOIN products p
+    ON p.id = t.product_id
+WHERE t.status = 'completed'
+GROUP BY
+    t.business_id,
+    t.product_id,
+    COALESCE(p.name, t.product_name),
+    p.category;
+
+COMMENT ON VIEW product_summary IS
+'Sales performance summary by product.';
+
+CREATE OR REPLACE VIEW inventory_summary AS
+SELECT
+    business_id,
+    id AS product_id,
+    name AS product_name,
+    category,
+    sku,
+    stock,
+    minimum_stock,
+    unit,
+    is_active,
+    CASE
+        WHEN stock = 0 THEN 'out_of_stock'
+        WHEN stock <= minimum_stock THEN 'low_stock'
+        ELSE 'safe'
+    END AS stock_status,
+    cost_price,
+    selling_price,
+    stock * cost_price AS inventory_cost_value,
+    stock * selling_price AS inventory_sales_value,
+    updated_at
+FROM products;
+
+COMMENT ON VIEW inventory_summary IS
+'Inventory status summary by product.';
+
+-- ==========================================================
+-- SUPABASE PRIVILEGES
+-- ==========================================================
+
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public
+TO anon, authenticated, service_role;
+
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public
+TO anon, authenticated, service_role;
+
+GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public
+TO anon, authenticated, service_role;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+GRANT ALL ON TABLES TO anon, authenticated, service_role;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+GRANT ALL ON FUNCTIONS TO anon, authenticated, service_role;
 
 COMMIT;
 
