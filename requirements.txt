@@ -10,3 +10,5 @@ openpyxl
 pillow
 loguru
 pytest
+fastapi
+uvicorn

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Settings - UMKM Copilot AI</title>
+  <link rel="stylesheet" href="../css/base.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/pages.css" />
+  <link rel="stylesheet" href="../css/responsive.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand__icon">U</div>
+        <div>
+          <h1 class="brand__title">UMKM Copilot AI</h1>
+          <p class="brand__subtitle">Smart Business Assistant</p>
+        </div>
+      </div>
+      <nav class="nav">
+        <a class="nav__link" href="index.html">Dashboard</a>
+        <a class="nav__link" href="transactions.html">Transactions</a>
+        <a class="nav__link" href="insights.html">Insights</a>
+        <a class="nav__link" href="marketing.html">Marketing</a>
+        <a class="nav__link" href="export.html">Export</a>
+        <a class="nav__link" href="ai_assistant.html">AI Assistant</a>
+        <a class="nav__link nav__link--active" href="settings.html">Settings</a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Settings</p>
+          <h2 class="page-title">Konfigurasi Frontend</h2>
+        </div>
+      </header>
+
+      <section class="panel settings-panel">
+        <form class="form">
+          <label class="form__group">
+            <span>API Base URL</span>
+            <input type="text" value="http://localhost:8000" />
+          </label>
+          <label class="form__group">
+            <span>Business ID</span>
+            <input type="text" value="default-business" />
+          </label>
+          <label class="form__group">
+            <span>Session ID</span>
+            <input type="text" value="default-session" />
+          </label>
+          <button class="button button--primary" type="button">Save Settings</button>
+        </form>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UMKM Copilot AI</title>
+  <link rel="stylesheet" href="../css/base.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/pages.css" />
+  <link rel="stylesheet" href="../css/responsive.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand__icon">U</div>
+        <div>
+          <h1 class="brand__title">UMKM Copilot AI</h1>
+          <p class="brand__subtitle">Smart Business Assistant</p>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <a class="nav__link nav__link--active" href="index.html">Dashboard</a>
+        <a class="nav__link" href="transactions.html">Transactions</a>
+        <a class="nav__link" href="insights.html">Insights</a>
+        <a class="nav__link" href="marketing.html">Marketing</a>
+        <a class="nav__link" href="export.html">Export</a>
+        <a class="nav__link" href="ai_assistant.html">AI Assistant</a>
+        <a class="nav__link" href="settings.html">Settings</a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Dashboard</p>
+          <h2 class="page-title">Ringkasan Bisnis Hari Ini</h2>
+        </div>
+        <div class="topbar__actions">
+          <span class="status-pill status-pill--success">API Connected</span>
+          <button class="button button--primary">Refresh</button>
+        </div>
+      </header>
+
+      <section class="kpi-grid">
+        <article class="kpi-card">
+          <p class="kpi-card__label">Total Revenue</p>
+          <h3 class="kpi-card__value">Rp12.500.000</h3>
+          <span class="trend trend--up">+18% bulan ini</span>
+        </article>
+        <article class="kpi-card">
+          <p class="kpi-card__label">Transactions</p>
+          <h3 class="kpi-card__value">348</h3>
+          <span class="trend trend--up">+42 transaksi</span>
+        </article>
+        <article class="kpi-card">
+          <p class="kpi-card__label">Low Stock</p>
+          <h3 class="kpi-card__value">7</h3>
+          <span class="trend trend--warning">Perlu restock</span>
+        </article>
+        <article class="kpi-card">
+          <p class="kpi-card__label">Active Products</p>
+          <h3 class="kpi-card__value">64</h3>
+          <span class="trend">Produk aktif</span>
+        </article>
+      </section>
+
+      <section class="content-grid">
+        <article class="panel panel--large">
+          <div class="panel__header">
+            <div>
+              <p class="eyebrow">Sales Analytics</p>
+              <h3 class="panel__title">Revenue Overview</h3>
+            </div>
+            <span class="badge">Last 30 days</span>
+          </div>
+          <div class="chart-placeholder">
+            <div class="bar bar--one"></div>
+            <div class="bar bar--two"></div>
+            <div class="bar bar--three"></div>
+            <div class="bar bar--four"></div>
+            <div class="bar bar--five"></div>
+            <div class="bar bar--six"></div>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel__header">
+            <div>
+              <p class="eyebrow">Alerts</p>
+              <h3 class="panel__title">Perlu Perhatian</h3>
+            </div>
+          </div>
+          <div class="alert alert--warning">
+            Stok Kopi Susu tinggal 3 item.
+          </div>
+          <div class="alert alert--info">
+            Produk "Brownies Mini" masuk top revenue.
+          </div>
+          <div class="alert alert--danger">
+            Ada 2 produk out of stock.
+          </div>
+        </article>
+      </section>
+
+      <section class="panel">
+        <div class="panel__header">
+          <div>
+            <p class="eyebrow">Top Products</p>
+            <h3 class="panel__title">Produk Terlaris</h3>
+          </div>
+        </div>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Category</th>
+              <th>Sold</th>
+              <th>Revenue</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Kopi Susu Aren</td>
+              <td>Beverage</td>
+              <td>128</td>
+              <td>Rp3.200.000</td>
+            </tr>
+            <tr>
+              <td>Brownies Mini</td>
+              <td>Snack</td>
+              <td>94</td>
+              <td>Rp2.350.000</td>
+            </tr>
+            <tr>
+              <td>Dimsum Frozen</td>
+              <td>Frozen Food</td>
+              <td>71</td>
+              <td>Rp2.130.000</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

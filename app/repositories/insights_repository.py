@@ -42,17 +42,27 @@ class InsightsRepository(BaseRepository):
 
         Returns:
             Created insight record.
+
+        Raises:
+            ValueError: If the insight is not created.
         """
 
-        result = (
-            self.table
-            .insert(data)
-            .execute()
-        )
+        try:
 
-        logger.success("Insight created.")
+            result = self.table.insert(data).execute()
 
-        return result.data[0]
+            if not result.data:
+                raise ValueError("Insight was not created.")
+
+            logger.success("Insight created.")
+
+            return result.data[0]
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def get(
         self,
@@ -68,18 +78,20 @@ class InsightsRepository(BaseRepository):
             Insight record if found, otherwise None.
         """
 
-        result = (
-            self.table
-            .select("*")
-            .eq("id", str(insight_id))
-            .limit(1)
-            .execute()
-        )
+        try:
 
-        if result.data:
-            return result.data[0]
+            result = self.table.select("*").eq("id", str(insight_id)).limit(1).execute()
 
-        return None
+            if result.data:
+                return result.data[0]
+
+            return None
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def list(
         self,
@@ -97,22 +109,29 @@ class InsightsRepository(BaseRepository):
             List of insight records.
         """
 
-        query = (
-            self.table
-            .select("*")
-            .order(
-                "created_at",
-                desc=True,
+        try:
+
+            query = (
+                self.table.select("*")
+                .order(
+                    "created_at",
+                    desc=True,
+                )
+                .limit(limit)
             )
-            .limit(limit)
-        )
 
-        if business_id is not None:
-            query = query.eq("business_id", str(business_id))
+            if business_id is not None:
+                query = query.eq("business_id", str(business_id))
 
-        result = query.execute()
+            result = query.execute()
 
-        return result.data
+            return result.data
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def update(
         self,
@@ -128,18 +147,27 @@ class InsightsRepository(BaseRepository):
 
         Returns:
             Updated insight record.
+
+        Raises:
+            ValueError: If the insight is not updated.
         """
 
-        result = (
-            self.table
-            .update(values)
-            .eq("id", str(insight_id))
-            .execute()
-        )
+        try:
 
-        logger.success("Insight updated.")
+            result = self.table.update(values).eq("id", str(insight_id)).execute()
 
-        return result.data[0]
+            if not result.data:
+                raise ValueError("Insight was not updated.")
+
+            logger.success("Insight updated.")
+
+            return result.data[0]
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def delete(
         self,
@@ -152,14 +180,17 @@ class InsightsRepository(BaseRepository):
             insight_id: Insight ID.
         """
 
-        (
-            self.table
-            .delete()
-            .eq("id", str(insight_id))
-            .execute()
-        )
+        try:
 
-        logger.success("Insight deleted.")
+            (self.table.delete().eq("id", str(insight_id)).execute())
+
+            logger.success("Insight deleted.")
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def count(
         self,
@@ -175,18 +206,22 @@ class InsightsRepository(BaseRepository):
             Total number of insight records.
         """
 
-        query = (
-            self.table
-            .select("id", count="exact")
-            .limit(1)
-        )
+        try:
 
-        if business_id is not None:
-            query = query.eq("business_id", str(business_id))
+            query = self.table.select("id", count="exact").limit(1)
 
-        result = query.execute()
+            if business_id is not None:
+                query = query.eq("business_id", str(business_id))
 
-        return int(result.count or 0)
+            result = query.execute()
+
+            return int(result.count or 0)
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def exists(
         self,
@@ -202,15 +237,19 @@ class InsightsRepository(BaseRepository):
             True if insight record exists, otherwise False.
         """
 
-        result = (
-            self.table
-            .select("id")
-            .eq("id", str(insight_id))
-            .limit(1)
-            .execute()
-        )
+        try:
 
-        return bool(result.data)
+            result = (
+                self.table.select("id").eq("id", str(insight_id)).limit(1).execute()
+            )
+
+            return bool(result.data)
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def list_by_category(
         self,
@@ -230,20 +269,27 @@ class InsightsRepository(BaseRepository):
             List of insight records for the category.
         """
 
-        result = (
-            self.table
-            .select("*")
-            .eq("business_id", str(business_id))
-            .eq("insight_category", insight_category)
-            .order(
-                "created_at",
-                desc=True,
-            )
-            .limit(limit)
-            .execute()
-        )
+        try:
 
-        return result.data
+            result = (
+                self.table.select("*")
+                .eq("business_id", str(business_id))
+                .eq("insight_category", insight_category)
+                .order(
+                    "created_at",
+                    desc=True,
+                )
+                .limit(limit)
+                .execute()
+            )
+
+            return result.data
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def list_recent(
         self,
@@ -261,19 +307,26 @@ class InsightsRepository(BaseRepository):
             List of recent insight records.
         """
 
-        result = (
-            self.table
-            .select("*")
-            .eq("business_id", str(business_id))
-            .order(
-                "created_at",
-                desc=True,
-            )
-            .limit(limit)
-            .execute()
-        )
+        try:
 
-        return result.data
+            result = (
+                self.table.select("*")
+                .eq("business_id", str(business_id))
+                .order(
+                    "created_at",
+                    desc=True,
+                )
+                .limit(limit)
+                .execute()
+            )
+
+            return result.data
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def search_title(
         self,
@@ -293,22 +346,29 @@ class InsightsRepository(BaseRepository):
             List of matching insight records.
         """
 
-        keyword = keyword.strip()
+        try:
 
-        if not keyword:
-            return []
+            keyword = keyword.strip()
 
-        result = (
-            self.table
-            .select("*")
-            .eq("business_id", str(business_id))
-            .ilike("title", f"%{keyword}%")
-            .order(
-                "created_at",
-                desc=True,
+            if not keyword:
+                return []
+
+            result = (
+                self.table.select("*")
+                .eq("business_id", str(business_id))
+                .ilike("title", f"%{keyword}%")
+                .order(
+                    "created_at",
+                    desc=True,
+                )
+                .limit(limit)
+                .execute()
             )
-            .limit(limit)
-            .execute()
-        )
 
-        return result.data
+            return result.data
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise

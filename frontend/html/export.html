@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Export - UMKM Copilot AI</title>
+  <link rel="stylesheet" href="../css/base.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/pages.css" />
+  <link rel="stylesheet" href="../css/responsive.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand__icon">U</div>
+        <div>
+          <h1 class="brand__title">UMKM Copilot AI</h1>
+          <p class="brand__subtitle">Smart Business Assistant</p>
+        </div>
+      </div>
+      <nav class="nav">
+        <a class="nav__link" href="index.html">Dashboard</a>
+        <a class="nav__link" href="transactions.html">Transactions</a>
+        <a class="nav__link" href="insights.html">Insights</a>
+        <a class="nav__link" href="marketing.html">Marketing</a>
+        <a class="nav__link nav__link--active" href="export.html">Export</a>
+        <a class="nav__link" href="ai_assistant.html">AI Assistant</a>
+        <a class="nav__link" href="settings.html">Settings</a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Export</p>
+          <h2 class="page-title">Unduh Data Bisnis</h2>
+        </div>
+      </header>
+
+      <section class="panel export-panel">
+        <div class="export-card">
+          <div class="export-card__icon">⬇️</div>
+          <h3>Generate Export File</h3>
+          <p>Pilih tipe data dan format file untuk mengunduh hasil analytics.</p>
+          <form class="form form--inline">
+            <label class="form__group">
+              <span>Export Type</span>
+              <select>
+                <option>dashboard</option>
+                <option>sales_summary</option>
+                <option>inventory_summary</option>
+              </select>
+            </label>
+            <label class="form__group">
+              <span>Format</span>
+              <select>
+                <option>json</option>
+                <option>csv</option>
+              </select>
+            </label>
+            <button class="button button--primary" type="button">Generate</button>
+          </form>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

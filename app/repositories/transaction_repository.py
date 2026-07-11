@@ -34,97 +34,265 @@ class TransactionRepository(BaseRepository):
     def create(
         self,
         data: dict[str, Any],
-    ) -> dict:
+    ) -> dict[str, Any]:
+        """
+        Create a transaction record.
 
-        result = (
-            self.table
-            .insert(data)
-            .execute()
-        )
+        Args:
+            data: Transaction table values.
 
-        logger.success("Transaction created.")
+        Returns:
+            Created transaction record.
 
-        return result.data[0]
+        Raises:
+            ValueError: If the transaction is not created.
+        """
+
+        try:
+
+            result = self.table.insert(data).execute()
+
+            if not result.data:
+                raise ValueError("Transaction was not created.")
+
+            logger.success("Transaction created.")
+
+            return result.data[0]
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def get(
         self,
         transaction_id: UUID | str,
-    ) -> dict | None:
+    ) -> dict[str, Any] | None:
+        """
+        Get a transaction by transaction ID.
 
-        result = (
-            self.table
-            .select("*")
-            .eq("id", str(transaction_id))
-            .limit(1)
-            .execute()
-        )
+        Args:
+            transaction_id: Transaction ID.
 
-        if result.data:
-            return result.data[0]
+        Returns:
+            Transaction record if found, otherwise None.
+        """
 
-        return None
+        try:
+
+            result = (
+                self.table.select("*").eq("id", str(transaction_id)).limit(1).execute()
+            )
+
+            if result.data:
+                return result.data[0]
+
+            return None
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def list(
         self,
+        business_id: UUID | str | None = None,
         limit: int = 100,
-    ) -> list[dict]:
+    ) -> list[dict[str, Any]]:
+        """
+        List transactions.
 
-        result = (
-            self.table
-            .select("*")
-            .order(
-                "transaction_date",
-                desc=True,
+        Args:
+            business_id: Optional business ID filter.
+            limit: Maximum number of records returned.
+
+        Returns:
+            List of transaction records.
+        """
+
+        try:
+
+            query = (
+                self.table.select("*")
+                .order(
+                    "transaction_date",
+                    desc=True,
+                )
+                .limit(limit)
             )
-            .limit(limit)
-            .execute()
-        )
 
-        return result.data
+            if business_id is not None:
+                query = query.eq("business_id", str(business_id))
+
+            result = query.execute()
+
+            return result.data
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def update(
         self,
         transaction_id: UUID | str,
         values: dict[str, Any],
-    ) -> dict:
+    ) -> dict[str, Any]:
+        """
+        Update a transaction record.
 
-        result = (
-            self.table
-            .update(values)
-            .eq("id", str(transaction_id))
-            .execute()
-        )
+        Args:
+            transaction_id: Transaction ID.
+            values: Transaction table values to update.
 
-        logger.success("Transaction updated.")
+        Returns:
+            Updated transaction record.
 
-        return result.data[0]
+        Raises:
+            ValueError: If the transaction is not updated.
+        """
+
+        try:
+
+            result = self.table.update(values).eq("id", str(transaction_id)).execute()
+
+            if not result.data:
+                raise ValueError("Transaction was not updated.")
+
+            logger.success("Transaction updated.")
+
+            return result.data[0]
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def delete(
         self,
         transaction_id: UUID | str,
     ) -> None:
+        """
+        Delete a transaction record.
 
-        (
-            self.table
-            .delete()
-            .eq("id", str(transaction_id))
-            .execute()
-        )
+        Args:
+            transaction_id: Transaction ID.
+        """
 
-        logger.success("Transaction deleted.")
+        try:
 
-    def get_today(self) -> list[dict]:
+            (self.table.delete().eq("id", str(transaction_id)).execute())
 
-        today = date.today().isoformat()
+            logger.success("Transaction deleted.")
 
-        result = (
-            self.table
-            .select("*")
-            .gte(
-                "transaction_date",
-                today,
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
+
+    def count(
+        self,
+        business_id: UUID | str | None = None,
+    ) -> int:
+        """
+        Count transactions.
+
+        Args:
+            business_id: Optional business ID filter.
+
+        Returns:
+            Total number of transaction records.
+        """
+
+        try:
+
+            query = self.table.select("id", count="exact").limit(1)
+
+            if business_id is not None:
+                query = query.eq("business_id", str(business_id))
+
+            result = query.execute()
+
+            return int(result.count or 0)
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
+
+    def exists(
+        self,
+        transaction_id: UUID | str,
+    ) -> bool:
+        """
+        Check whether a transaction exists by transaction ID.
+
+        Args:
+            transaction_id: Transaction ID.
+
+        Returns:
+            True if transaction exists, otherwise False.
+        """
+
+        try:
+
+            result = (
+                self.table.select("id").eq("id", str(transaction_id)).limit(1).execute()
             )
-            .execute()
-        )
 
-        return result.data
+            return bool(result.data)
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
+
+    def get_today(
+        self,
+        business_id: UUID | str | None = None,
+    ) -> list[dict[str, Any]]:
+        """
+        List transactions from today.
+
+        Args:
+            business_id: Optional business ID filter.
+
+        Returns:
+            List of today's transaction records.
+        """
+
+        try:
+
+            today = date.today().isoformat()
+
+            query = (
+                self.table.select("*")
+                .gte(
+                    "transaction_date",
+                    today,
+                )
+                .order(
+                    "transaction_date",
+                    desc=True,
+                )
+            )
+
+            if business_id is not None:
+                query = query.eq("business_id", str(business_id))
+
+            result = query.execute()
+
+            return result.data
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise

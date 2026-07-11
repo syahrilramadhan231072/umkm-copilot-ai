@@ -43,21 +43,29 @@ class BusinessRepository(BaseRepository):
 
         Returns:
             Created business profile record.
+
+        Raises:
+            ValueError: If the business profile is not created.
         """
 
-        result = (
-            self.table
-            .insert(data)
-            .execute()
-        )
+        try:
 
-        logger.success("Business profile created.")
+            result = self.table.insert(data).execute()
 
-        return result.data[0]
+            if not result.data:
+                raise ValueError("Business profile was not created.")
 
-    def get(
-        self,
-    ) -> dict[str, Any] | None:
+            logger.success("Business profile created.")
+
+            return result.data[0]
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
+
+    def get(self) -> dict[str, Any] | None:
         """
         Get the business profile record.
 
@@ -65,17 +73,20 @@ class BusinessRepository(BaseRepository):
             Business profile record if found, otherwise None.
         """
 
-        result = (
-            self.table
-            .select("*")
-            .limit(1)
-            .execute()
-        )
+        try:
 
-        if result.data:
-            return result.data[0]
+            result = self.table.select("*").limit(1).execute()
 
-        return None
+            if result.data:
+                return result.data[0]
+
+            return None
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def list(
         self,
@@ -91,14 +102,17 @@ class BusinessRepository(BaseRepository):
             List of business profile records.
         """
 
-        result = (
-            self.table
-            .select("*")
-            .limit(limit)
-            .execute()
-        )
+        try:
 
-        return result.data
+            result = self.table.select("*").limit(limit).execute()
+
+            return result.data
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def update(
         self,
@@ -112,44 +126,54 @@ class BusinessRepository(BaseRepository):
 
         Returns:
             Updated business profile record.
+
+        Raises:
+            ValueError: If the business profile does not exist or is not updated.
         """
 
-        profile = self.get_profile()
+        try:
 
-        if profile is None:
-            raise ValueError("Business profile does not exist.")
+            profile = self.get_profile()
 
-        result = (
-            self.table
-            .update(values)
-            .eq("id", str(profile["id"]))
-            .execute()
-        )
+            if profile is None:
+                raise ValueError("Business profile does not exist.")
 
-        logger.success("Business profile updated.")
+            result = self.table.update(values).eq("id", str(profile["id"])).execute()
 
-        return result.data[0]
+            if not result.data:
+                raise ValueError("Business profile was not updated.")
 
-    def delete(
-        self,
-    ) -> None:
+            logger.success("Business profile updated.")
+
+            return result.data[0]
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
+
+    def delete(self) -> None:
         """
         Delete the business profile record.
         """
 
-        profile = self.get_profile()
+        try:
 
-        if profile is None:
-            return
+            profile = self.get_profile()
 
-        (
-            self.table
-            .delete()
-            .eq("id", str(profile["id"]))
-            .execute()
-        )
+            if profile is None:
+                return
 
-        logger.success("Business profile deleted.")
+            (self.table.delete().eq("id", str(profile["id"])).execute())
+
+            logger.success("Business profile deleted.")
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def count(self) -> int:
         """
@@ -159,14 +183,17 @@ class BusinessRepository(BaseRepository):
             Total number of business profile records.
         """
 
-        result = (
-            self.table
-            .select("id", count="exact")
-            .limit(1)
-            .execute()
-        )
+        try:
 
-        return int(result.count or 0)
+            result = self.table.select("id", count="exact").limit(1).execute()
+
+            return int(result.count or 0)
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def exists(self) -> bool:
         """
@@ -176,14 +203,17 @@ class BusinessRepository(BaseRepository):
             True if the business profile exists, otherwise False.
         """
 
-        result = (
-            self.table
-            .select("id")
-            .limit(1)
-            .execute()
-        )
+        try:
 
-        return bool(result.data)
+            result = self.table.select("id").limit(1).execute()
+
+            return bool(result.data)
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def get_profile(self) -> dict[str, Any] | None:
         """
@@ -193,7 +223,15 @@ class BusinessRepository(BaseRepository):
             Business profile record if found, otherwise None.
         """
 
-        return self.get()
+        try:
+
+            return self.get()
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def update_profile(
         self,
@@ -209,4 +247,12 @@ class BusinessRepository(BaseRepository):
             Updated business profile record.
         """
 
-        return self.update(values)
+        try:
+
+            return self.update(values)
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise

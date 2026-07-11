@@ -41,9 +41,7 @@ class BaseRepository:
         """
 
         if not self.TABLE_NAME:
-            raise ValueError(
-                "TABLE_NAME is not defined."
-            )
+            raise ValueError("TABLE_NAME is not defined.")
 
         return self.client.table(self.TABLE_NAME)
 
@@ -56,9 +54,7 @@ class BaseRepository:
 
             self.table.select("*").limit(1).execute()
 
-            logger.success(
-                f"{self.TABLE_NAME} repository OK."
-            )
+            logger.success(f"{self.TABLE_NAME} repository OK.")
 
             return True
 

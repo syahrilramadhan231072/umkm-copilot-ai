@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Assistant - UMKM Copilot AI</title>
+  <link rel="stylesheet" href="../css/base.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/pages.css" />
+  <link rel="stylesheet" href="../css/responsive.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand__icon">U</div>
+        <div>
+          <h1 class="brand__title">UMKM Copilot AI</h1>
+          <p class="brand__subtitle">Smart Business Assistant</p>
+        </div>
+      </div>
+      <nav class="nav">
+        <a class="nav__link" href="index.html">Dashboard</a>
+        <a class="nav__link" href="transactions.html">Transactions</a>
+        <a class="nav__link" href="insights.html">Insights</a>
+        <a class="nav__link" href="marketing.html">Marketing</a>
+        <a class="nav__link" href="export.html">Export</a>
+        <a class="nav__link nav__link--active" href="ai_assistant.html">AI Assistant</a>
+        <a class="nav__link" href="settings.html">Settings</a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">AI Assistant</p>
+          <h2 class="page-title">Tanya Copilot Bisnis Anda</h2>
+        </div>
+      </header>
+
+      <section class="chat-shell">
+        <div class="chat-message chat-message--assistant">
+          <div class="chat-message__avatar">AI</div>
+          <div class="chat-message__bubble">
+            Halo! Saya siap membantu membaca data bisnis, transaksi, insight, marketing, dan export Anda.
+          </div>
+        </div>
+        <div class="chat-message chat-message--user">
+          <div class="chat-message__avatar">U</div>
+          <div class="chat-message__bubble">
+            Produk mana yang paling laku minggu ini?
+          </div>
+        </div>
+        <div class="chat-message chat-message--assistant">
+          <div class="chat-message__avatar">AI</div>
+          <div class="chat-message__bubble">
+            Produk dengan revenue tertinggi adalah Kopi Susu Aren. Stoknya perlu dipantau karena mulai rendah.
+          </div>
+        </div>
+      </section>
+
+      <form class="chat-input">
+        <input type="text" placeholder="Tanyakan sesuatu tentang bisnis Anda..." />
+        <button class="button button--primary" type="button">Send</button>
+      </form>
+    </main>
+  </div>
+</body>
+</html>

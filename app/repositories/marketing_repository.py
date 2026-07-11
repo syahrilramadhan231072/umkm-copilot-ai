@@ -42,17 +42,27 @@ class MarketingRepository(BaseRepository):
 
         Returns:
             Created marketing history record.
+
+        Raises:
+            ValueError: If the marketing history record is not created.
         """
 
-        result = (
-            self.table
-            .insert(data)
-            .execute()
-        )
+        try:
 
-        logger.success("Marketing history created.")
+            result = self.table.insert(data).execute()
 
-        return result.data[0]
+            if not result.data:
+                raise ValueError("Marketing history was not created.")
+
+            logger.success("Marketing history created.")
+
+            return result.data[0]
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def get(
         self,
@@ -68,18 +78,22 @@ class MarketingRepository(BaseRepository):
             Marketing history record if found, otherwise None.
         """
 
-        result = (
-            self.table
-            .select("*")
-            .eq("id", str(marketing_id))
-            .limit(1)
-            .execute()
-        )
+        try:
 
-        if result.data:
-            return result.data[0]
+            result = (
+                self.table.select("*").eq("id", str(marketing_id)).limit(1).execute()
+            )
 
-        return None
+            if result.data:
+                return result.data[0]
+
+            return None
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def list(
         self,
@@ -97,22 +111,29 @@ class MarketingRepository(BaseRepository):
             List of marketing history records.
         """
 
-        query = (
-            self.table
-            .select("*")
-            .order(
-                "created_at",
-                desc=True,
+        try:
+
+            query = (
+                self.table.select("*")
+                .order(
+                    "created_at",
+                    desc=True,
+                )
+                .limit(limit)
             )
-            .limit(limit)
-        )
 
-        if business_id is not None:
-            query = query.eq("business_id", str(business_id))
+            if business_id is not None:
+                query = query.eq("business_id", str(business_id))
 
-        result = query.execute()
+            result = query.execute()
 
-        return result.data
+            return result.data
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def update(
         self,
@@ -128,18 +149,27 @@ class MarketingRepository(BaseRepository):
 
         Returns:
             Updated marketing history record.
+
+        Raises:
+            ValueError: If the marketing history record is not updated.
         """
 
-        result = (
-            self.table
-            .update(values)
-            .eq("id", str(marketing_id))
-            .execute()
-        )
+        try:
 
-        logger.success("Marketing history updated.")
+            result = self.table.update(values).eq("id", str(marketing_id)).execute()
 
-        return result.data[0]
+            if not result.data:
+                raise ValueError("Marketing history was not updated.")
+
+            logger.success("Marketing history updated.")
+
+            return result.data[0]
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def delete(
         self,
@@ -152,14 +182,17 @@ class MarketingRepository(BaseRepository):
             marketing_id: Marketing history ID.
         """
 
-        (
-            self.table
-            .delete()
-            .eq("id", str(marketing_id))
-            .execute()
-        )
+        try:
 
-        logger.success("Marketing history deleted.")
+            (self.table.delete().eq("id", str(marketing_id)).execute())
+
+            logger.success("Marketing history deleted.")
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def count(
         self,
@@ -175,18 +208,22 @@ class MarketingRepository(BaseRepository):
             Total number of marketing history records.
         """
 
-        query = (
-            self.table
-            .select("id", count="exact")
-            .limit(1)
-        )
+        try:
 
-        if business_id is not None:
-            query = query.eq("business_id", str(business_id))
+            query = self.table.select("id", count="exact").limit(1)
 
-        result = query.execute()
+            if business_id is not None:
+                query = query.eq("business_id", str(business_id))
 
-        return int(result.count or 0)
+            result = query.execute()
+
+            return int(result.count or 0)
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def exists(
         self,
@@ -202,15 +239,19 @@ class MarketingRepository(BaseRepository):
             True if marketing history record exists, otherwise False.
         """
 
-        result = (
-            self.table
-            .select("id")
-            .eq("id", str(marketing_id))
-            .limit(1)
-            .execute()
-        )
+        try:
 
-        return bool(result.data)
+            result = (
+                self.table.select("id").eq("id", str(marketing_id)).limit(1).execute()
+            )
+
+            return bool(result.data)
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def list_by_platform(
         self,
@@ -230,20 +271,27 @@ class MarketingRepository(BaseRepository):
             List of marketing history records for the platform.
         """
 
-        result = (
-            self.table
-            .select("*")
-            .eq("business_id", str(business_id))
-            .eq("platform", platform)
-            .order(
-                "created_at",
-                desc=True,
-            )
-            .limit(limit)
-            .execute()
-        )
+        try:
 
-        return result.data
+            result = (
+                self.table.select("*")
+                .eq("business_id", str(business_id))
+                .eq("platform", platform)
+                .order(
+                    "created_at",
+                    desc=True,
+                )
+                .limit(limit)
+                .execute()
+            )
+
+            return result.data
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def list_recent(
         self,
@@ -261,19 +309,26 @@ class MarketingRepository(BaseRepository):
             List of recent marketing history records.
         """
 
-        result = (
-            self.table
-            .select("*")
-            .eq("business_id", str(business_id))
-            .order(
-                "created_at",
-                desc=True,
-            )
-            .limit(limit)
-            .execute()
-        )
+        try:
 
-        return result.data
+            result = (
+                self.table.select("*")
+                .eq("business_id", str(business_id))
+                .order(
+                    "created_at",
+                    desc=True,
+                )
+                .limit(limit)
+                .execute()
+            )
+
+            return result.data
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def list_by_product(
         self,
@@ -293,20 +348,27 @@ class MarketingRepository(BaseRepository):
             List of marketing history records for the product.
         """
 
-        result = (
-            self.table
-            .select("*")
-            .eq("business_id", str(business_id))
-            .eq("product_id", str(product_id))
-            .order(
-                "created_at",
-                desc=True,
-            )
-            .limit(limit)
-            .execute()
-        )
+        try:
 
-        return result.data
+            result = (
+                self.table.select("*")
+                .eq("business_id", str(business_id))
+                .eq("product_id", str(product_id))
+                .order(
+                    "created_at",
+                    desc=True,
+                )
+                .limit(limit)
+                .execute()
+            )
+
+            return result.data
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def search_caption(
         self,
@@ -326,25 +388,32 @@ class MarketingRepository(BaseRepository):
             List of matching marketing history records.
         """
 
-        keyword = keyword.strip()
+        try:
 
-        if not keyword:
-            return []
+            keyword = keyword.strip()
 
-        result = (
-            self.table
-            .select("*")
-            .eq("business_id", str(business_id))
-            .ilike("caption", f"%{keyword}%")
-            .order(
-                "created_at",
-                desc=True,
+            if not keyword:
+                return []
+
+            result = (
+                self.table.select("*")
+                .eq("business_id", str(business_id))
+                .ilike("caption", f"%{keyword}%")
+                .order(
+                    "created_at",
+                    desc=True,
+                )
+                .limit(limit)
+                .execute()
             )
-            .limit(limit)
-            .execute()
-        )
 
-        return result.data
+            return result.data
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def count_by_platform(
         self,
@@ -362,13 +431,20 @@ class MarketingRepository(BaseRepository):
             Total number of marketing history records for the platform.
         """
 
-        result = (
-            self.table
-            .select("id", count="exact")
-            .eq("business_id", str(business_id))
-            .eq("platform", platform)
-            .limit(1)
-            .execute()
-        )
+        try:
 
-        return int(result.count or 0)
+            result = (
+                self.table.select("id", count="exact")
+                .eq("business_id", str(business_id))
+                .eq("platform", platform)
+                .limit(1)
+                .execute()
+            )
+
+            return int(result.count or 0)
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise

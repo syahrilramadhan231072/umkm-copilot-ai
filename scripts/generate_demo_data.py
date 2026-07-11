@@ -44,21 +44,13 @@ random.seed(RANDOM_SEED)
 # ==========================================================
 
 BUSINESS_TYPES = [
-
     "Coffee Shop",
-
     "Bakery",
-
     "Warung",
-
     "Laundry",
-
     "Toko Kelontong",
-
     "Barbershop",
-
-    "Apotek"
-
+    "Apotek",
 ]
 
 # ==========================================================
@@ -66,21 +58,13 @@ BUSINESS_TYPES = [
 # ==========================================================
 
 BUSINESS = {
-
     "name": "Demo Coffee",
-
     "owner": "Agus",
-
     "type": random.choice(BUSINESS_TYPES),
-
     "phone": "081234567890",
-
     "email": "owner@demo.com",
-
     "address": "Bandung",
-
     "currency": "IDR",
-
 }
 
 # ==========================================================
@@ -88,7 +72,6 @@ BUSINESS = {
 # ==========================================================
 
 PRODUCT_CATALOG = [
-
     {
         "name": "Americano",
         "category": "Minuman",
@@ -97,7 +80,6 @@ PRODUCT_CATALOG = [
         "unit": "cup",
         "weight": 25,
     },
-
     {
         "name": "Latte",
         "category": "Minuman",
@@ -106,7 +88,6 @@ PRODUCT_CATALOG = [
         "unit": "cup",
         "weight": 20,
     },
-
     {
         "name": "Cappuccino",
         "category": "Minuman",
@@ -115,7 +96,6 @@ PRODUCT_CATALOG = [
         "unit": "cup",
         "weight": 18,
     },
-
     {
         "name": "Mocha",
         "category": "Minuman",
@@ -124,7 +104,6 @@ PRODUCT_CATALOG = [
         "unit": "cup",
         "weight": 15,
     },
-
     {
         "name": "Espresso",
         "category": "Minuman",
@@ -133,7 +112,6 @@ PRODUCT_CATALOG = [
         "unit": "cup",
         "weight": 12,
     },
-
     {
         "name": "Es Kopi Susu",
         "category": "Minuman",
@@ -142,7 +120,6 @@ PRODUCT_CATALOG = [
         "unit": "cup",
         "weight": 30,
     },
-
     {
         "name": "Matcha Latte",
         "category": "Minuman",
@@ -151,7 +128,6 @@ PRODUCT_CATALOG = [
         "unit": "cup",
         "weight": 10,
     },
-
     {
         "name": "Chocolate",
         "category": "Minuman",
@@ -160,7 +136,6 @@ PRODUCT_CATALOG = [
         "unit": "cup",
         "weight": 10,
     },
-
     {
         "name": "Croissant",
         "category": "Makanan",
@@ -169,7 +144,6 @@ PRODUCT_CATALOG = [
         "unit": "pcs",
         "weight": 15,
     },
-
     {
         "name": "Brownies",
         "category": "Dessert",
@@ -178,7 +152,6 @@ PRODUCT_CATALOG = [
         "unit": "pcs",
         "weight": 12,
     },
-
     {
         "name": "Cheesecake",
         "category": "Dessert",
@@ -187,7 +160,6 @@ PRODUCT_CATALOG = [
         "unit": "slice",
         "weight": 8,
     },
-
     {
         "name": "Donut",
         "category": "Snack",
@@ -196,7 +168,6 @@ PRODUCT_CATALOG = [
         "unit": "pcs",
         "weight": 14,
     },
-
     {
         "name": "French Fries",
         "category": "Snack",
@@ -205,7 +176,6 @@ PRODUCT_CATALOG = [
         "unit": "box",
         "weight": 10,
     },
-
     {
         "name": "Chicken Sandwich",
         "category": "Makanan",
@@ -214,7 +184,6 @@ PRODUCT_CATALOG = [
         "unit": "pcs",
         "weight": 9,
     },
-
     {
         "name": "Mineral Water",
         "category": "Minuman",
@@ -223,7 +192,6 @@ PRODUCT_CATALOG = [
         "unit": "bottle",
         "weight": 18,
     },
-
 ]
 
 # ==========================================================
@@ -231,27 +199,16 @@ PRODUCT_CATALOG = [
 # ==========================================================
 
 PAYMENT_METHODS = [
-
     "cash",
-
     "cash",
-
     "cash",
-
     "cash",
-
     "qris",
-
     "qris",
-
     "qris",
-
     "transfer",
-
     "transfer",
-
     "credit_card",
-
 ]
 
 # ==========================================================
@@ -259,27 +216,16 @@ PAYMENT_METHODS = [
 # ==========================================================
 
 TRANSACTION_STATUS = [
-
     "completed",
-
     "completed",
-
     "completed",
-
     "completed",
-
     "completed",
-
     "completed",
-
     "completed",
-
     "completed",
-
     "cancelled",
-
     "refunded",
-
 ]
 
 # ==========================================================
@@ -287,20 +233,16 @@ TRANSACTION_STATUS = [
 # ==========================================================
 
 PLATFORMS = [
-
     "Instagram",
-
     "Facebook",
-
     "TikTok",
-
     "WhatsApp",
-
 ]
 
 # ==========================================================
 # SQL HELPER
 # ==========================================================
+
 
 def sql(value):
 
@@ -315,9 +257,11 @@ def sql(value):
 
     return "'" + str(value).replace("'", "''") + "'"
 
+
 # ==========================================================
 # RANDOM HELPERS
 # ==========================================================
+
 
 def random_datetime(day: datetime) -> datetime:
     """
@@ -325,15 +269,10 @@ def random_datetime(day: datetime) -> datetime:
     """
 
     return day.replace(
-
         hour=random.randint(8, 21),
-
         minute=random.randint(0, 59),
-
         second=random.randint(0, 59),
-
         microsecond=0,
-
     )
 
 
@@ -366,6 +305,7 @@ def random_quantity(category: str) -> int:
         return random.randint(1, 2)
 
     return random.randint(1, 4)
+
 
 # ==========================================================
 # BUSINESS GENERATOR
@@ -436,33 +376,21 @@ while len(products) < NUM_PRODUCTS:
     pid = str(uuid.uuid4())
 
     product = {
-
         "id": pid,
-
         "business_id": business_id,
-
         "name": name,
-
         "category": template["category"],
-
         "selling_price": template["price"],
-
         "cost_price": template["cost"],
-
         "stock": stock,
-
         "minimum_stock": minimum_stock,
-
         "unit": template["unit"],
-
         "weight": template["weight"],
-
     }
 
     products.append(product)
 
-    product_sql.append(
-f"""
+    product_sql.append(f"""
 INSERT INTO products
 (
     id,
@@ -491,8 +419,7 @@ VALUES
 )
 ON CONFLICT (sku)
 DO NOTHING;
-"""
-    )
+""")
 
 # ==========================================================
 # WEIGHTED PRODUCT LIST
@@ -502,11 +429,7 @@ weighted_products = []
 
 for product in products:
 
-    weighted_products.extend(
-
-        [product] * product["weight"]
-
-    )
+    weighted_products.extend([product] * product["weight"])
 
 # ==========================================================
 # INVENTORY SIMULATION
@@ -517,16 +440,14 @@ inventory = {}
 for product in products:
 
     inventory[product["id"]] = {
-
         "stock": product["stock"],
-
-        "minimum_stock": product["minimum_stock"]
-
+        "minimum_stock": product["minimum_stock"],
     }
 
 # ==========================================================
 # PRODUCT PICKER
 # ==========================================================
+
 
 def choose_product():
     """
@@ -536,9 +457,11 @@ def choose_product():
 
     return random.choice(weighted_products)
 
+
 # ==========================================================
 # STOCK UPDATE
 # ==========================================================
+
 
 def reduce_stock(product_id: str, qty: int):
 
@@ -546,14 +469,13 @@ def reduce_stock(product_id: str, qty: int):
 
         return
 
-    inventory[product_id]["stock"] = max(
-        0,
-        inventory[product_id]["stock"] - qty
-    )
+    inventory[product_id]["stock"] = max(0, inventory[product_id]["stock"] - qty)
+
 
 # ==========================================================
 # LOW STOCK REPORT
 # ==========================================================
+
 
 def low_stock_products():
 
@@ -569,12 +491,13 @@ def low_stock_products():
 
     return result
 
+
 # ==========================================================
 # PRICE SIMULATION
 # ==========================================================
 
-def selling_price(product):
 
+def selling_price(product):
     """
     Kadang ada promo.
 
@@ -587,17 +510,10 @@ def selling_price(product):
 
         discount = random.choice([5, 10, 15])
 
-        price = int(
-
-            price *
-
-            (100 - discount)
-
-            / 100
-
-        )
+        price = int(price * (100 - discount) / 100)
 
     return price
+
 
 # ==========================================================
 # PRODUCT STATISTICS
@@ -633,15 +549,7 @@ for day_offset in range(DAYS_HISTORY):
     multiplier = weekend_multiplier(current_day)
 
     transaction_count = int(
-
-        random.randint(
-
-            MIN_TRANSACTION_PER_DAY,
-
-            MAX_TRANSACTION_PER_DAY
-
-        ) * multiplier
-
+        random.randint(MIN_TRANSACTION_PER_DAY, MAX_TRANSACTION_PER_DAY) * multiplier
     )
 
     for _ in range(transaction_count):
@@ -716,21 +624,13 @@ for day_offset in range(DAYS_HISTORY):
 
         if status == "completed":
 
-            reduce_stock(
-
-                product["id"],
-
-                qty
-
-            )
+            reduce_stock(product["id"], qty)
 
         # --------------------------------------------------
         # SQL
         # --------------------------------------------------
 
-        transaction_sql.append(
-
-f"""
+        transaction_sql.append(f"""
 INSERT INTO transactions
 (
     id,
@@ -759,8 +659,7 @@ VALUES
     {sql(notes)},
     '{trx_datetime.isoformat()}'
 );
-"""
-        )
+""")
 
         transaction_counter += 1
 
@@ -820,15 +719,7 @@ for item in low_stock[:10]:
 
     minimum = inventory[item["id"]]["minimum_stock"]
 
-    print(
-
-        f"{item['name']:<25}"
-
-        f"Stock={remain:<4}"
-
-        f"Minimum={minimum}"
-
-    )
+    print(f"{item['name']:<25}" f"Stock={remain:<4}" f"Minimum={minimum}")
 
 # ==========================================================
 # MARKETING HISTORY
@@ -837,35 +728,21 @@ for item in low_stock[:10]:
 marketing_sql = []
 
 MARKETING_PROMPTS = [
-
     "Create Instagram caption",
-
     "Create Facebook promotion",
-
     "Create TikTok campaign",
-
     "Create WhatsApp broadcast",
-
     "Create product advertisement",
-
     "Promote today's best seller",
-
 ]
 
 HASHTAGS = [
-
     "#coffee #umkm",
-
     "#coffeeshop #bandung",
-
     "#kuliner #kopi",
-
     "#localbusiness",
-
     "#freshcoffee",
-
     "#viralcoffee",
-
 ]
 
 for _ in range(NUM_MARKETING_HISTORY):
@@ -877,26 +754,16 @@ for _ in range(NUM_MARKETING_HISTORY):
     prompt = random.choice(MARKETING_PROMPTS)
 
     caption = (
-
         f"Nikmati {product['name']} "
-
         f"hanya Rp{product['selling_price']:,}. "
-
         "Tersedia hari ini!"
-
     )
 
     hashtags = random.choice(HASHTAGS)
 
-    created = datetime.now() - timedelta(
+    created = datetime.now() - timedelta(days=random.randint(0, DAYS_HISTORY))
 
-        days=random.randint(0, DAYS_HISTORY)
-
-    )
-
-    marketing_sql.append(
-
-f"""
+    marketing_sql.append(f"""
 INSERT INTO marketing_history
 (
     id,
@@ -919,8 +786,7 @@ VALUES
     {sql(hashtags)},
     '{created.isoformat()}'
 );
-"""
-    )
+""")
 
 print("=" * 60)
 print("Marketing history generated")
@@ -934,71 +800,30 @@ print("Records :", len(marketing_sql))
 conversation_sql = []
 
 AI_PAIRS = [
-
-(
-"Berapa omzet hari ini?",
-"Omzet hari ini sekitar Rp2.450.000."
-),
-
-(
-"Produk terlaris apa?",
-"Es Kopi Susu merupakan produk terlaris."
-),
-
-(
-"Produk yang stoknya hampir habis?",
-"Croissant hampir habis dan perlu restock."
-),
-
-(
-"Buat caption Instagram.",
-"Caption berhasil dibuat untuk Instagram."
-),
-
-(
-"Tambah stok Americano.",
-"Stok Americano berhasil diperbarui."
-),
-
-(
-"Penjualan minggu ini bagaimana?",
-"Penjualan meningkat dibanding minggu lalu."
-),
-
-(
-"Apakah QRIS sering digunakan?",
-"QRIS merupakan metode pembayaran kedua terbanyak."
-),
-
-(
-"Produk mana yang kurang laku?",
-"Cheesecake memiliki penjualan paling rendah."
-),
-
-(
-"Apakah akhir pekan lebih ramai?",
-"Ya, transaksi meningkat signifikan pada Sabtu dan Minggu."
-),
-
-(
-"Buat promosi hari ini.",
-"Promo berhasil dibuat untuk pelanggan."
-),
-
+    ("Berapa omzet hari ini?", "Omzet hari ini sekitar Rp2.450.000."),
+    ("Produk terlaris apa?", "Es Kopi Susu merupakan produk terlaris."),
+    ("Produk yang stoknya hampir habis?", "Croissant hampir habis dan perlu restock."),
+    ("Buat caption Instagram.", "Caption berhasil dibuat untuk Instagram."),
+    ("Tambah stok Americano.", "Stok Americano berhasil diperbarui."),
+    ("Penjualan minggu ini bagaimana?", "Penjualan meningkat dibanding minggu lalu."),
+    (
+        "Apakah QRIS sering digunakan?",
+        "QRIS merupakan metode pembayaran kedua terbanyak.",
+    ),
+    ("Produk mana yang kurang laku?", "Cheesecake memiliki penjualan paling rendah."),
+    (
+        "Apakah akhir pekan lebih ramai?",
+        "Ya, transaksi meningkat signifikan pada Sabtu dan Minggu.",
+    ),
+    ("Buat promosi hari ini.", "Promo berhasil dibuat untuk pelanggan."),
 ]
 
 AGENTS = [
-
-"router",
-
-"transaction",
-
-"inventory",
-
-"marketing",
-
-"insight",
-
+    "router",
+    "transaction",
+    "inventory",
+    "marketing",
+    "insight",
 ]
 
 for _ in range(NUM_AI_SESSION):
@@ -1007,19 +832,13 @@ for _ in range(NUM_AI_SESSION):
 
     question, answer = random.choice(AI_PAIRS)
 
-    created = datetime.now() - timedelta(
-
-        days=random.randint(0, DAYS_HISTORY)
-
-    )
+    created = datetime.now() - timedelta(days=random.randint(0, DAYS_HISTORY))
 
     user_agent = "router"
 
     assistant_agent = random.choice(AGENTS)
 
-    conversation_sql.append(
-
-f"""
+    conversation_sql.append(f"""
 INSERT INTO ai_conversations
 (
     id,
@@ -1061,8 +880,7 @@ VALUES
     {sql(answer)},
     '{created.isoformat()}'
 );
-"""
-    )
+""")
 
 print("=" * 60)
 print("AI conversations generated")
@@ -1075,38 +893,20 @@ print("Messages :", len(conversation_sql) * 2)
 # ==========================================================
 
 conversation_pairs = [
-    (
-        "Berapa omzet hari ini?",
-        "Omzet hari ini mencapai Rp2.450.000."
-    ),
-    (
-        "Produk terlaris minggu ini?",
-        "Latte merupakan produk terlaris minggu ini."
-    ),
-    (
-        "Tambah stok Croissant.",
-        "Stok Croissant berhasil ditambahkan."
-    ),
-    (
-        "Buat caption Instagram.",
-        "Caption Instagram berhasil dibuat."
-    ),
-    (
-        "Bagaimana kondisi stok?",
-        "Beberapa produk berada di bawah minimum stock."
-    ),
+    ("Berapa omzet hari ini?", "Omzet hari ini mencapai Rp2.450.000."),
+    ("Produk terlaris minggu ini?", "Latte merupakan produk terlaris minggu ini."),
+    ("Tambah stok Croissant.", "Stok Croissant berhasil ditambahkan."),
+    ("Buat caption Instagram.", "Caption Instagram berhasil dibuat."),
+    ("Bagaimana kondisi stok?", "Beberapa produk berada di bawah minimum stock."),
     (
         "Berapa transaksi bulan ini?",
-        "Jumlah transaksi bulan ini meningkat dibanding bulan lalu."
+        "Jumlah transaksi bulan ini meningkat dibanding bulan lalu.",
     ),
     (
         "Produk apa yang perlu dipromosikan?",
-        "Brownies memiliki penjualan rendah dan layak dipromosikan."
+        "Brownies memiliki penjualan rendah dan layak dipromosikan.",
     ),
-    (
-        "Bagaimana penjualan QRIS?",
-        "Pembayaran QRIS menunjukkan tren meningkat."
-    ),
+    ("Bagaimana penjualan QRIS?", "Pembayaran QRIS menunjukkan tren meningkat."),
 ]
 
 conversation_sql = []
@@ -1117,8 +917,7 @@ for _ in range(500):
 
     question, answer = random.choice(conversation_pairs)
 
-    conversation_sql.append(
-        f"""
+    conversation_sql.append(f"""
 INSERT INTO ai_conversations
 (
     id,
@@ -1137,11 +936,9 @@ VALUES
     'router',
     {sql(question)}
 );
-"""
-    )
+""")
 
-    conversation_sql.append(
-        f"""
+    conversation_sql.append(f"""
 INSERT INTO ai_conversations
 (
     id,
@@ -1160,8 +957,7 @@ VALUES
     'copilot',
     {sql(answer)}
 );
-"""
-    )
+""")
 
 # ==========================================================
 # INSIGHTS
@@ -1171,38 +967,22 @@ insight_templates = [
     (
         "sales",
         "Omzet Mingguan",
-        "Penjualan minggu ini meningkat dibanding minggu sebelumnya."
+        "Penjualan minggu ini meningkat dibanding minggu sebelumnya.",
     ),
-    (
-        "sales",
-        "Produk Terlaris",
-        "Latte menjadi produk dengan penjualan tertinggi."
-    ),
-    (
-        "inventory",
-        "Stok Rendah",
-        "Croissant hampir habis dan perlu segera di-restock."
-    ),
+    ("sales", "Produk Terlaris", "Latte menjadi produk dengan penjualan tertinggi."),
+    ("inventory", "Stok Rendah", "Croissant hampir habis dan perlu segera di-restock."),
     (
         "marketing",
         "QRIS Meningkat",
-        "Penggunaan QRIS meningkat dalam 30 hari terakhir."
+        "Penggunaan QRIS meningkat dalam 30 hari terakhir.",
     ),
     (
         "marketing",
         "Produk Kurang Laku",
-        "Brownies memiliki penjualan rendah dan layak dipromosikan."
+        "Brownies memiliki penjualan rendah dan layak dipromosikan.",
     ),
-    (
-        "customer",
-        "Jam Ramai",
-        "Transaksi paling tinggi terjadi pukul 17.00–20.00."
-    ),
-    (
-        "general",
-        "Ringkasan Bulanan",
-        "Kinerja bisnis tetap stabil selama bulan ini."
-    ),
+    ("customer", "Jam Ramai", "Transaksi paling tinggi terjadi pukul 17.00–20.00."),
+    ("general", "Ringkasan Bulanan", "Kinerja bisnis tetap stabil selama bulan ini."),
 ]
 
 insight_sql = []
@@ -1211,8 +991,7 @@ for _ in range(50):
 
     category, title, content = random.choice(insight_templates)
 
-    insight_sql.append(
-        f"""
+    insight_sql.append(f"""
 INSERT INTO insights
 (
     id,
@@ -1229,8 +1008,7 @@ VALUES
     {sql(title)},
     {sql(content)}
 );
-"""
-    )
+""")
 
 # ==========================================================
 # WRITE SQL FILE
@@ -1260,10 +1038,7 @@ sql_output.append("")
 
 OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
 
-OUTPUT_FILE.write_text(
-    "\n".join(sql_output),
-    encoding="utf-8"
-)
+OUTPUT_FILE.write_text("\n".join(sql_output), encoding="utf-8")
 
 # ==========================================================
 # SUMMARY
@@ -1273,7 +1048,7 @@ print("=" * 60)
 print("UMKM Copilot AI Demo Seed Generated")
 print("=" * 60)
 print(f"Output File      : {OUTPUT_FILE.resolve()}")
-print(f"Business         : 1")
+print("Business         : 1")
 print(f"Products         : {len(products)}")
 print(f"Transactions     : {len(transaction_sql)}")
 print(f"Marketing Posts  : {len(marketing_sql)}")

@@ -2,27 +2,15 @@
 Prompt Loader
 =============
 
-Centralized prompt management for Gemini.
-
-Responsibilities
-----------------
-- Load prompt templates
-- Cache prompt contents
-- Render dynamic prompts
-- Validate prompt existence
-- Reload cache
-- Preload all prompts
-- Support dependency injection for testing
+Prompt template loader for UMKM Copilot AI.
 
 Author:
-UMKM Copilot AI
+    UMKM Copilot AI
 """
 
 from __future__ import annotations
 
-from functools import lru_cache
 from pathlib import Path
-from string import Formatter
 
 from app.utils.logger import logger
 
@@ -31,210 +19,125 @@ class PromptLoader:
     """
     Prompt template loader.
 
-    Example
-    -------
-    loader = PromptLoader()
-
-    prompt = loader.load("marketing")
-
-    prompt = loader.render(
-        "marketing",
-        product_name="Keripik Pisang",
-        price="15000"
-    )
+    PromptLoader reads prompt templates from a configured prompt directory. It
+    never calls LLM providers, accesses databases, calls repositories, calls
+    services, or modifies prompt files.
     """
 
-    def __init__(self, prompt_dir: str | Path | None = None):
+    ALLOWED_SUFFIXES = {".md", ".txt", ".j2"}
 
-        if prompt_dir is None:
-            self.prompt_dir = (
-                Path(__file__).resolve().parents[2]
-                / "prompts"
-            )
-        else:
-            self.prompt_dir = Path(prompt_dir)
-
-        if not self.prompt_dir.exists():
-            raise FileNotFoundError(
-                f"Prompt directory not found:\n{self.prompt_dir}"
-            )
-
-        logger.success(
-            f"Prompt directory loaded: {self.prompt_dir}"
-        )
-
-    # =====================================================
-    # Exists
-    # =====================================================
-
-    def exists(self, name: str) -> bool:
+    def __init__(self, prompt_dir: str | Path = "prompts") -> None:
         """
-        Check whether prompt exists.
+        Initialize prompt loader.
+
+        Args:
+            prompt_dir: Directory containing prompt template files.
         """
 
-        return (
-            self.prompt_dir / f"{name}.md"
-        ).exists()
+        self._logger = logger
+        self._prompt_dir = Path(prompt_dir).resolve()
 
-    # =====================================================
-    # Load Prompt
-    # =====================================================
-
-    @lru_cache(maxsize=64)
-    def load(self, name: str) -> str:
+    @property
+    def prompt_dir(self) -> Path:
         """
-        Load prompt from markdown file.
+        Return configured prompt directory.
 
-        Example
-        -------
-        loader.load("marketing")
+        Returns:
+            Prompt directory path.
         """
 
-        file_path = self.prompt_dir / f"{name}.md"
+        return self._prompt_dir
 
-        if not file_path.exists():
-            raise FileNotFoundError(
-                f"Prompt '{name}' not found."
-            )
-
-        prompt = file_path.read_text(
-            encoding="utf-8"
-        ).strip()
-
-        if not prompt:
-            raise ValueError(
-                f"Prompt '{name}' is empty."
-            )
-
-        logger.debug(
-            f"Prompt loaded: {file_path.name}"
-        )
-
-        return prompt
-
-    # =====================================================
-    # Render Prompt
-    # =====================================================
-
-    def render(
-        self,
-        name: str,
-        **kwargs,
-    ) -> str:
+    def load_template(self, template_name: str) -> str:
         """
-        Render prompt using placeholders.
+        Load prompt template text.
 
-        Example
-        -------
-        loader.render(
-            "marketing",
-            product_name="Keripik Pisang",
-            price="15000"
-        )
+        Args:
+            template_name: Template file name.
+
+        Returns:
+            Template content.
+
+        Raises:
+            FileNotFoundError: If template does not exist.
+            ValueError: If template name is invalid.
         """
 
-        prompt = self.load(name)
+        template_path = self._resolve_template_path(template_name)
 
-        formatter = Formatter()
+        if not template_path.exists():
+            raise FileNotFoundError(f"Prompt template not found: {template_name}.")
 
-        required = {
-            field_name
-            for _, field_name, _, _
-            in formatter.parse(prompt)
-            if field_name
-        }
+        if not template_path.is_file():
+            raise ValueError(f"Prompt template is not a file: {template_name}.")
 
-        missing = required - kwargs.keys()
+        self._logger.info("Loading prompt template: %s.", template_name)
 
-        if missing:
+        return template_path.read_text(encoding="utf-8")
 
-            raise ValueError(
-                "Missing prompt variables: "
-                + ", ".join(sorted(missing))
-            )
-
-        return prompt.format(**kwargs)
-
-    # =====================================================
-    # List Prompts
-    # =====================================================
-
-    def available(self) -> list[str]:
+    def list_templates(self) -> list[str]:
         """
-        Return available prompt names.
+        List available prompt templates.
+
+        Returns:
+            Sorted template file names.
         """
+
+        if not self._prompt_dir.exists():
+            return []
 
         return sorted(
-            file.stem
-            for file in self.prompt_dir.glob("*.md")
+            str(path.relative_to(self._prompt_dir)).replace("\\", "/")
+            for path in self._prompt_dir.rglob("*")
+            if path.is_file() and path.suffix in self.ALLOWED_SUFFIXES
         )
 
-    # =====================================================
-    # Load All
-    # =====================================================
-
-    def load_all(self) -> dict[str, str]:
+    def template_exists(self, template_name: str) -> bool:
         """
-        Load all prompts.
+        Check whether a template exists.
 
-        Useful for debugging.
-        """
+        Args:
+            template_name: Template file name.
 
-        return {
-            name: self.load(name)
-            for name in self.available()
-        }
-
-    # =====================================================
-    # Preload
-    # =====================================================
-
-    def preload(self) -> None:
-        """
-        Preload all prompts into cache.
+        Returns:
+            True if template exists, otherwise False.
         """
 
-        count = 0
+        try:
+            return self._resolve_template_path(template_name).is_file()
+        except ValueError:
+            return False
 
-        for name in self.available():
-            self.load(name)
-            count += 1
-
-        logger.success(
-            f"{count} prompt(s) preloaded."
-        )
-
-    # =====================================================
-    # Reload
-    # =====================================================
-
-    def reload(self) -> None:
+    def _resolve_template_path(self, template_name: str) -> Path:
         """
-        Clear prompt cache.
+        Resolve template path safely.
+
+        Args:
+            template_name: Template file name.
+
+        Returns:
+            Resolved template path.
+
+        Raises:
+            ValueError: If template name is invalid or unsafe.
         """
 
-        self.load.cache_clear()
+        if not isinstance(template_name, str) or not template_name.strip():
+            raise ValueError("template_name is required.")
 
-        logger.success(
-            "Prompt cache cleared."
-        )
+        if "\x00" in template_name:
+            raise ValueError("template_name contains invalid characters.")
 
+        candidate = (self._prompt_dir / template_name.strip()).resolve()
 
-# ==========================================================
-# Singleton
-# ==========================================================
+        if candidate.suffix not in self.ALLOWED_SUFFIXES:
+            raise ValueError(
+                f"template suffix must be one of {sorted(self.ALLOWED_SUFFIXES)}."
+            )
 
-_loader: PromptLoader | None = None
+        try:
+            candidate.relative_to(self._prompt_dir)
+        except ValueError as exc:
+            raise ValueError("template_name must stay inside prompt_dir.") from exc
 
-
-def get_prompt_loader() -> PromptLoader:
-    """
-    Singleton PromptLoader.
-    """
-
-    global _loader
-
-    if _loader is None:
-        _loader = PromptLoader()
-
-    return _loader
+        return candidate

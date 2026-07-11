@@ -151,9 +151,7 @@ class Settings(BaseSettings):
         key = self.GEMINI_API_KEY.get_secret_value()
 
         if not key.strip():
-            raise RuntimeError(
-                "GEMINI_API_KEY is not configured."
-            )
+            raise RuntimeError("GEMINI_API_KEY is not configured.")
 
         return key
 
@@ -165,9 +163,7 @@ class Settings(BaseSettings):
         key = self.SUPABASE_KEY.get_secret_value()
 
         if not key.strip():
-            raise RuntimeError(
-                "SUPABASE_KEY is not configured."
-            )
+            raise RuntimeError("SUPABASE_KEY is not configured.")
 
         return key
 
@@ -177,9 +173,7 @@ class Settings(BaseSettings):
         """
 
         if not self.SUPABASE_URL.strip():
-            raise RuntimeError(
-                "SUPABASE_URL is missing."
-            )
+            raise RuntimeError("SUPABASE_URL is missing.")
 
         self.supabase_key()
 

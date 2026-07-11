@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Transactions - UMKM Copilot AI</title>
+  <link rel="stylesheet" href="../css/base.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/pages.css" />
+  <link rel="stylesheet" href="../css/responsive.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand__icon">U</div>
+        <div>
+          <h1 class="brand__title">UMKM Copilot AI</h1>
+          <p class="brand__subtitle">Smart Business Assistant</p>
+        </div>
+      </div>
+      <nav class="nav">
+        <a class="nav__link" href="index.html">Dashboard</a>
+        <a class="nav__link nav__link--active" href="transactions.html">Transactions</a>
+        <a class="nav__link" href="insights.html">Insights</a>
+        <a class="nav__link" href="marketing.html">Marketing</a>
+        <a class="nav__link" href="export.html">Export</a>
+        <a class="nav__link" href="ai_assistant.html">AI Assistant</a>
+        <a class="nav__link" href="settings.html">Settings</a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Transactions</p>
+          <h2 class="page-title">Catat Penjualan Baru</h2>
+        </div>
+      </header>
+
+      <section class="content-grid">
+        <article class="panel">
+          <div class="panel__header">
+            <div>
+              <p class="eyebrow">Input</p>
+              <h3 class="panel__title">Form Transaksi</h3>
+            </div>
+          </div>
+
+          <form class="form">
+            <label class="form__group">
+              <span>Business ID</span>
+              <input type="text" placeholder="business-1" />
+            </label>
+            <label class="form__group">
+              <span>Product ID</span>
+              <input type="text" placeholder="product-1" />
+            </label>
+            <label class="form__group">
+              <span>Quantity</span>
+              <input type="number" value="1" min="1" />
+            </label>
+            <label class="form__group">
+              <span>Payment Method</span>
+              <select>
+                <option>cash</option>
+                <option>transfer</option>
+                <option>qris</option>
+              </select>
+            </label>
+            <label class="form__group">
+              <span>Notes</span>
+              <textarea placeholder="Catatan transaksi"></textarea>
+            </label>
+            <button class="button button--primary" type="button">Record Transaction</button>
+          </form>
+        </article>
+
+        <article class="panel">
+          <div class="panel__header">
+            <div>
+              <p class="eyebrow">Summary</p>
+              <h3 class="panel__title">Transaction Result</h3>
+            </div>
+          </div>
+          <div class="empty-state">
+            <div class="empty-state__icon">🧾</div>
+            <h4>Belum ada transaksi dicatat</h4>
+            <p>Isi form transaksi untuk melihat hasil pencatatan dan update ringkasan penjualan.</p>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

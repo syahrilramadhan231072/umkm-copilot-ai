@@ -39,21 +39,31 @@ class ProductRepository(BaseRepository):
         Create a product record.
 
         Args:
-            data: Product data using products table columns.
+            data: Product table values.
 
         Returns:
             Created product record.
+
+        Raises:
+            ValueError: If the product is not created.
         """
 
-        result = (
-            self.table
-            .insert(data)
-            .execute()
-        )
+        try:
 
-        logger.success("Product created.")
+            result = self.table.insert(data).execute()
 
-        return result.data[0]
+            if not result.data:
+                raise ValueError("Product was not created.")
+
+            logger.success("Product created.")
+
+            return result.data[0]
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def get(
         self,
@@ -63,48 +73,59 @@ class ProductRepository(BaseRepository):
         Get a product by product ID.
 
         Args:
-            product_id: Product UUID.
+            product_id: Product ID.
 
         Returns:
             Product record if found, otherwise None.
         """
 
-        result = (
-            self.table
-            .select("*")
-            .eq("id", str(product_id))
-            .limit(1)
-            .execute()
-        )
+        try:
 
-        if result.data:
-            return result.data[0]
+            result = self.table.select("*").eq("id", str(product_id)).limit(1).execute()
 
-        return None
+            if result.data:
+                return result.data[0]
+
+            return None
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def list(
         self,
+        business_id: UUID | str | None = None,
         limit: int = 100,
     ) -> list[dict[str, Any]]:
         """
         List products.
 
         Args:
+            business_id: Optional business ID filter.
             limit: Maximum number of records returned.
 
         Returns:
             List of product records.
         """
 
-        result = (
-            self.table
-            .select("*")
-            .order("name")
-            .limit(limit)
-            .execute()
-        )
+        try:
 
-        return result.data
+            query = self.table.select("*").order("name").limit(limit)
+
+            if business_id is not None:
+                query = query.eq("business_id", str(business_id))
+
+            result = query.execute()
+
+            return result.data
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def update(
         self,
@@ -115,23 +136,32 @@ class ProductRepository(BaseRepository):
         Update a product record.
 
         Args:
-            product_id: Product UUID.
-            values: Product column values to update.
+            product_id: Product ID.
+            values: Product table values to update.
 
         Returns:
             Updated product record.
+
+        Raises:
+            ValueError: If the product is not updated.
         """
 
-        result = (
-            self.table
-            .update(values)
-            .eq("id", str(product_id))
-            .execute()
-        )
+        try:
 
-        logger.success("Product updated.")
+            result = self.table.update(values).eq("id", str(product_id)).execute()
 
-        return result.data[0]
+            if not result.data:
+                raise ValueError("Product was not updated.")
+
+            logger.success("Product updated.")
+
+            return result.data[0]
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def delete(
         self,
@@ -141,34 +171,51 @@ class ProductRepository(BaseRepository):
         Delete a product record.
 
         Args:
-            product_id: Product UUID.
+            product_id: Product ID.
         """
 
-        (
-            self.table
-            .delete()
-            .eq("id", str(product_id))
-            .execute()
-        )
+        try:
 
-        logger.success("Product deleted.")
+            (self.table.delete().eq("id", str(product_id)).execute())
 
-    def count(self) -> int:
+            logger.success("Product deleted.")
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
+
+    def count(
+        self,
+        business_id: UUID | str | None = None,
+    ) -> int:
         """
-        Count all products.
+        Count products.
+
+        Args:
+            business_id: Optional business ID filter.
 
         Returns:
             Total number of product records.
         """
 
-        result = (
-            self.table
-            .select("id", count="exact")
-            .range(0, 0)
-            .execute()
-        )
+        try:
 
-        return int(result.count or 0)
+            query = self.table.select("id", count="exact").limit(1)
+
+            if business_id is not None:
+                query = query.eq("business_id", str(business_id))
+
+            result = query.execute()
+
+            return int(result.count or 0)
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def exists(
         self,
@@ -178,21 +225,25 @@ class ProductRepository(BaseRepository):
         Check whether a product exists by product ID.
 
         Args:
-            product_id: Product UUID.
+            product_id: Product ID.
 
         Returns:
             True if product exists, otherwise False.
         """
 
-        result = (
-            self.table
-            .select("id")
-            .eq("id", str(product_id))
-            .limit(1)
-            .execute()
-        )
+        try:
 
-        return bool(result.data)
+            result = (
+                self.table.select("id").eq("id", str(product_id)).limit(1).execute()
+            )
+
+            return bool(result.data)
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def get_by_sku(
         self,
@@ -203,26 +254,33 @@ class ProductRepository(BaseRepository):
         Get a product by business ID and SKU.
 
         Args:
-            business_id: Business UUID.
+            business_id: Business ID.
             sku: Product SKU.
 
         Returns:
             Product record if found, otherwise None.
         """
 
-        result = (
-            self.table
-            .select("*")
-            .eq("business_id", str(business_id))
-            .eq("sku", sku)
-            .limit(1)
-            .execute()
-        )
+        try:
 
-        if result.data:
-            return result.data[0]
+            result = (
+                self.table.select("*")
+                .eq("business_id", str(business_id))
+                .eq("sku", sku)
+                .limit(1)
+                .execute()
+            )
 
-        return None
+            if result.data:
+                return result.data[0]
+
+            return None
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def get_by_barcode(
         self,
@@ -233,26 +291,33 @@ class ProductRepository(BaseRepository):
         Get a product by business ID and barcode.
 
         Args:
-            business_id: Business UUID.
+            business_id: Business ID.
             barcode: Product barcode.
 
         Returns:
             Product record if found, otherwise None.
         """
 
-        result = (
-            self.table
-            .select("*")
-            .eq("business_id", str(business_id))
-            .eq("barcode", barcode)
-            .limit(1)
-            .execute()
-        )
+        try:
 
-        if result.data:
-            return result.data[0]
+            result = (
+                self.table.select("*")
+                .eq("business_id", str(business_id))
+                .eq("barcode", barcode)
+                .limit(1)
+                .execute()
+            )
 
-        return None
+            if result.data:
+                return result.data[0]
+
+            return None
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def list_active(
         self,
@@ -263,24 +328,31 @@ class ProductRepository(BaseRepository):
         List active products for a business.
 
         Args:
-            business_id: Business UUID.
+            business_id: Business ID.
             limit: Maximum number of records returned.
 
         Returns:
             List of active product records.
         """
 
-        result = (
-            self.table
-            .select("*")
-            .eq("business_id", str(business_id))
-            .eq("is_active", True)
-            .order("name")
-            .limit(limit)
-            .execute()
-        )
+        try:
 
-        return result.data
+            result = (
+                self.table.select("*")
+                .eq("business_id", str(business_id))
+                .eq("is_active", True)
+                .order("name")
+                .limit(limit)
+                .execute()
+            )
+
+            return result.data
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def list_low_stock(
         self,
@@ -288,31 +360,39 @@ class ProductRepository(BaseRepository):
         limit: int = 100,
     ) -> list[dict[str, Any]]:
         """
-        List products with stock lower than or equal to minimum stock.
+        List active products with low stock for a business.
 
         Args:
-            business_id: Business UUID.
+            business_id: Business ID.
             limit: Maximum number of records returned.
 
         Returns:
             List of low-stock product records.
         """
 
-        result = (
-            self.table
-            .select("*")
-            .eq("business_id", str(business_id))
-            .eq("is_active", True)
-            .order("stock")
-            .limit(limit)
-            .execute()
-        )
+        try:
 
-        return [
-            product
-            for product in result.data
-            if product["stock"] <= product["minimum_stock"]
-        ]
+            result = (
+                self.table.select("*")
+                .eq("business_id", str(business_id))
+                .eq("is_active", True)
+                .order("stock")
+                .execute()
+            )
+
+            products = [
+                product
+                for product in result.data
+                if product["stock"] <= product["minimum_stock"]
+            ]
+
+            return products[:limit]
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def update_stock(
         self,
@@ -323,27 +403,40 @@ class ProductRepository(BaseRepository):
         Update product stock.
 
         Args:
-            product_id: Product UUID.
+            product_id: Product ID.
             stock: New stock value.
 
         Returns:
             Updated product record.
+
+        Raises:
+            ValueError: If product stock is not updated.
         """
 
-        result = (
-            self.table
-            .update(
-                {
-                    "stock": stock,
-                }
+        try:
+
+            result = (
+                self.table.update(
+                    {
+                        "stock": stock,
+                    }
+                )
+                .eq("id", str(product_id))
+                .execute()
             )
-            .eq("id", str(product_id))
-            .execute()
-        )
 
-        logger.success("Product stock updated.")
+            if not result.data:
+                raise ValueError("Product stock was not updated.")
 
-        return result.data[0]
+            logger.success("Product stock updated.")
+
+            return result.data[0]
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def search(
         self,
@@ -355,7 +448,7 @@ class ProductRepository(BaseRepository):
         Search products by keyword.
 
         Args:
-            business_id: Business UUID.
+            business_id: Business ID.
             keyword: Search keyword.
             limit: Maximum number of records returned.
 
@@ -363,34 +456,41 @@ class ProductRepository(BaseRepository):
             List of matching product records.
         """
 
-        search_keyword = keyword.strip()
+        try:
 
-        if not search_keyword:
-            return []
+            keyword = keyword.strip()
 
-        pattern = f"%{search_keyword}%"
+            if not keyword:
+                return []
 
-        result = (
-            self.table
-            .select("*")
-            .eq("business_id", str(business_id))
-            .or_(
-                ",".join(
-                    [
-                        f"name.ilike.{pattern}",
-                        f"category.ilike.{pattern}",
-                        f"sku.ilike.{pattern}",
-                        f"description.ilike.{pattern}",
-                        f"barcode.ilike.{pattern}",
-                    ]
+            pattern = f"%{keyword}%"
+
+            result = (
+                self.table.select("*")
+                .eq("business_id", str(business_id))
+                .or_(
+                    ",".join(
+                        [
+                            f"name.ilike.{pattern}",
+                            f"category.ilike.{pattern}",
+                            f"sku.ilike.{pattern}",
+                            f"description.ilike.{pattern}",
+                            f"barcode.ilike.{pattern}",
+                        ]
+                    )
                 )
+                .order("name")
+                .limit(limit)
+                .execute()
             )
-            .order("name")
-            .limit(limit)
-            .execute()
-        )
 
-        return result.data
+            return result.data
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def count_active(
         self,
@@ -400,22 +500,29 @@ class ProductRepository(BaseRepository):
         Count active products for a business.
 
         Args:
-            business_id: Business UUID.
+            business_id: Business ID.
 
         Returns:
             Total number of active product records.
         """
 
-        result = (
-            self.table
-            .select("id", count="exact")
-            .eq("business_id", str(business_id))
-            .eq("is_active", True)
-            .range(0, 0)
-            .execute()
-        )
+        try:
 
-        return int(result.count or 0)
+            result = (
+                self.table.select("id", count="exact")
+                .eq("business_id", str(business_id))
+                .eq("is_active", True)
+                .limit(1)
+                .execute()
+            )
+
+            return int(result.count or 0)
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def exists_sku(
         self,
@@ -426,23 +533,30 @@ class ProductRepository(BaseRepository):
         Check whether a SKU exists for a business.
 
         Args:
-            business_id: Business UUID.
+            business_id: Business ID.
             sku: Product SKU.
 
         Returns:
             True if SKU exists, otherwise False.
         """
 
-        result = (
-            self.table
-            .select("id")
-            .eq("business_id", str(business_id))
-            .eq("sku", sku)
-            .limit(1)
-            .execute()
-        )
+        try:
 
-        return bool(result.data)
+            result = (
+                self.table.select("id")
+                .eq("business_id", str(business_id))
+                .eq("sku", sku)
+                .limit(1)
+                .execute()
+            )
+
+            return bool(result.data)
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
 
     def exists_barcode(
         self,
@@ -453,20 +567,27 @@ class ProductRepository(BaseRepository):
         Check whether a barcode exists for a business.
 
         Args:
-            business_id: Business UUID.
+            business_id: Business ID.
             barcode: Product barcode.
 
         Returns:
             True if barcode exists, otherwise False.
         """
 
-        result = (
-            self.table
-            .select("id")
-            .eq("business_id", str(business_id))
-            .eq("barcode", barcode)
-            .limit(1)
-            .execute()
-        )
+        try:
 
-        return bool(result.data)
+            result = (
+                self.table.select("id")
+                .eq("business_id", str(business_id))
+                .eq("barcode", barcode)
+                .limit(1)
+                .execute()
+            )
+
+            return bool(result.data)
+
+        except Exception as exc:
+
+            logger.exception(exc)
+
+            raise
