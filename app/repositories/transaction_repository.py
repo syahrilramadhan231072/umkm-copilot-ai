@@ -17,7 +17,7 @@ Author:
 from __future__ import annotations
 
 from datetime import date
-from typing import Any
+from typing import Any, List
 from uuid import UUID
 
 from app.repositories.base_repository import BaseRepository
@@ -100,7 +100,7 @@ class TransactionRepository(BaseRepository):
         self,
         business_id: UUID | str | None = None,
         limit: int = 100,
-    ) -> list[dict[str, Any]]:
+    ) -> List[dict[str, Any]]:
         """
         List transactions.
 
@@ -257,7 +257,7 @@ class TransactionRepository(BaseRepository):
     def get_today(
         self,
         business_id: UUID | str | None = None,
-    ) -> list[dict[str, Any]]:
+    ) -> List[dict[str, Any]]:
         """
         List transactions from today.
 

@@ -1,0 +1,532 @@
+scripts/generate_demo_data.py:346: error: Need type annotation for "products"
+(hint: "products: list[<type>] = ...")  [var-annotated]
+    products = []
+    ^~~~~~~~
+scripts/generate_demo_data.py:432: error: Unsupported operand types for *
+("list[dict[str, object]]" and "object")  [operator]
+        weighted_products.extend([product] * product["weight"])
+                                             ^~~~~~~~~~~~~~~~~
+scripts/generate_demo_data.py:472: error: Unsupported operand types for -
+("object" and "int")  [operator]
+        inventory[product_id]["stock"] = max(0, inventory[product_id]["sto...
+                                                ^
+scripts/generate_demo_data.py:571: error: Unsupported operand types for >=
+("int" and "object")  [operator]
+            if current_stock <= 0:
+               ^
+scripts/generate_demo_data.py:575: error: Unsupported operand types for >
+("int" and "object")  [operator]
+            if qty > current_stock:
+                     ^~~~~~~~~~~~~
+scripts/generate_demo_data.py:577: error: Incompatible types in assignment
+(expression has type "object", variable has type "int")  [assignment]
+                qty = current_stock
+                      ^~~~~~~~~~~~~
+app/llm/gemini_client.py:141: error: Item "None" of
+"GeminiModelProtocol | None" has no attribute "generate_content"  [union-attr]
+                response = self._model.generate_content(prompt, **kwargs)
+                           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/llm/gemini_client.py:199: error: Skipping analyzing "google.generativeai":
+module is installed, but missing library stubs or py.typed marker 
+[import-untyped]
+                import google.generativeai as genai
+                ^
+app/llm/gemini_client.py:199: note: See https://mypy.readthedocs.io/en/stable/running_mypy.html#missing-imports
+app/llm/gemini_client.py:199: error: Skipping analyzing "google": module is
+installed, but missing library stubs or py.typed marker  [import-untyped]
+                import google.generativeai as genai
+                ^
+scripts/manual/prompt_loader_manual.py:5: error: Module "app.llm.prompt_loader"
+has no attribute "get_prompt_loader"  [attr-defined]
+    from app.llm.prompt_loader import get_prompt_loader
+    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+scripts/manual/gemini_manual.py:5: error: Module "app.llm.gemini_client" has no
+attribute "get_gemini"  [attr-defined]
+    from app.llm.gemini_client import get_gemini
+    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/repositories/marketing_repository.py:261: error: Function
+"app.repositories.marketing_repository.MarketingRepository.list" is not valid as
+a type  [valid-type]
+        ) -> list[dict[str, Any]]:
+             ^
+app/repositories/marketing_repository.py:261: note: Perhaps you need "Callable[...]" or a callback protocol?
+app/repositories/marketing_repository.py:300: error: Function
+"app.repositories.marketing_repository.MarketingRepository.list" is not valid as
+a type  [valid-type]
+        ) -> list[dict[str, Any]]:
+             ^
+app/repositories/marketing_repository.py:300: note: Perhaps you need "Callable[...]" or a callback protocol?
+app/repositories/marketing_repository.py:338: error: Function
+"app.repositories.marketing_repository.MarketingRepository.list" is not valid as
+a type  [valid-type]
+        ) -> list[dict[str, Any]]:
+             ^
+app/repositories/marketing_repository.py:338: note: Perhaps you need "Callable[...]" or a callback protocol?
+app/repositories/marketing_repository.py:378: error: Function
+"app.repositories.marketing_repository.MarketingRepository.list" is not valid as
+a type  [valid-type]
+        ) -> list[dict[str, Any]]:
+             ^
+app/repositories/marketing_repository.py:378: note: Perhaps you need "Callable[...]" or a callback protocol?
+app/repositories/insights_repository.py:259: error: Function
+"app.repositories.insights_repository.InsightsRepository.list" is not valid as a
+type  [valid-type]
+        ) -> list[dict[str, Any]]:
+             ^
+app/repositories/insights_repository.py:259: note: Perhaps you need "Callable[...]" or a callback protocol?
+app/repositories/insights_repository.py:298: error: Function
+"app.repositories.insights_repository.InsightsRepository.list" is not valid as a
+type  [valid-type]
+        ) -> list[dict[str, Any]]:
+             ^
+app/repositories/insights_repository.py:298: note: Perhaps you need "Callable[...]" or a callback protocol?
+app/repositories/insights_repository.py:336: error: Function
+"app.repositories.insights_repository.InsightsRepository.list" is not valid as a
+type  [valid-type]
+        ) -> list[dict[str, Any]]:
+             ^
+app/repositories/insights_repository.py:336: note: Perhaps you need "Callable[...]" or a callback protocol?
+app/repositories/conversation_repository.py:264: error: Function
+"app.repositories.conversation_repository.ConversationRepository.list" is not
+valid as a type  [valid-type]
+        ) -> list[dict[str, Any]]:
+             ^
+app/repositories/conversation_repository.py:264: note: Perhaps you need "Callable[...]" or a callback protocol?
+app/repositories/conversation_repository.py:300: error: Function
+"app.repositories.conversation_repository.ConversationRepository.list" is not
+valid as a type  [valid-type]
+        ) -> list[dict[str, Any]]:
+             ^
+app/repositories/conversation_repository.py:300: note: Perhaps you need "Callable[...]" or a callback protocol?
+app/repositories/conversation_repository.py:338: error: Function
+"app.repositories.conversation_repository.ConversationRepository.list" is not
+valid as a type  [valid-type]
+        ) -> list[dict[str, Any]]:
+             ^
+app/repositories/conversation_repository.py:338: note: Perhaps you need "Callable[...]" or a callback protocol?
+app/repositories/conversation_repository.py:378: error: Function
+"app.repositories.conversation_repository.ConversationRepository.list" is not
+valid as a type  [valid-type]
+        ) -> list[dict[str, Any]]:
+             ^
+app/repositories/conversation_repository.py:378: note: Perhaps you need "Callable[...]" or a callback protocol?
+app/analytics/customer_analytics.py:78: error: Argument 1 to
+"_detect_customer_fields" of "CustomerAnalytics" has incompatible type
+"list[dict[str, Any]]"; expected "list[Mapping[str, Any]]"  [arg-type]
+                    transactions,
+                    ^~~~~~~~~~~~
+app/analytics/customer_analytics.py:78: note: "list" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
+app/analytics/customer_analytics.py:78: note: Consider using "Sequence" instead, which is covariant
+app/services/transaction_service.py:295: error: Signature of "_to_dict"
+incompatible with supertype "app.services.base_service.BaseService"  [override]
+        def _to_dict(self, value: Mapping[str, Any], field_name: str) -> d...
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+app/services/transaction_service.py:295: note:      Superclass:
+app/services/transaction_service.py:295: note:          @staticmethod
+app/services/transaction_service.py:295: note:          def _to_dict(value: Mapping[str, Any], field_name: str) -> dict[str, Any]
+app/services/transaction_service.py:295: note:      Subclass:
+app/services/transaction_service.py:295: note:          def _to_dict(self, value: Mapping[str, Any], field_name: str) -> dict[str, Any]
+app/services/transaction_service.py:304: error: Signature of "_required_text"
+incompatible with supertype "app.services.base_service.BaseService"  [override]
+        def _required_text(self, value: Any, field_name: str) -> str:
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/services/transaction_service.py:304: note:      Superclass:
+app/services/transaction_service.py:304: note:          @staticmethod
+app/services/transaction_service.py:304: note:          def _required_text(value: Any, field_name: str) -> str
+app/services/transaction_service.py:304: note:      Subclass:
+app/services/transaction_service.py:304: note:          def _required_text(self, value: Any, field_name: str) -> str
+app/services/transaction_service.py:323: error: Signature of "_validate_limit"
+incompatible with supertype "app.services.base_service.BaseService"  [override]
+        def _validate_limit(self, limit: int) -> None:
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/services/transaction_service.py:323: note:      Superclass:
+app/services/transaction_service.py:323: note:          @staticmethod
+app/services/transaction_service.py:323: note:          def _validate_limit(limit: int) -> None
+app/services/transaction_service.py:323: note:      Subclass:
+app/services/transaction_service.py:323: note:          def _validate_limit(self, limit: int) -> None
+app/services/product_service.py:200: error: Signature of "_to_dict"
+incompatible with supertype "app.services.base_service.BaseService"  [override]
+        def _to_dict(self, value: Mapping[str, Any], field_name: str) -> d...
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+app/services/product_service.py:200: note:      Superclass:
+app/services/product_service.py:200: note:          @staticmethod
+app/services/product_service.py:200: note:          def _to_dict(value: Mapping[str, Any], field_name: str) -> dict[str, Any]
+app/services/product_service.py:200: note:      Subclass:
+app/services/product_service.py:200: note:          def _to_dict(self, value: Mapping[str, Any], field_name: str) -> dict[str, Any]
+app/services/product_service.py:209: error: Signature of "_required_text"
+incompatible with supertype "app.services.base_service.BaseService"  [override]
+        def _required_text(self, value: Any, field_name: str) -> str:
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/services/product_service.py:209: note:      Superclass:
+app/services/product_service.py:209: note:          @staticmethod
+app/services/product_service.py:209: note:          def _required_text(value: Any, field_name: str) -> str
+app/services/product_service.py:209: note:      Subclass:
+app/services/product_service.py:209: note:          def _required_text(self, value: Any, field_name: str) -> str
+app/services/product_service.py:223: error: Signature of "_validate_limit"
+incompatible with supertype "app.services.base_service.BaseService"  [override]
+        def _validate_limit(self, limit: int) -> None:
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/services/product_service.py:223: note:      Superclass:
+app/services/product_service.py:223: note:          @staticmethod
+app/services/product_service.py:223: note:          def _validate_limit(limit: int) -> None
+app/services/product_service.py:223: note:      Subclass:
+app/services/product_service.py:223: note:          def _validate_limit(self, limit: int) -> None
+app/services/product_service.py:228: error: Signature of "_ensure_dict"
+incompatible with supertype "app.services.base_service.BaseService"  [override]
+        def _ensure_dict(self, value: Any, message: str) -> dict[str, Any]...
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/services/product_service.py:228: note:      Superclass:
+app/services/product_service.py:228: note:          @staticmethod
+app/services/product_service.py:228: note:          def _ensure_dict(value: Any, message: str) -> dict[str, Any]
+app/services/product_service.py:228: note:      Subclass:
+app/services/product_service.py:228: note:          def _ensure_dict(self, value: Any, message: str) -> dict[str, Any]
+app/services/product_service.py:234: error: Signature of "_ensure_list"
+incompatible with supertype "app.services.base_service.BaseService"  [override]
+        def _ensure_list(self, value: Any) -> list[dict[str, Any]]:
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/services/product_service.py:234: note:      Superclass:
+app/services/product_service.py:234: note:          @staticmethod
+app/services/product_service.py:234: note:          def _ensure_list(value: Any, message: str) -> list[dict[str, Any]]
+app/services/product_service.py:234: note:      Subclass:
+app/services/product_service.py:234: note:          def _ensure_list(self, value: Any) -> list[dict[str, Any]]
+app/services/inventory_service.py:149: error: Signature of "_required_text"
+incompatible with supertype "app.services.base_service.BaseService"  [override]
+        def _required_text(self, value: Any, field_name: str) -> str:
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/services/inventory_service.py:149: note:      Superclass:
+app/services/inventory_service.py:149: note:          @staticmethod
+app/services/inventory_service.py:149: note:          def _required_text(value: Any, field_name: str) -> str
+app/services/inventory_service.py:149: note:      Subclass:
+app/services/inventory_service.py:149: note:          def _required_text(self, value: Any, field_name: str) -> str
+app/services/inventory_service.py:168: error: Signature of "_validate_limit"
+incompatible with supertype "app.services.base_service.BaseService"  [override]
+        def _validate_limit(self, limit: int) -> None:
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/services/inventory_service.py:168: note:      Superclass:
+app/services/inventory_service.py:168: note:          @staticmethod
+app/services/inventory_service.py:168: note:          def _validate_limit(limit: int) -> None
+app/services/inventory_service.py:168: note:      Subclass:
+app/services/inventory_service.py:168: note:          def _validate_limit(self, limit: int) -> None
+app/analytics/product_analytics.py:84: error: Argument 1 to "_average_numeric"
+of "BaseAnalytics" has incompatible type "list[dict[str, Any]]"; expected
+"list[Mapping[str, Any]]"  [arg-type]
+                    products,
+                    ^~~~~~~~
+app/analytics/product_analytics.py:84: note: "list" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
+app/analytics/product_analytics.py:84: note: Consider using "Sequence" instead, which is covariant
+app/analytics/product_analytics.py:88: error: Argument 1 to "_average_numeric"
+of "BaseAnalytics" has incompatible type "list[dict[str, Any]]"; expected
+"list[Mapping[str, Any]]"  [arg-type]
+                    products,
+                    ^~~~~~~~
+app/analytics/product_analytics.py:88: note: "list" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
+app/analytics/product_analytics.py:88: note: Consider using "Sequence" instead, which is covariant
+app/services/marketing_service.py:210: error: Signature of "_to_dict"
+incompatible with supertype "app.services.base_service.BaseService"  [override]
+        def _to_dict(self, value: Mapping[str, Any], field_name: str) -> d...
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+app/services/marketing_service.py:210: note:      Superclass:
+app/services/marketing_service.py:210: note:          @staticmethod
+app/services/marketing_service.py:210: note:          def _to_dict(value: Mapping[str, Any], field_name: str) -> dict[str, Any]
+app/services/marketing_service.py:210: note:      Subclass:
+app/services/marketing_service.py:210: note:          def _to_dict(self, value: Mapping[str, Any], field_name: str) -> dict[str, Any]
+app/services/marketing_service.py:219: error: Signature of "_required_text"
+incompatible with supertype "app.services.base_service.BaseService"  [override]
+        def _required_text(self, value: Any, field_name: str) -> str:
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/services/marketing_service.py:219: note:      Superclass:
+app/services/marketing_service.py:219: note:          @staticmethod
+app/services/marketing_service.py:219: note:          def _required_text(value: Any, field_name: str) -> str
+app/services/marketing_service.py:219: note:      Subclass:
+app/services/marketing_service.py:219: note:          def _required_text(self, value: Any, field_name: str) -> str
+app/services/marketing_service.py:228: error: Signature of "_validate_limit"
+incompatible with supertype "app.services.base_service.BaseService"  [override]
+        def _validate_limit(self, limit: int) -> None:
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/services/marketing_service.py:228: note:      Superclass:
+app/services/marketing_service.py:228: note:          @staticmethod
+app/services/marketing_service.py:228: note:          def _validate_limit(limit: int) -> None
+app/services/marketing_service.py:228: note:      Subclass:
+app/services/marketing_service.py:228: note:          def _validate_limit(self, limit: int) -> None
+app/services/insight_service.py:217: error: Signature of "_to_dict"
+incompatible with supertype "app.services.base_service.BaseService"  [override]
+        def _to_dict(self, value: Mapping[str, Any], field_name: str) -> d...
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+app/services/insight_service.py:217: note:      Superclass:
+app/services/insight_service.py:217: note:          @staticmethod
+app/services/insight_service.py:217: note:          def _to_dict(value: Mapping[str, Any], field_name: str) -> dict[str, Any]
+app/services/insight_service.py:217: note:      Subclass:
+app/services/insight_service.py:217: note:          def _to_dict(self, value: Mapping[str, Any], field_name: str) -> dict[str, Any]
+app/services/insight_service.py:226: error: Signature of "_required_text"
+incompatible with supertype "app.services.base_service.BaseService"  [override]
+        def _required_text(self, value: Any, field_name: str) -> str:
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/services/insight_service.py:226: note:      Superclass:
+app/services/insight_service.py:226: note:          @staticmethod
+app/services/insight_service.py:226: note:          def _required_text(value: Any, field_name: str) -> str
+app/services/insight_service.py:226: note:      Subclass:
+app/services/insight_service.py:226: note:          def _required_text(self, value: Any, field_name: str) -> str
+app/services/insight_service.py:235: error: Signature of "_validate_limit"
+incompatible with supertype "app.services.base_service.BaseService"  [override]
+        def _validate_limit(self, limit: int) -> None:
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/services/insight_service.py:235: note:      Superclass:
+app/services/insight_service.py:235: note:          @staticmethod
+app/services/insight_service.py:235: note:          def _validate_limit(limit: int) -> None
+app/services/insight_service.py:235: note:      Subclass:
+app/services/insight_service.py:235: note:          def _validate_limit(self, limit: int) -> None
+app/services/conversation_service.py:202: error: Signature of "_to_dict"
+incompatible with supertype "app.services.base_service.BaseService"  [override]
+        def _to_dict(self, value: Mapping[str, Any], field_name: str) -> d...
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+app/services/conversation_service.py:202: note:      Superclass:
+app/services/conversation_service.py:202: note:          @staticmethod
+app/services/conversation_service.py:202: note:          def _to_dict(value: Mapping[str, Any], field_name: str) -> dict[str, Any]
+app/services/conversation_service.py:202: note:      Subclass:
+app/services/conversation_service.py:202: note:          def _to_dict(self, value: Mapping[str, Any], field_name: str) -> dict[str, Any]
+app/services/conversation_service.py:211: error: Signature of "_required_text"
+incompatible with supertype "app.services.base_service.BaseService"  [override]
+        def _required_text(self, value: Any, field_name: str) -> str:
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/services/conversation_service.py:211: note:      Superclass:
+app/services/conversation_service.py:211: note:          @staticmethod
+app/services/conversation_service.py:211: note:          def _required_text(value: Any, field_name: str) -> str
+app/services/conversation_service.py:211: note:      Subclass:
+app/services/conversation_service.py:211: note:          def _required_text(self, value: Any, field_name: str) -> str
+app/services/conversation_service.py:220: error: Signature of "_validate_limit"
+incompatible with supertype "app.services.base_service.BaseService"  [override]
+        def _validate_limit(self, limit: int) -> None:
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/services/conversation_service.py:220: note:      Superclass:
+app/services/conversation_service.py:220: note:          @staticmethod
+app/services/conversation_service.py:220: note:          def _validate_limit(limit: int) -> None
+app/services/conversation_service.py:220: note:      Subclass:
+app/services/conversation_service.py:220: note:          def _validate_limit(self, limit: int) -> None
+app/services/business_service.py:123: error: Signature of "_to_dict"
+incompatible with supertype "app.services.base_service.BaseService"  [override]
+        def _to_dict(self, value: Mapping[str, Any], field_name: str) -> d...
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+app/services/business_service.py:123: note:      Superclass:
+app/services/business_service.py:123: note:          @staticmethod
+app/services/business_service.py:123: note:          def _to_dict(value: Mapping[str, Any], field_name: str) -> dict[str, Any]
+app/services/business_service.py:123: note:      Subclass:
+app/services/business_service.py:123: note:          def _to_dict(self, value: Mapping[str, Any], field_name: str) -> dict[str, Any]
+app/services/business_service.py:132: error: Signature of "_required_text"
+incompatible with supertype "app.services.base_service.BaseService"  [override]
+        def _required_text(self, value: Any, field_name: str) -> str:
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/services/business_service.py:132: note:      Superclass:
+app/services/business_service.py:132: note:          @staticmethod
+app/services/business_service.py:132: note:          def _required_text(value: Any, field_name: str) -> str
+app/services/business_service.py:132: note:      Subclass:
+app/services/business_service.py:132: note:          def _required_text(self, value: Any, field_name: str) -> str
+app/services/business_service.py:141: error: Signature of "_validate_limit"
+incompatible with supertype "app.services.base_service.BaseService"  [override]
+        def _validate_limit(self, limit: int) -> None:
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/services/business_service.py:141: note:      Superclass:
+app/services/business_service.py:141: note:          @staticmethod
+app/services/business_service.py:141: note:          def _validate_limit(limit: int) -> None
+app/services/business_service.py:141: note:      Subclass:
+app/services/business_service.py:141: note:          def _validate_limit(self, limit: int) -> None
+app/services/business_service.py:146: error: Signature of "_ensure_dict"
+incompatible with supertype "app.services.base_service.BaseService"  [override]
+        def _ensure_dict(self, value: Any, message: str) -> dict[str, Any]...
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/services/business_service.py:146: note:      Superclass:
+app/services/business_service.py:146: note:          @staticmethod
+app/services/business_service.py:146: note:          def _ensure_dict(value: Any, message: str) -> dict[str, Any]
+app/services/business_service.py:146: note:      Subclass:
+app/services/business_service.py:146: note:          def _ensure_dict(self, value: Any, message: str) -> dict[str, Any]
+tests/test_base_analytics.py:56: error: Argument 1 to "_sum_numeric" of
+"BaseAnalytics" has incompatible type "list[object]"; expected
+"Iterable[Mapping[str, Any]]"  [arg-type]
+        assert analytics._sum_numeric(records, "total_price") == 30000
+                                      ^~~~~~~
+tests/test_base_analytics.py:57: error: Argument 1 to "_average_numeric" of
+"BaseAnalytics" has incompatible type "list[object]"; expected
+"list[Mapping[str, Any]]"  [arg-type]
+        assert analytics._average_numeric(records, "total_price") == 10000...
+                                          ^~~~~~~
+pages/Dashboard.py:25: error: Missing return statement  [empty-body]
+        def get_dashboard(
+        ^~~~~~~~~~~~~~~~~~
+pages/Dashboard.py:30: error: Missing return statement  [empty-body]
+        def get_sales_summary(
+        ^~~~~~~~~~~~~~~~~~~~~~
+pages/Dashboard.py:35: error: Missing return statement  [empty-body]
+        def get_inventory_summary(
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/transactions.py:43: error: Incompatible return value type (got
+"dict[str, Any] | JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_api_response(response)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/transactions.py:46: error: Incompatible return value type (got
+"dict[str, Any] | JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_api_response(response)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/transactions.py:48: error: Incompatible return value type (got
+"JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_exception_response(exc)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/transactions.py:72: error: Incompatible return value type (got
+"dict[str, Any] | JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_api_response(response)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/transactions.py:74: error: Incompatible return value type (got
+"JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_exception_response(exc)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/transactions.py:100: error: Incompatible return value type (got
+"dict[str, Any] | JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_api_response(response)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/transactions.py:102: error: Incompatible return value type (got
+"JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_exception_response(exc)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/router.py:47: error: Incompatible return value type (got
+"dict[str, Any] | JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_api_response(response)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/router.py:49: error: Incompatible return value type (got
+"JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_exception_response(exc)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/marketing.py:47: error: Incompatible return value type (got
+"dict[str, Any] | JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_api_response(response)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/marketing.py:49: error: Incompatible return value type (got
+"JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_exception_response(exc)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/marketing.py:74: error: Incompatible return value type (got
+"dict[str, Any] | JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_api_response(response)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/marketing.py:76: error: Incompatible return value type (got
+"JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_exception_response(exc)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/marketing.py:108: error: Incompatible return value type (got
+"dict[str, Any] | JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_api_response(response)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/marketing.py:110: error: Incompatible return value type (got
+"JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_exception_response(exc)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/insights.py:47: error: Incompatible return value type (got
+"dict[str, Any] | JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_api_response(response)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/insights.py:49: error: Incompatible return value type (got
+"JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_exception_response(exc)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/insights.py:74: error: Incompatible return value type (got
+"dict[str, Any] | JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_api_response(response)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/insights.py:76: error: Incompatible return value type (got
+"JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_exception_response(exc)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/insights.py:111: error: Incompatible return value type (got
+"dict[str, Any] | JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_api_response(response)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/insights.py:113: error: Incompatible return value type (got
+"JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_exception_response(exc)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/exports.py:48: error: Incompatible return value type (got
+"dict[str, Any] | JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_api_response(response)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/exports.py:50: error: Incompatible return value type (got
+"JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_exception_response(exc)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/exports.py:76: error: Incompatible return value type (got
+"dict[str, Any] | JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_api_response(response)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/exports.py:78: error: Incompatible return value type (got
+"JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_exception_response(exc)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/exports.py:107: error: Incompatible return value type (got
+"dict[str, Any] | JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_api_response(response)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/exports.py:109: error: Incompatible return value type (got
+"JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_exception_response(exc)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/exports.py:137: error: Incompatible return value type (got
+"dict[str, Any] | JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_api_response(response)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/exports.py:139: error: Incompatible return value type (got
+"JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_exception_response(exc)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/business.py:47: error: Incompatible return value type (got
+"dict[str, Any] | JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_api_response(response)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/business.py:49: error: Incompatible return value type (got
+"JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_exception_response(exc)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/business.py:74: error: Incompatible return value type (got
+"dict[str, Any] | JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_api_response(response)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/business.py:76: error: Incompatible return value type (got
+"JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_exception_response(exc)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/analytics.py:44: error: Incompatible return value type (got
+"dict[str, Any] | JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_api_response(response)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/analytics.py:46: error: Incompatible return value type (got
+"JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_exception_response(exc)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/analytics.py:69: error: Incompatible return value type (got
+"dict[str, Any] | JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_api_response(response)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/analytics.py:71: error: Incompatible return value type (got
+"JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_exception_response(exc)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/analytics.py:94: error: Incompatible return value type (got
+"dict[str, Any] | JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_api_response(response)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/analytics.py:96: error: Incompatible return value type (got
+"JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_exception_response(exc)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/analytics.py:119: error: Incompatible return value type (got
+"dict[str, Any] | JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_api_response(response)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/analytics.py:121: error: Incompatible return value type (got
+"JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_exception_response(exc)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/analytics.py:144: error: Incompatible return value type (got
+"dict[str, Any] | JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_api_response(response)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/api/routers/analytics.py:146: error: Incompatible return value type (got
+"JSONResponse", expected "dict[str, Any]")  [return-value]
+            return build_exception_response(exc)
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Found 96 errors in 25 files (checked 146 source files)

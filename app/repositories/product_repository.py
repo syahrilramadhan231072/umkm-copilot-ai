@@ -17,7 +17,7 @@ Author:
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, List
 from uuid import UUID
 
 from app.repositories.base_repository import BaseRepository
@@ -98,7 +98,7 @@ class ProductRepository(BaseRepository):
         self,
         business_id: UUID | str | None = None,
         limit: int = 100,
-    ) -> list[dict[str, Any]]:
+    ) -> List[dict[str, Any]]:
         """
         List products.
 
@@ -323,7 +323,7 @@ class ProductRepository(BaseRepository):
         self,
         business_id: UUID | str,
         limit: int = 100,
-    ) -> list[dict[str, Any]]:
+    ) -> List[dict[str, Any]]:
         """
         List active products for a business.
 
@@ -358,7 +358,7 @@ class ProductRepository(BaseRepository):
         self,
         business_id: UUID | str,
         limit: int = 100,
-    ) -> list[dict[str, Any]]:
+    ) -> List[dict[str, Any]]:
         """
         List active products with low stock for a business.
 
@@ -443,7 +443,7 @@ class ProductRepository(BaseRepository):
         business_id: UUID | str,
         keyword: str,
         limit: int = 100,
-    ) -> list[dict[str, Any]]:
+    ) -> List[dict[str, Any]]:
         """
         Search products by keyword.
 
