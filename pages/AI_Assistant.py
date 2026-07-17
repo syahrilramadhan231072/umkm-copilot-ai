@@ -1,75 +1,120 @@
-"""Streamlit AI Assistant page."""
+"""
+Asisten AI
+==========
+"""
 
 from __future__ import annotations
 
 from typing import Any, Mapping
 
 from app.frontend.assets import load_frontend_assets
-from app.frontend.session import ensure_frontend_session, get_api_client_from_session_state
-
-PAGE_NAME = 'ai_assistant'
-
-
-def initialize_chat_state(session_state: dict[str, Any]) -> None:
-    if 'chat_messages' not in session_state:
-        session_state['chat_messages'] = []
-
-
-def append_chat_message(session_state: dict[str, Any], *, role: str, content: str) -> None:
-    if role not in {'user', 'assistant', 'system'}:
-        raise ValueError("role must be one of ['assistant', 'system', 'user'].")
-    if not content.strip():
-        raise ValueError('content is required.')
-    initialize_chat_state(session_state)
-    session_state['chat_messages'].append({'role': role, 'content': content.strip()})
+from app.frontend.navigation import render_navigation
+from app.frontend.onboarding import build_onboarding_state, is_valid_uuid
+from app.frontend.session import (
+    DEFAULT_LIMIT,
+    build_business_preferences,
+    ensure_frontend_session,
+    get_api_client_from_session_state,
+)
+from app.frontend.ui_components import error_message, render_business_header, render_hero, render_locked_page
 
 
-def build_route_payload(*, business_id: str, session_id: str, user_input: str, explicit_route: str | None = None) -> dict[str, Any]:
-    for name, value in {'business_id': business_id, 'session_id': session_id, 'user_input': user_input}.items():
-        if not str(value).strip():
-            raise ValueError(f'{name} is required.')
-    return {'user_input': user_input.strip(), 'payload': {'business_id': business_id.strip(), 'session_id': session_id.strip(), 'user_message': user_input.strip()}, 'explicit_route': explicit_route}
+PAGE_NAME = "ai_assistant"
 
 
-def extract_assistant_text(response: Mapping[str, Any]) -> str:
-    if not response.get('success'):
-        error = response.get('error')
-        return f"Maaf, terjadi kendala: {error.get('message', 'Unknown error')}" if isinstance(error, Mapping) else 'Maaf, terjadi kendala.'
-    data = response.get('data', {})
-    if isinstance(data, Mapping):
-        return f"Permintaan berhasil diproses melalui route {data.get('route', 'unknown')}: {data.get('route_response', data)}"
-    return 'Permintaan berhasil diproses.'
+def render_page() -> None:
+    """Render asisten AI."""
 
-
-def render_page(api_client: Any | None = None) -> None:
     st = _get_streamlit()
-    st.set_page_config(page_title='AI Assistant', page_icon='AI', layout='wide')
+    st.set_page_config(page_title="Asisten AI", page_icon="🤖", layout="wide")
     load_frontend_assets(st, page_name=PAGE_NAME)
     ensure_frontend_session(st.session_state)
-    initialize_chat_state(st.session_state)
-    client = api_client or get_api_client_from_session_state(st.session_state)
-    business_id = str(st.session_state['business_id'])
-    session_id = str(st.session_state['session_id'])
-    explicit_route = st.sidebar.selectbox('Explicit Route', ['auto', 'business', 'transaction', 'marketing', 'insight', 'export'])
-    for message in st.session_state['chat_messages']:
-        with st.chat_message(message['role']):
-            st.write(message['content'])
-    user_input = st.chat_input('Tanyakan sesuatu tentang bisnis Anda...')
+    st.session_state.setdefault("chat_messages", [])
+
+    client = get_api_client_from_session_state(st.session_state)
+    business_id = str(st.session_state.get("business_id", ""))
+    product_id = str(st.session_state.get("active_product_id", ""))
+    session_id = str(st.session_state.get("session_id", "sesi-utama"))
+    preferences = build_business_preferences(st.session_state)
+    limit = int(st.session_state.get("dashboard_limit", DEFAULT_LIMIT))
+
+    dashboard_response = None
+    if is_valid_uuid(business_id):
+        dashboard_response = client.get_dashboard(business_id=business_id, limit=limit)
+
+    state = build_onboarding_state(
+        business_id=business_id,
+        product_id=product_id,
+        dashboard_response=dashboard_response,
+    )
+    render_navigation(st, state)
+
+    render_hero(
+        st,
+        eyebrow="Asisten AI",
+        title="Tanya Copilot Bisnis Anda",
+        description="Ajukan pertanyaan tentang penjualan, produk, stok, dan promosi.",
+    )
+
+    if state.business_profile_ready:
+        render_business_header(st, preferences)
+
+    if not state.ai_ready:
+        render_locked_page(
+            st,
+            message="Asisten AI akan aktif setelah transaksi pertama masuk backend.",
+            state=state,
+            next_action_label="Lanjutkan Penyiapan",
+            next_page="app.py",
+        )
+        return
+
+    for message in st.session_state["chat_messages"]:
+        with st.chat_message(str(message["role"])):
+            st.write(str(message["content"]))
+
+    user_input = st.chat_input("Tulis pertanyaan Anda...")
     if user_input:
-        append_chat_message(st.session_state, role='user', content=user_input)
-        request = build_route_payload(business_id=business_id, session_id=session_id, user_input=user_input, explicit_route=None if explicit_route == 'auto' else str(explicit_route))
-        response = client.route(**request)
-        append_chat_message(st.session_state, role='assistant', content=extract_assistant_text(response))
+        st.session_state["chat_messages"].append({"role": "user", "content": user_input})
+        with st.spinner("Asisten sedang membaca data bisnis..."):
+            response = client.route(
+                user_input=user_input,
+                payload={
+                    "business_id": business_id,
+                    "session_id": session_id,
+                    "user_message": user_input,
+                    "business_profile": preferences,
+                },
+            )
+        answer = _answer(response)
+        st.session_state["chat_messages"].append({"role": "assistant", "content": answer})
         st.rerun()
-    if st.button('Clear Chat'):
-        st.session_state['chat_messages'] = []
+
+    if st.button("Hapus Percakapan"):
+        st.session_state["chat_messages"] = []
         st.rerun()
+
+
+def _answer(response: Mapping[str, Any]) -> str:
+    """Extract answer."""
+
+    if not response.get("success"):
+        return f"Maaf, terjadi kendala: {error_message(dict(response))}"
+
+    data = response.get("data")
+    if isinstance(data, Mapping):
+        return str(data.get("answer") or data.get("message") or data.get("route_response") or "Permintaan berhasil diproses.")
+
+    return "Permintaan berhasil diproses."
 
 
 def _get_streamlit() -> Any:
+    """Import Streamlit."""
+
     import streamlit as st
+
     return st
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     render_page()

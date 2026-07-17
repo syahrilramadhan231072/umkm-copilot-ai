@@ -1,27 +1,39 @@
-"""Tests for frontend session helpers."""
-
 from __future__ import annotations
 
-from app.frontend.api_client import FrontendApiClient
-from app.frontend.session import DEFAULT_API_BASE_URL, DEFAULT_BUSINESS_ID, DEFAULT_LIMIT, DEFAULT_SESSION_ID, build_common_payload, ensure_frontend_session, get_api_client_from_session_state
+from app.frontend.session import (
+    build_business_preferences,
+    ensure_frontend_session,
+    has_active_product,
+    has_business_profile,
+    set_active_product_from_response,
+    set_business_from_response,
+)
 
 
-def test_session_defaults() -> None:
+def test_set_business_from_response() -> None:
+    state = {}
+    set_business_from_response(
+        state,
+        {
+            "business_id": "11111111-1111-4111-8111-111111111111",
+            "business_name": "Demo Coffee",
+            "owner_name": "Sari",
+            "business_type": "Kuliner",
+            "currency": "IDR",
+            "timezone": "Asia/Jakarta",
+            "language": "Bahasa Indonesia",
+        },
+    )
+    assert has_business_profile(state) is True
+    assert build_business_preferences(state)["business_name"] == "Demo Coffee"
+
+
+def test_set_active_product_from_response() -> None:
     state = {}
     ensure_frontend_session(state)
-    assert state['api_base_url'] == DEFAULT_API_BASE_URL
-    assert state['business_id'] == DEFAULT_BUSINESS_ID
-    assert state['session_id'] == DEFAULT_SESSION_ID
-    assert state['dashboard_limit'] == DEFAULT_LIMIT
-
-
-def test_api_client_from_session() -> None:
-    state = {'api_base_url': 'http://api.test'}
-    client = get_api_client_from_session_state(state)
-    assert isinstance(client, FrontendApiClient)
-    assert client.api_base_url == 'http://api.test'
-
-
-def test_common_payload() -> None:
-    state = {'business_id': 'b1', 'session_id': 's1'}
-    assert build_common_payload(state, {'user_message': 'hi'}) == {'business_id': 'b1', 'session_id': 's1', 'user_message': 'hi'}
+    set_active_product_from_response(
+        state,
+        {"product_id": "product-1", "name": "Kopi Susu"},
+    )
+    assert has_active_product(state) is True
+    assert state["active_product_name"] == "Kopi Susu"

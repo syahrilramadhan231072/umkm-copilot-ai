@@ -32,7 +32,7 @@ def render_page() -> None:
     """Render halaman transaksi pertama."""
 
     st = _get_streamlit()
-    st.set_page_config(page_title="Transaksi", page_icon="🧾", layout="wide")
+    st.set_page_config(page_title="Transaksi Pertama", page_icon="🧾", layout="wide")
     load_frontend_assets(st, page_name=PAGE_NAME)
     ensure_frontend_session(st.session_state)
 
@@ -57,8 +57,8 @@ def render_page() -> None:
 
     render_hero(
         st,
-        eyebrow="Transaksi",
-        title="Transaksi",
+        eyebrow="Langkah 3",
+        title="Transaksi Pertama",
         description="Catat penjualan pertama ke backend agar fitur penuh langsung aktif.",
     )
 

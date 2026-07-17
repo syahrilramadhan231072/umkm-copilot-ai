@@ -1,87 +1,143 @@
-"""Streamlit Marketing page."""
+"""
+Pemasaran
+=========
+"""
 
 from __future__ import annotations
 
 from typing import Any, Mapping
 
 from app.frontend.assets import load_frontend_assets
-from app.frontend.session import ensure_frontend_session, get_api_client_from_session_state
+from app.frontend.navigation import render_navigation
+from app.frontend.onboarding import build_onboarding_state, is_valid_uuid
+from app.frontend.session import (
+    DEFAULT_LIMIT,
+    build_business_preferences,
+    ensure_frontend_session,
+    get_api_client_from_session_state,
+)
+from app.frontend.ui_components import (
+    error_message,
+    render_business_header,
+    render_hero,
+    render_locked_page,
+    render_response_table,
+)
 
-PAGE_NAME = 'marketing'
+
+PAGE_NAME = "marketing"
 
 
-def build_marketing_context_payload(*, product_id: str, business_id: str | None = None, session_id: str | None = None) -> dict[str, Any]:
-    _required_text(product_id, 'product_id')
-    return {'product_id': product_id.strip(), 'business_id': _optional(business_id), 'session_id': _optional(session_id)}
+def render_page() -> None:
+    """Render pemasaran."""
 
-
-def build_marketing_record_payload(*, business_id: str, platform: str, caption: str, campaign_name: str | None = None, product_id: str | None = None, session_id: str | None = None) -> dict[str, Any]:
-    _required_text(business_id, 'business_id')
-    _required_text(platform, 'platform')
-    _required_text(caption, 'caption')
-    return {'business_id': business_id.strip(), 'marketing_data': {'platform': platform.strip(), 'caption': caption.strip(), 'campaign_name': _optional(campaign_name), 'product_id': _optional(product_id)}, 'session_id': _optional(session_id)}
-
-
-def render_page(api_client: Any | None = None) -> None:
     st = _get_streamlit()
-    st.set_page_config(page_title='Marketing', page_icon='Marketing', layout='wide')
+    st.set_page_config(page_title="Pemasaran", page_icon="📣", layout="wide")
     load_frontend_assets(st, page_name=PAGE_NAME)
     ensure_frontend_session(st.session_state)
-    client = api_client or get_api_client_from_session_state(st.session_state)
-    business_id = str(st.session_state['business_id'])
-    session_id = str(st.session_state['session_id'])
-    tab1, tab2, tab3 = st.tabs(['Product Context', 'Save Record', 'History'])
-    with tab1:
-        product_id = st.text_input('Product ID')
-        if st.button('Build Marketing Context', type='primary'):
-            _show(st, client.get_marketing_context(build_marketing_context_payload(product_id=product_id, business_id=business_id, session_id=session_id)), 'Marketing Context')
-    with tab2:
-        with st.form('marketing_record_form'):
-            platform = st.text_input('Platform', value='Instagram')
-            record_product_id = st.text_input('Product ID', value='')
-            campaign_name = st.text_input('Campaign Name')
-            caption = st.text_area('Caption')
-            submitted = st.form_submit_button('Save Marketing Record')
+
+    client = get_api_client_from_session_state(st.session_state)
+    business_id = str(st.session_state.get("business_id", ""))
+    product_id = str(st.session_state.get("active_product_id", ""))
+    session_id = str(st.session_state.get("session_id", "sesi-utama"))
+    preferences = build_business_preferences(st.session_state)
+    limit = int(st.session_state.get("dashboard_limit", DEFAULT_LIMIT))
+
+    dashboard_response = None
+    if is_valid_uuid(business_id):
+        dashboard_response = client.get_dashboard(business_id=business_id, limit=limit)
+
+    state = build_onboarding_state(
+        business_id=business_id,
+        product_id=product_id,
+        dashboard_response=dashboard_response,
+    )
+    render_navigation(st, state)
+
+    render_hero(
+        st,
+        eyebrow="Pemasaran",
+        title="Ruang Kerja Pemasaran",
+        description="Bangun konteks promosi dan simpan riwayat campaign.",
+    )
+
+    if state.business_profile_ready:
+        render_business_header(st, preferences)
+
+    if not state.marketing_ready:
+        render_locked_page(
+            st,
+            message="Pemasaran akan aktif setelah profil dan produk tersimpan di backend.",
+            state=state,
+            next_action_label="Buka Produk",
+            next_page="pages/Products.py",
+        )
+        return
+
+    tab_context, tab_save, tab_history = st.tabs(["Konteks Produk", "Simpan Campaign", "Riwayat"])
+
+    with tab_context:
+        if st.button("Bangun Konteks Pemasaran", type="primary"):
+            response = client.get_marketing_context(
+                {
+                    "product_id": product_id,
+                    "business_id": business_id,
+                    "session_id": session_id,
+                    "business_profile": preferences,
+                }
+            )
+            _render_response(st, response)
+
+    with tab_save:
+        with st.form("marketing_form"):
+            platform = st.text_input("Platform", value="Instagram")
+            caption = st.text_area("Caption")
+            campaign = st.text_input("Nama Campaign")
+            submitted = st.form_submit_button("Simpan Campaign")
         if submitted:
-            payload = build_marketing_record_payload(business_id=business_id, platform=platform, caption=caption, campaign_name=campaign_name, product_id=record_product_id, session_id=session_id)
-            _show(st, client.create_marketing_record(payload), 'Create Marketing Record')
-    with tab3:
-        keyword = st.text_input('Keyword')
-        limit = st.number_input('History Limit', min_value=1, value=100, step=10)
-        if st.button('Load Marketing History'):
-            _show(st, client.get_marketing_history(business_id, keyword or None, int(limit)), 'Marketing History')
+            response = client.create_marketing_record(
+                {
+                    "business_id": business_id,
+                    "marketing_data": {
+                        "platform": platform,
+                        "caption": caption,
+                        "campaign_name": campaign,
+                        "product_id": product_id,
+                    },
+                    "session_id": session_id,
+                }
+            )
+            _render_response(st, response)
+
+    with tab_history:
+        keyword = st.text_input("Kata Kunci")
+        if st.button("Muat Riwayat"):
+            response = client.get_marketing_history(
+                business_id=business_id,
+                keyword=keyword or None,
+                limit=100,
+            )
+            _render_response(st, response)
 
 
-def _show(st: Any, response: Mapping[str, Any], title: str) -> None:
-    st.subheader(title)
-    if response.get('success'):
-        st.success('Request successful.')
-    else:
-        st.error(_error(response))
-    st.json(dict(response))
+def _render_response(st: Any, response: Mapping[str, Any]) -> None:
+    """Render response."""
 
+    if not response.get("success"):
+        st.error(error_message(dict(response)))
+        return
 
-def _error(response: Mapping[str, Any]) -> str:
-    error = response.get('error')
-    return str(error.get('message', 'Marketing request failed.')) if isinstance(error, Mapping) else 'Marketing request failed.'
-
-
-def _required_text(value: Any, field: str) -> None:
-    if value is None or not str(value).strip():
-        raise ValueError(f'{field} is required.')
-
-
-def _optional(value: str | None) -> str | None:
-    if value is None:
-        return None
-    text = str(value).strip()
-    return text or None
+    st.success("Berhasil.")
+    render_response_table(st, response.get("data"))
 
 
 def _get_streamlit() -> Any:
+    """Import Streamlit."""
+
     import streamlit as st
+
     return st
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     render_page()

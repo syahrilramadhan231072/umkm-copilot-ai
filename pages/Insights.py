@@ -1,94 +1,124 @@
-"""Streamlit Insights page."""
+"""
+Rekomendasi
+===========
+"""
 
 from __future__ import annotations
 
 from typing import Any, Mapping
 
 from app.frontend.assets import load_frontend_assets
-from app.frontend.session import ensure_frontend_session, get_api_client_from_session_state
+from app.frontend.navigation import render_navigation
+from app.frontend.onboarding import build_onboarding_state, is_valid_uuid
+from app.frontend.session import (
+    DEFAULT_LIMIT,
+    build_business_preferences,
+    ensure_frontend_session,
+    get_api_client_from_session_state,
+)
+from app.frontend.ui_components import (
+    error_message,
+    render_business_header,
+    render_hero,
+    render_locked_page,
+    render_response_table,
+)
 
-PAGE_NAME = 'insights'
+
+PAGE_NAME = "insights"
 
 
-def build_insight_context_payload(*, business_id: str, limit: int = 100, session_id: str | None = None) -> dict[str, Any]:
-    _required_text(business_id, 'business_id')
-    _positive_int(limit, 'limit')
-    return {'business_id': business_id.strip(), 'limit': limit, 'session_id': _optional(session_id)}
+def render_page() -> None:
+    """Render rekomendasi."""
 
-
-def build_create_insight_payload(*, business_id: str, title: str, insight_category: str, content: str, priority: str = 'medium', session_id: str | None = None) -> dict[str, Any]:
-    for field, value in {'business_id': business_id, 'title': title, 'insight_category': insight_category, 'content': content, 'priority': priority}.items():
-        _required_text(value, field)
-    return {'business_id': business_id.strip(), 'insight_data': {'title': title.strip(), 'insight_category': insight_category.strip(), 'content': content.strip(), 'priority': priority.strip()}, 'session_id': _optional(session_id)}
-
-
-def render_page(api_client: Any | None = None) -> None:
     st = _get_streamlit()
-    st.set_page_config(page_title='Insights', page_icon='Insights', layout='wide')
+    st.set_page_config(page_title="Rekomendasi", page_icon="💡", layout="wide")
     load_frontend_assets(st, page_name=PAGE_NAME)
     ensure_frontend_session(st.session_state)
-    client = api_client or get_api_client_from_session_state(st.session_state)
-    business_id = st.text_input('Business ID', value=str(st.session_state['business_id']))
-    session_id = str(st.session_state['session_id'])
-    limit = st.number_input('Limit', min_value=1, value=100, step=10)
 
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button('Load Insight Context', type='primary'):
-            _show(st, client.get_insight_context(build_insight_context_payload(business_id=business_id, limit=int(limit), session_id=session_id)), 'Insight Context')
-    with col2:
-        keyword = st.text_input('Search Keyword', value='')
-        category = st.text_input('Insight Category', value='')
-        if st.button('Review Insights'):
-            _show(st, client.get_insight_review(business_id, keyword or None, category or None, int(limit)), 'Insight Review')
+    client = get_api_client_from_session_state(st.session_state)
+    business_id = str(st.session_state.get("business_id", ""))
+    product_id = str(st.session_state.get("active_product_id", ""))
+    session_id = str(st.session_state.get("session_id", "sesi-utama"))
+    preferences = build_business_preferences(st.session_state)
+    limit = int(st.session_state.get("dashboard_limit", DEFAULT_LIMIT))
 
-    st.divider()
-    with st.form('create_insight_form'):
-        title = st.text_input('Title')
-        category_new = st.text_input('Category', value='general')
-        priority = st.selectbox('Priority', ['low', 'medium', 'high'])
-        content = st.text_area('Content')
-        submitted = st.form_submit_button('Save Insight')
-    if submitted:
-        payload = build_create_insight_payload(business_id=business_id, title=title, insight_category=category_new, content=content, priority=str(priority), session_id=session_id)
-        _show(st, client.create_insight(payload), 'Create Insight')
+    dashboard_response = None
+    if is_valid_uuid(business_id):
+        dashboard_response = client.get_dashboard(business_id=business_id, limit=limit)
+
+    state = build_onboarding_state(
+        business_id=business_id,
+        product_id=product_id,
+        dashboard_response=dashboard_response,
+    )
+    render_navigation(st, state)
+
+    render_hero(
+        st,
+        eyebrow="Rekomendasi",
+        title="Rekomendasi Bisnis",
+        description="Lihat rekomendasi berbasis transaksi, produk, persediaan, dan pemasaran.",
+    )
+
+    if state.business_profile_ready:
+        render_business_header(st, preferences)
+
+    if not state.insights_ready:
+        render_locked_page(
+            st,
+            message="Rekomendasi akan aktif setelah transaksi pertama masuk backend.",
+            state=state,
+            next_action_label="Catat Transaksi Pertama",
+            next_page="pages/First_Transaction.py",
+        )
+        return
+
+    tab_context, tab_review = st.tabs(["Konteks", "Daftar Rekomendasi"])
+
+    with tab_context:
+        if st.button("Muat Konteks Rekomendasi", type="primary"):
+            response = client.get_insight_context(
+                {
+                    "business_id": business_id,
+                    "limit": limit,
+                    "session_id": session_id,
+                    "business_profile": preferences,
+                }
+            )
+            _render_response(st, response)
+
+    with tab_review:
+        keyword = st.text_input("Kata Kunci")
+        category = st.text_input("Kategori")
+        if st.button("Muat Rekomendasi"):
+            response = client.get_insight_review(
+                business_id=business_id,
+                keyword=keyword or None,
+                insight_category=category or None,
+                limit=limit,
+            )
+            _render_response(st, response)
 
 
-def _show(st: Any, response: Mapping[str, Any], title: str) -> None:
-    st.subheader(title)
-    if response.get('success'):
-        st.success('Request successful.')
-    else:
-        st.error(_error(response))
-    st.json(dict(response))
+def _render_response(st: Any, response: Mapping[str, Any]) -> None:
+    """Render response."""
 
+    if not response.get("success"):
+        st.error(error_message(dict(response)))
+        return
 
-def _error(response: Mapping[str, Any]) -> str:
-    error = response.get('error')
-    return str(error.get('message', 'Insight request failed.')) if isinstance(error, Mapping) else 'Insight request failed.'
-
-
-def _required_text(value: Any, field: str) -> None:
-    if value is None or not str(value).strip():
-        raise ValueError(f'{field} is required.')
-
-
-def _positive_int(value: Any, field: str) -> None:
-    if not isinstance(value, int) or value <= 0:
-        raise ValueError(f'{field} must be a positive integer.')
-
-
-def _optional(value: str | None) -> str | None:
-    if value is None:
-        return None
-    text = str(value).strip()
-    return text or None
+    st.success("Berhasil.")
+    render_response_table(st, response.get("data"))
 
 
 def _get_streamlit() -> Any:
+    """Import Streamlit."""
+
     import streamlit as st
+
     return st
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     render_page()

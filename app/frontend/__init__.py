@@ -1,8 +1,3 @@
-"""
-Frontend Utilities
-==================
-
-Frontend helper package for UMKM Copilot AI Streamlit layer.
-"""
+"""Helper frontend UMKM Copilot AI."""
 
 from __future__ import annotations
