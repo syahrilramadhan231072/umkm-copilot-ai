@@ -3,6 +3,13 @@ Klien API Frontend
 ==================
 
 Klien HTTP untuk menghubungkan Streamlit dengan FastAPI.
+
+Catatan penting:
+- Router onboarding baru memakai prefix /api/v1/onboarding.
+- Router bawaan project memakai prefix langsung, misalnya:
+  /transactions, /analytics, /business, /marketing, /insights, /exports, /router.
+- Client ini mencoba endpoint non-/api/v1 terlebih dahulu untuk router bawaan
+  dan tetap menyediakan fallback ke /api/v1 untuk kompatibilitas.
 """
 
 from __future__ import annotations
@@ -42,38 +49,54 @@ class FrontendApiClient:
         return self._normalize_health_response(self._request("GET", "/health"))
 
     def create_business_profile(self, payload: Mapping[str, Any]) -> dict[str, Any]:
-        """Buat profil bisnis di backend."""
+        """Buat profil bisnis melalui router onboarding."""
 
-        return self._request(
+        return self._request_with_fallback(
             "POST",
-            "/api/v1/onboarding/business-profile",
+            [
+                "/api/v1/onboarding/business-profile",
+                "/onboarding/business-profile",
+            ],
             json_body=dict(payload),
         )
 
     def create_product(self, payload: Mapping[str, Any]) -> dict[str, Any]:
-        """Buat produk di backend."""
+        """Buat produk melalui router onboarding."""
 
-        return self._request(
+        return self._request_with_fallback(
             "POST",
-            "/api/v1/onboarding/products",
+            [
+                "/api/v1/onboarding/products",
+                "/onboarding/products",
+            ],
             json_body=dict(payload),
         )
 
     def list_products(self, business_id: str, limit: int = 100) -> dict[str, Any]:
-        """Ambil daftar produk dari backend."""
+        """Ambil daftar produk dari router onboarding."""
 
-        return self._request(
+        safe_business_id = self._safe_path(business_id)
+
+        return self._request_with_fallback(
             "GET",
-            f"/api/v1/onboarding/products/{self._safe_path(business_id)}",
+            [
+                f"/api/v1/onboarding/products/{safe_business_id}",
+                f"/onboarding/products/{safe_business_id}",
+            ],
             query={"limit": limit},
         )
 
     def get_dashboard(self, business_id: str, limit: int = 1000) -> dict[str, Any]:
         """Ambil seluruh data dashboard dari backend."""
 
-        return self._request(
+        safe_business_id = self._safe_path(business_id)
+
+        return self._request_with_fallback(
             "GET",
-            f"/api/v1/analytics/dashboard/{self._safe_path(business_id)}",
+            [
+                f"/analytics/dashboard/{safe_business_id}",
+                f"/api/v1/analytics/dashboard/{safe_business_id}",
+            ],
             query={"limit": limit},
         )
 
@@ -85,9 +108,12 @@ class FrontendApiClient:
     ) -> dict[str, Any]:
         """Ambil ringkasan bisnis."""
 
-        return self._request(
+        return self._request_with_fallback(
             "POST",
-            "/api/v1/business/overview",
+            [
+                "/business/overview",
+                "/api/v1/business/overview",
+            ],
             json_body={
                 "business_id": business_id,
                 "limit": limit,
@@ -103,9 +129,12 @@ class FrontendApiClient:
     ) -> dict[str, Any]:
         """Ambil pemeriksaan kondisi bisnis."""
 
-        return self._request(
+        return self._request_with_fallback(
             "POST",
-            "/api/v1/business/health-check",
+            [
+                "/business/health-check",
+                "/api/v1/business/health-check",
+            ],
             json_body={
                 "business_id": business_id,
                 "limit": limit,
@@ -114,12 +143,20 @@ class FrontendApiClient:
         )
 
     def record_transaction(self, payload: Mapping[str, Any]) -> dict[str, Any]:
-        """Catat transaksi melalui endpoint backend yang sudah ada."""
+        """Catat transaksi melalui endpoint transaksi backend."""
 
-        return self._request(
+        clean_payload = dict(payload)
+
+        return self._request_with_fallback(
             "POST",
-            "/api/v1/transactions/record",
-            json_body=dict(payload),
+            [
+                "/transactions/record",
+                "/transactions/record-payload",
+                "/api/v1/transactions/record",
+                "/api/v1/transactions/record-payload",
+            ],
+            json_body=clean_payload,
+            fallback_statuses=(404, 405, 422),
         )
 
     def get_transaction_summary(
@@ -129,9 +166,14 @@ class FrontendApiClient:
     ) -> dict[str, Any]:
         """Ambil ringkasan transaksi."""
 
-        return self._request(
+        safe_business_id = self._safe_path(business_id)
+
+        return self._request_with_fallback(
             "GET",
-            f"/api/v1/transactions/summary/{self._safe_path(business_id)}",
+            [
+                f"/transactions/summary/{safe_business_id}",
+                f"/api/v1/transactions/summary/{safe_business_id}",
+            ],
             query={"limit": limit},
         )
 
@@ -141,9 +183,12 @@ class FrontendApiClient:
     ) -> dict[str, Any]:
         """Ambil konteks pemasaran."""
 
-        return self._request(
+        return self._request_with_fallback(
             "POST",
-            "/api/v1/marketing/context",
+            [
+                "/marketing/context",
+                "/api/v1/marketing/context",
+            ],
             json_body=dict(payload),
         )
 
@@ -153,9 +198,12 @@ class FrontendApiClient:
     ) -> dict[str, Any]:
         """Simpan riwayat pemasaran."""
 
-        return self._request(
+        return self._request_with_fallback(
             "POST",
-            "/api/v1/marketing/records",
+            [
+                "/marketing/records",
+                "/api/v1/marketing/records",
+            ],
             json_body=dict(payload),
         )
 
@@ -167,27 +215,38 @@ class FrontendApiClient:
     ) -> dict[str, Any]:
         """Ambil riwayat pemasaran."""
 
-        return self._request(
+        safe_business_id = self._safe_path(business_id)
+
+        return self._request_with_fallback(
             "GET",
-            f"/api/v1/marketing/history/{self._safe_path(business_id)}",
+            [
+                f"/marketing/history/{safe_business_id}",
+                f"/api/v1/marketing/history/{safe_business_id}",
+            ],
             query={"keyword": keyword, "limit": limit},
         )
 
     def get_insight_context(self, payload: Mapping[str, Any]) -> dict[str, Any]:
         """Ambil konteks rekomendasi bisnis."""
 
-        return self._request(
+        return self._request_with_fallback(
             "POST",
-            "/api/v1/insights/context",
+            [
+                "/insights/context",
+                "/api/v1/insights/context",
+            ],
             json_body=dict(payload),
         )
 
     def create_insight(self, payload: Mapping[str, Any]) -> dict[str, Any]:
         """Simpan rekomendasi bisnis."""
 
-        return self._request(
+        return self._request_with_fallback(
             "POST",
-            "/api/v1/insights/records",
+            [
+                "/insights/records",
+                "/api/v1/insights/records",
+            ],
             json_body=dict(payload),
         )
 
@@ -200,9 +259,14 @@ class FrontendApiClient:
     ) -> dict[str, Any]:
         """Ambil daftar rekomendasi bisnis."""
 
-        return self._request(
+        safe_business_id = self._safe_path(business_id)
+
+        return self._request_with_fallback(
             "GET",
-            f"/api/v1/insights/review/{self._safe_path(business_id)}",
+            [
+                f"/insights/review/{safe_business_id}",
+                f"/api/v1/insights/review/{safe_business_id}",
+            ],
             query={
                 "keyword": keyword,
                 "insight_category": insight_category,
@@ -213,36 +277,48 @@ class FrontendApiClient:
     def export_dashboard(self, payload: Mapping[str, Any]) -> dict[str, Any]:
         """Unduh data dashboard."""
 
-        return self._request(
+        return self._request_with_fallback(
             "POST",
-            "/api/v1/exports/dashboard",
+            [
+                "/exports/dashboard",
+                "/api/v1/exports/dashboard",
+            ],
             json_body=dict(payload),
         )
 
     def export_sales_summary(self, payload: Mapping[str, Any]) -> dict[str, Any]:
         """Unduh ringkasan penjualan."""
 
-        return self._request(
+        return self._request_with_fallback(
             "POST",
-            "/api/v1/exports/sales-summary",
+            [
+                "/exports/sales-summary",
+                "/api/v1/exports/sales-summary",
+            ],
             json_body=dict(payload),
         )
 
     def export_inventory_summary(self, payload: Mapping[str, Any]) -> dict[str, Any]:
         """Unduh ringkasan persediaan."""
 
-        return self._request(
+        return self._request_with_fallback(
             "POST",
-            "/api/v1/exports/inventory-summary",
+            [
+                "/exports/inventory-summary",
+                "/api/v1/exports/inventory-summary",
+            ],
             json_body=dict(payload),
         )
 
     def export_structured_data(self, payload: Mapping[str, Any]) -> dict[str, Any]:
         """Unduh data terstruktur."""
 
-        return self._request(
+        return self._request_with_fallback(
             "POST",
-            "/api/v1/exports/structured",
+            [
+                "/exports/structured",
+                "/api/v1/exports/structured",
+            ],
             json_body=dict(payload),
         )
 
@@ -254,14 +330,53 @@ class FrontendApiClient:
     ) -> dict[str, Any]:
         """Kirim pertanyaan ke asisten bisnis."""
 
-        return self._request(
+        return self._request_with_fallback(
             "POST",
-            "/api/v1/router/route",
+            [
+                "/router/route",
+                "/api/v1/router/route",
+            ],
             json_body={
                 "user_input": user_input,
                 "payload": dict(payload),
                 "explicit_route": explicit_route,
             },
+        )
+
+    def _request_with_fallback(
+        self,
+        method: str,
+        paths: list[str],
+        *,
+        json_body: Mapping[str, Any] | None = None,
+        query: Mapping[str, Any] | None = None,
+        fallback_statuses: tuple[int, ...] = (404, 405),
+    ) -> dict[str, Any]:
+        """Coba beberapa path hingga mendapatkan response bukan fallback status."""
+
+        attempts: list[str] = []
+        last_response: dict[str, Any] | None = None
+
+        for path in paths:
+            response = self._request(
+                method,
+                path,
+                json_body=json_body,
+                query=query,
+            )
+            attempts.append(
+                f"{method.upper()} {path} -> {response.get('_http_status', 200)}"
+            )
+            response["_path_attempts"] = attempts.copy()
+            last_response = response
+
+            status = response.get("_http_status")
+            if status not in fallback_statuses:
+                return response
+
+        return last_response or self._failure_response(
+            "RouteNotFound",
+            "Tidak ada endpoint yang tersedia.",
         )
 
     def _request(
@@ -298,7 +413,9 @@ class FrontendApiClient:
             parsed = self._parse_response_text(response_text)
 
             if 200 <= status_code < 300:
-                return parsed
+                if "success" in parsed:
+                    return parsed
+                return {"success": True, "data": parsed, "error": None}
 
             parsed.setdefault("success", False)
             parsed["_http_status"] = status_code

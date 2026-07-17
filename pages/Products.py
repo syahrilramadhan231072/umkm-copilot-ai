@@ -114,8 +114,8 @@ def render_page() -> None:
     st.subheader("Tambah Produk")
     with st.form("product_form"):
         name = st.text_input("Nama Produk", placeholder="Contoh: Kopi Susu Gula Aren")
-        selling_price = st.number_input("Harga Jual", min_value=0.0, value=0.0, step=1000.0)
-        cost_price = st.number_input("Harga Modal", min_value=0.0, value=0.0, step=1000.0)
+        selling_price = st.number_input("Harga Jual", min_value=0, value=0, step=1000)
+        cost_price = st.number_input("Harga Modal", min_value=0, value=0, step=1000)
         initial_stock = st.number_input("Stok Awal", min_value=0, value=0, step=1)
         unit = st.text_input("Satuan", value="pcs")
         category = st.text_input("Kategori", value="Umum")
@@ -129,8 +129,8 @@ def render_page() -> None:
         payload = {
             "business_id": business_id,
             "name": name,
-            "selling_price": float(selling_price),
-            "cost_price": float(cost_price),
+            "selling_price": int(selling_price),
+            "cost_price": int(cost_price),
             "initial_stock": int(initial_stock),
             "unit": unit,
             "category": category,
@@ -142,6 +142,16 @@ def render_page() -> None:
             data = response.get("data")
             if isinstance(data, dict):
                 set_active_product_from_response(st.session_state, data)
+                products_response = client.list_products(business_id=business_id)
+                if products_response.get("success"):
+                    products_data = products_response.get("data", {})
+                    loaded_products = (
+                        products_data.get("products", [])
+                        if isinstance(products_data, dict)
+                        else []
+                    )
+                    if isinstance(loaded_products, list):
+                        set_backend_products(st.session_state, loaded_products)
                 st.success("Produk berhasil disimpan.")
                 st.rerun()
             else:
