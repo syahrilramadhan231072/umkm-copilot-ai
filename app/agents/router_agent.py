@@ -18,6 +18,7 @@ from app.agents.marketing_agent import MarketingAgent
 from app.agents.transaction_agent import TransactionAgent
 from app.memory.conversation_memory import ConversationMemory
 from app.utils.logger import logger
+from app.workflows.ai_conversation_workflow import AIConversationWorkflow
 from app.workflows.business_workflow import BusinessWorkflow
 
 
@@ -26,8 +27,8 @@ class RouterAgent:
     High-level router agent.
 
     RouterAgent classifies user intent and delegates execution to the appropriate
-    domain agent or business workflow. It never accesses repositories, services,
-    tools, analytics classes, databases, prompts, or LLM providers directly.
+    domain agent or workflow. It never accesses repositories, services, tools,
+    analytics classes, databases, prompts, or LLM providers directly.
     """
 
     ROUTE_KEYWORDS = {
@@ -80,6 +81,46 @@ class RouterAgent:
         ),
     }
 
+    QUESTION_PREFIXES = (
+        "apa",
+        "apakah",
+        "bagaimana",
+        "gimana",
+        "kenapa",
+        "mengapa",
+        "siapa",
+        "kapan",
+        "dimana",
+        "di mana",
+        "berapa",
+        "what",
+        "why",
+        "how",
+        "who",
+        "when",
+        "where",
+        "which",
+        "should",
+        "can",
+        "could",
+        "would",
+        "do",
+        "does",
+        "is",
+        "are",
+    )
+    GREETINGS = (
+        "hi",
+        "hello",
+        "halo",
+        "hai",
+        "hey",
+        "selamat pagi",
+        "selamat siang",
+        "selamat sore",
+        "selamat malam",
+    )
+
     def __init__(
         self,
         transaction_agent: TransactionAgent,
@@ -87,6 +128,7 @@ class RouterAgent:
         insight_agent: InsightAgent,
         export_agent: ExportAgent,
         business_workflow: BusinessWorkflow,
+        ai_conversation_workflow: AIConversationWorkflow | None = None,
         conversation_memory: ConversationMemory | None = None,
     ) -> None:
         """
@@ -98,6 +140,7 @@ class RouterAgent:
             insight_agent: Insight domain agent.
             export_agent: Export domain agent.
             business_workflow: Business workflow dependency.
+            ai_conversation_workflow: Gemini-backed AI conversation workflow.
             conversation_memory: Optional conversation memory dependency.
         """
 
@@ -106,6 +149,7 @@ class RouterAgent:
         self._insight_agent = insight_agent
         self._export_agent = export_agent
         self._business_workflow = business_workflow
+        self._ai_conversation_workflow = ai_conversation_workflow
         self._conversation_memory = conversation_memory
         self._logger = logger
 
@@ -160,6 +204,8 @@ class RouterAgent:
                 )
             elif route_name == "business":
                 response = self._run_business_route(payload)
+            elif route_name == "conversation":
+                response = self._run_conversation_route(user_input, payload)
             else:
                 raise ValueError(f"Unsupported route: {route_name}.")
 
@@ -182,21 +228,56 @@ class RouterAgent:
         """
         Classify user input into route name.
 
-        Args:
-            user_input: User input text.
-
-        Returns:
-            Route name.
+        General questions and greetings are routed to Gemini-backed conversation
+        so the assistant can answer the actual prompt instead of always returning
+        a business overview.
         """
 
         self._validate_text(user_input, field_name="user_input")
-        lowered = user_input.lower()
+        lowered = user_input.lower().strip()
+
+        if self._is_conversation_prompt(lowered):
+            return "conversation"
 
         for route_name, keywords in self.ROUTE_KEYWORDS.items():
             if any(keyword in lowered for keyword in keywords):
                 return route_name
 
-        return "business"
+        return "conversation"
+
+    def _run_conversation_route(
+        self,
+        user_input: str,
+        payload: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        """Run Gemini-backed AI conversation workflow."""
+
+        if self._ai_conversation_workflow is None:
+            raise RuntimeError("AI conversation workflow is not configured.")
+
+        business_id = self._optional_text(payload.get("business_id"))
+        session_id = self._optional_text(payload.get("session_id"))
+        limit = self._get_optional_int(payload, "limit", default=1000)
+        business_profile = payload.get("business_profile")
+        if not isinstance(business_profile, Mapping):
+            business_profile = None
+
+        workflow_response = self._ai_conversation_workflow.run_ai_conversation(
+            user_input=user_input,
+            business_id=business_id,
+            session_id=session_id,
+            business_profile=business_profile,
+            limit=limit,
+        )
+
+        return {
+            "success": bool(workflow_response.get("success")),
+            "agent": "AIConversationWorkflowRoute",
+            "intent": "ai_conversation",
+            "workflow": workflow_response,
+            "data": workflow_response.get("data", {}),
+            "error": workflow_response.get("error"),
+        }
 
     def _run_business_route(self, payload: Mapping[str, Any]) -> dict[str, Any]:
         """
@@ -247,6 +328,17 @@ class RouterAgent:
             "data": workflow_response.get("data", {}),
             "error": workflow_response.get("error"),
         }
+
+    def _is_conversation_prompt(self, lowered_input: str) -> bool:
+        """Return True for greetings and natural-language questions."""
+
+        if lowered_input in self.GREETINGS:
+            return True
+
+        if lowered_input.endswith("?"):
+            return True
+
+        return lowered_input.startswith(self.QUESTION_PREFIXES)
 
     def _save_optional_user_message(
         self,
@@ -299,6 +391,22 @@ class RouterAgent:
             raise ValueError(f"{field_name} must be an integer.")
 
         return value
+
+    def _get_optional_int(
+        self,
+        payload: Mapping[str, Any],
+        field_name: str,
+        *,
+        default: int,
+    ) -> int:
+        """Get integer value but accept absent/None values."""
+
+        value = payload.get(field_name, default)
+        if value is None:
+            return default
+        if isinstance(value, int):
+            return value
+        raise ValueError(f"{field_name} must be an integer.")
 
     def _optional_text(self, value: Any) -> str | None:
         """Return stripped optional text."""

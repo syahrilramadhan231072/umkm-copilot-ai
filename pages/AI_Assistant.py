@@ -59,16 +59,19 @@ def render_page() -> None:
         st,
         eyebrow="Asisten AI",
         title="Tanya Copilot Bisnis Anda",
-        description="Ajukan pertanyaan tentang penjualan, produk, stok, dan promosi.",
+        description=(
+            "Ajukan pertanyaan umum atau pertanyaan tentang penjualan, produk, "
+            "stok, pemasaran, dan strategi bisnis."
+        ),
     )
 
     if state.business_profile_ready:
         render_business_header(st, preferences)
 
-    if not state.ai_ready:
+    if not state.business_profile_ready:
         render_locked_page(
             st,
-            message="Asisten AI akan aktif setelah transaksi pertama masuk backend.",
+            message="Asisten AI memerlukan business aktif agar konteks workspace tersedia.",
             state=state,
             next_action_label="Lanjutkan Penyiapan",
             next_page="app.py",
@@ -82,7 +85,7 @@ def render_page() -> None:
     user_input = st.chat_input("Tulis pertanyaan Anda...")
     if user_input:
         st.session_state["chat_messages"].append({"role": "user", "content": user_input})
-        with st.spinner("Asisten sedang membaca data bisnis..."):
+        with st.spinner("Gemini sedang menyusun jawaban..."):
             response = client.route(
                 user_input=user_input,
                 payload={
@@ -90,9 +93,10 @@ def render_page() -> None:
                     "session_id": session_id,
                     "user_message": user_input,
                     "business_profile": preferences,
+                    "limit": limit,
                 },
             )
-        answer = _answer(response, preferences=preferences)
+        answer = _answer(response)
         st.session_state["chat_messages"].append({"role": "assistant", "content": answer})
         st.rerun()
 
@@ -109,148 +113,51 @@ def render_page() -> None:
             st.rerun()
 
 
-def _answer(response: Mapping[str, Any], *, preferences: Mapping[str, str]) -> str:
-    """Ubah response workflow backend menjadi jawaban ringkas untuk user."""
+def _answer(response: Mapping[str, Any]) -> str:
+    """Ambil jawaban AI dari response backend."""
 
     if not response.get("success"):
         return f"Maaf, terjadi kendala: {error_message(dict(response))}"
 
-    direct_answer = _find_text_value(
+    answer = _find_text_value(
         response,
-        keys=("answer", "message", "route_response", "response", "content"),
+        keys=("answer", "text", "message", "response", "content"),
     )
-    if direct_answer:
-        return direct_answer
+    if answer:
+        return answer
 
-    workflow_data = _extract_workflow_data(response)
-    dashboard = workflow_data.get("dashboard") if isinstance(workflow_data, Mapping) else None
-
-    if isinstance(dashboard, Mapping):
-        return _format_dashboard_answer(dashboard, preferences=preferences)
-
-    data = response.get("data")
-    if isinstance(data, Mapping):
-        return _format_mapping_summary(data)
-
-    return "Permintaan berhasil diproses."
-
-
-def _extract_workflow_data(response: Mapping[str, Any]) -> Mapping[str, Any]:
-    """Ambil data workflow dari beberapa kemungkinan struktur response."""
-
-    workflow = response.get("workflow")
-    if isinstance(workflow, Mapping):
-        workflow_data = workflow.get("data")
-        if isinstance(workflow_data, Mapping):
-            return workflow_data
-
-    data = response.get("data")
-    if isinstance(data, Mapping):
-        if "dashboard" in data:
-            return data
-
-        nested_workflow = data.get("workflow")
-        if isinstance(nested_workflow, Mapping):
-            nested_data = nested_workflow.get("data")
-            if isinstance(nested_data, Mapping):
-                return nested_data
-
-        nested_data = data.get("data")
-        if isinstance(nested_data, Mapping):
-            return nested_data
-
-    return {}
-
-
-def _format_dashboard_answer(
-    dashboard: Mapping[str, Any],
-    *,
-    preferences: Mapping[str, str],
-) -> str:
-    """Format jawaban dashboard menjadi narasi singkat."""
-
-    business_name = preferences.get("business_name") or "bisnis Anda"
-    sales = dashboard.get("sales_summary")
-    inventory = dashboard.get("inventory_summary")
-    products = dashboard.get("product_summary")
-    top_revenue = dashboard.get("top_products_by_revenue")
-    top_quantity = dashboard.get("top_products_by_quantity")
-
-    sales = sales if isinstance(sales, Mapping) else {}
-    inventory = inventory if isinstance(inventory, Mapping) else {}
-    products = products if isinstance(products, Mapping) else {}
-
-    total_revenue = sales.get("total_revenue", 0)
-    transaction_count = sales.get("transaction_count", 0)
-    active_products = products.get("active_products", products.get("total_products", 0))
-    stock_units = inventory.get("total_stock_units", 0)
-    low_stock = inventory.get("low_stock_count", 0)
-
-    top_product = _first_key_value(top_revenue) or _first_key_value(top_quantity)
-
-    lines = [
-        f"Halo! Data {business_name} sudah terbaca.",
-        "",
-        f"- Total omzet saat ini: Rp{total_revenue}",
-        f"- Jumlah transaksi selesai: {transaction_count}",
-        f"- Produk aktif: {active_products}",
-        f"- Total stok tersedia: {stock_units}",
-        f"- Produk stok rendah: {low_stock}",
-    ]
-
-    if top_product:
-        lines.append(f"- Produk teratas: {top_product}")
-
-    lines.extend(
-        [
-            "",
-            "Anda bisa bertanya lebih lanjut, misalnya: produk mana yang paling laku, stok mana yang perlu diperhatikan, atau ide promosi apa yang cocok.",
-        ]
-    )
-
-    return "\n".join(lines)
-
-
-def _first_key_value(value: Any) -> str:
-    """Ambil key-value pertama dari list top product."""
-
-    if isinstance(value, list) and value:
-        first = value[0]
-        if isinstance(first, Mapping):
-            key = first.get("key") or first.get("name") or first.get("product_name")
-            val = first.get("value")
-            if key and val is not None:
-                return f"{key} ({val})"
-            if key:
-                return str(key)
-
-    return ""
-
-
-def _format_mapping_summary(data: Mapping[str, Any]) -> str:
-    """Format mapping umum agar tidak menampilkan dict mentah."""
-
-    keys = ", ".join(str(key) for key in data.keys())
-    return f"Permintaan berhasil diproses. Data yang tersedia: {keys}."
+    return "Permintaan berhasil diproses, tetapi backend belum mengembalikan teks jawaban."
 
 
 def _find_text_value(value: Any, *, keys: tuple[str, ...]) -> str:
-    """Cari field teks pada response secara rekursif dangkal."""
+    """Cari field teks pada response secara rekursif."""
 
-    if not isinstance(value, Mapping):
-        return ""
-
-    for key in keys:
-        item = value.get(key)
-        if isinstance(item, str) and item.strip():
-            return item.strip()
-
-    data = value.get("data")
-    if isinstance(data, Mapping):
+    if isinstance(value, Mapping):
         for key in keys:
-            item = data.get(key)
+            item = value.get(key)
             if isinstance(item, str) and item.strip():
                 return item.strip()
+
+        preferred_children = (
+            value.get("data"),
+            value.get("route_response"),
+            value.get("workflow"),
+        )
+        for child in preferred_children:
+            found = _find_text_value(child, keys=keys)
+            if found:
+                return found
+
+        for item in value.values():
+            found = _find_text_value(item, keys=keys)
+            if found:
+                return found
+
+    if isinstance(value, list):
+        for item in value:
+            found = _find_text_value(item, keys=keys)
+            if found:
+                return found
 
     return ""
 

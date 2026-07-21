@@ -1,0 +1,16 @@
+app/llm/providers/base.py: OK
+app/llm/providers/errors.py: OK
+app/llm/providers/config.py: OK
+app/llm/providers/http_utils.py: OK
+app/llm/providers/registry.py: OK
+app/llm/providers/gemini_provider.py: OK
+app/llm/providers/openrouter_provider.py: OK
+app/llm/providers/huggingface_provider.py: OK
+app/llm/providers/ollama_provider.py: OK
+app/llm/providers/default_registry.py: OK
+app/llm/providers/provider_manager.py: OK
+app/llm/providers/__init__.py: OK
+app/llm/gemini_client.py: OK
+app/services/ai_generation_service.py: OK
+tests/test_provider_manager.py: OK
+tests/test_ai_generation_service_multi_provider.py: OK

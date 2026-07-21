@@ -11,4 +11,4 @@ pillow
 loguru
 pytest
 fastapi
-uvicorn
+uvicorngoogle-generativeai==0.8.6

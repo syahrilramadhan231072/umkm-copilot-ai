@@ -12,6 +12,11 @@ from __future__ import annotations
 
 from fastapi import Depends
 
+from app.workflows.ai_conversation_workflow import AIConversationWorkflow
+from app.services.ai_generation_service import AIGenerationService
+from app.llm.response_formatter import ResponseFormatter
+from app.llm.prompt_builder import PromptBuilder
+from app.llm.gemini_client import GeminiClient
 from app.agents.export_agent import ExportAgent
 from app.agents.insight_agent import InsightAgent
 from app.agents.marketing_agent import MarketingAgent
@@ -102,7 +107,9 @@ def get_product_service(
 
 
 def get_transaction_service(
-    transaction_repository: TransactionRepository = Depends(get_transaction_repository),
+    transaction_repository: TransactionRepository = Depends(
+        get_transaction_repository
+    ),
     product_repository: ProductRepository = Depends(get_product_repository),
 ) -> TransactionService:
     """Return TransactionService dependency."""
@@ -138,7 +145,9 @@ def get_conversation_service(
 def get_insight_service(
     insights_repository: InsightsRepository = Depends(get_insights_repository),
     product_repository: ProductRepository = Depends(get_product_repository),
-    transaction_repository: TransactionRepository = Depends(get_transaction_repository),
+    transaction_repository: TransactionRepository = Depends(
+        get_transaction_repository
+    ),
     marketing_repository: MarketingRepository = Depends(get_marketing_repository),
 ) -> InsightService:
     """Return InsightService dependency."""
@@ -152,7 +161,9 @@ def get_insight_service(
 
 
 def get_sales_analytics(
-    transaction_repository: TransactionRepository = Depends(get_transaction_repository),
+    transaction_repository: TransactionRepository = Depends(
+        get_transaction_repository
+    ),
 ) -> SalesAnalytics:
     """Return SalesAnalytics dependency."""
 
@@ -169,7 +180,9 @@ def get_inventory_analytics(
 
 def get_product_analytics(
     product_repository: ProductRepository = Depends(get_product_repository),
-    transaction_repository: TransactionRepository = Depends(get_transaction_repository),
+    transaction_repository: TransactionRepository = Depends(
+        get_transaction_repository
+    ),
 ) -> ProductAnalytics:
     """Return ProductAnalytics dependency."""
 
@@ -180,7 +193,9 @@ def get_product_analytics(
 
 
 def get_customer_analytics(
-    transaction_repository: TransactionRepository = Depends(get_transaction_repository),
+    transaction_repository: TransactionRepository = Depends(
+        get_transaction_repository
+    ),
 ) -> CustomerAnalytics:
     """Return CustomerAnalytics dependency."""
 
@@ -393,12 +408,57 @@ def get_export_agent(
     )
 
 
+
+def get_gemini_client() -> GeminiClient:
+    """Return GeminiClient dependency."""
+
+    return GeminiClient()
+
+
+def get_prompt_builder() -> PromptBuilder:
+    """Return PromptBuilder dependency."""
+
+    return PromptBuilder()
+
+
+def get_response_formatter() -> ResponseFormatter:
+    """Return ResponseFormatter dependency."""
+
+    return ResponseFormatter()
+
+
+def get_ai_generation_service(
+    prompt_builder: PromptBuilder = Depends(get_prompt_builder),
+    response_formatter: ResponseFormatter = Depends(get_response_formatter),
+) -> AIGenerationService:
+    """Return AIGenerationService dependency."""
+
+    return AIGenerationService(
+        prompt_builder=prompt_builder,
+        response_formatter=response_formatter,
+    )
+
+
+def get_ai_conversation_workflow(
+    ai_generation_service: AIGenerationService = Depends(get_ai_generation_service),
+    analytics_tools: AnalyticsTools = Depends(get_analytics_tools),
+    conversation_tools: ConversationTools = Depends(get_conversation_tools),
+) -> AIConversationWorkflow:
+    """Return AIConversationWorkflow dependency."""
+
+    return AIConversationWorkflow(
+        ai_generation_service=ai_generation_service,
+        analytics_tools=analytics_tools,
+        conversation_tools=conversation_tools,
+    )
+
 def get_router_agent(
     transaction_agent: TransactionAgent = Depends(get_transaction_agent),
     marketing_agent: MarketingAgent = Depends(get_marketing_agent),
     insight_agent: InsightAgent = Depends(get_insight_agent),
     export_agent: ExportAgent = Depends(get_export_agent),
     business_workflow: BusinessWorkflow = Depends(get_business_workflow),
+    ai_conversation_workflow: AIConversationWorkflow = Depends(get_ai_conversation_workflow),
     conversation_memory: ConversationMemory = Depends(get_conversation_memory),
 ) -> RouterAgent:
     """Return RouterAgent dependency."""
@@ -409,5 +469,6 @@ def get_router_agent(
         insight_agent=insight_agent,
         export_agent=export_agent,
         business_workflow=business_workflow,
+        ai_conversation_workflow=ai_conversation_workflow,
         conversation_memory=conversation_memory,
     )
