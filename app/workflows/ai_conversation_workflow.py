@@ -15,6 +15,7 @@ from typing import Any, Mapping
 from app.services.ai_generation_service import AIGenerationService
 from app.tools.analytics_tools import AnalyticsTools
 from app.tools.conversation_tools import ConversationTools
+from app.tools.product_tools import ProductTools
 from app.utils.logger import logger
 
 
@@ -26,12 +27,14 @@ class AIConversationWorkflow:
         ai_generation_service: AIGenerationService,
         analytics_tools: AnalyticsTools,
         conversation_tools: ConversationTools,
+        product_tools: ProductTools | None = None,
     ) -> None:
         """Initialize workflow."""
 
         self._ai_generation_service = ai_generation_service
         self._analytics_tools = analytics_tools
         self._conversation_tools = conversation_tools
+        self._product_tools = product_tools
         self._logger = logger
 
     def run_ai_conversation(
@@ -162,7 +165,84 @@ class AIConversationWorkflow:
             if isinstance(dashboard_data, Mapping):
                 context["dashboard"] = self._compact_dashboard_context(dashboard_data)
 
+        product_context = self._build_product_context(
+            business_id=business_id,
+            limit=limit,
+            steps=steps,
+        )
+        if product_context:
+            context["products"] = product_context
+
         return context
+
+    def _build_product_context(
+        self,
+        *,
+        business_id: str,
+        limit: int,
+        steps: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        """Build active product context using ProductTools when available."""
+
+        if self._product_tools is None:
+            return []
+
+        safe_limit = min(max(limit, 1), 100)
+        product_response = self._product_tools.list_active_products(
+            business_id=business_id,
+            limit=safe_limit,
+        )
+        steps.append(
+            {
+                "name": "build_active_product_context",
+                "success": bool(product_response.get("success")),
+                "tool": "list_active_products",
+            }
+        )
+
+        if not product_response.get("success"):
+            return []
+
+        product_data = product_response.get("data")
+        if not isinstance(product_data, list):
+            return []
+
+        return self._compact_products(product_data)
+
+    def _compact_products(
+        self,
+        products: list[Any],
+    ) -> list[dict[str, Any]]:
+        """Keep only useful product fields for prompt/local context."""
+
+        allowed_keys = (
+            "id",
+            "name",
+            "category",
+            "selling_price",
+            "cost_price",
+            "stock",
+            "minimum_stock",
+            "unit",
+            "sku",
+            "barcode",
+            "is_active",
+        )
+        compacted: list[dict[str, Any]] = []
+
+        for product in products:
+            if not isinstance(product, Mapping):
+                continue
+
+            compacted.append(
+                {
+                    key: product.get(key)
+                    for key in allowed_keys
+                    if key in product
+                }
+            )
+
+        return compacted
 
     def _build_history(
         self,

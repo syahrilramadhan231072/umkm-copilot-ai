@@ -1,0 +1,523 @@
+diff -ruN a/app/api/dependencies.py b/app/api/dependencies.py
+--- a/app/api/dependencies.py	2026-07-21 06:16:57.152609764 +0000
++++ b/app/api/dependencies.py	2026-07-21 06:20:20.459659893 +0000
+@@ -443,6 +443,7 @@
+     ai_generation_service: AIGenerationService = Depends(get_ai_generation_service),
+     analytics_tools: AnalyticsTools = Depends(get_analytics_tools),
+     conversation_tools: ConversationTools = Depends(get_conversation_tools),
++    product_tools: ProductTools = Depends(get_product_tools),
+ ) -> AIConversationWorkflow:
+     """Return AIConversationWorkflow dependency."""
+ 
+@@ -450,6 +451,7 @@
+         ai_generation_service=ai_generation_service,
+         analytics_tools=analytics_tools,
+         conversation_tools=conversation_tools,
++        product_tools=product_tools,
+     )
+ 
+ def get_router_agent(
+diff -ruN a/app/services/ai_generation_service.py b/app/services/ai_generation_service.py
+--- a/app/services/ai_generation_service.py	2026-07-21 06:16:57.186582217 +0000
++++ b/app/services/ai_generation_service.py	2026-07-21 06:20:01.415696679 +0000
+@@ -67,8 +67,21 @@
+         "produk",
+         "nama_produk",
+         "nama",
+-        "title",
+-        "label",
++    }
++    PRODUCT_CONTAINER_KEYS = {
++        "products",
++        "active_products",
++        "active_product_items",
++        "product_items",
++        "product_list",
++        "product_catalog",
++        "catalog_products",
++    }
++    RANKED_PRODUCT_CONTAINER_KEYS = {
++        "top_products",
++        "top_products_by_revenue",
++        "top_products_by_quantity",
++        "best_selling_products",
+     }
+     PRODUCT_PRICE_KEYS = {
+         "price",
+@@ -395,16 +408,25 @@
+         return "\n".join(lines)
+ 
+     def _extract_products(self, business_context: Mapping[str, Any]) -> list[dict[str, Any]]:
+-        """Extract product-like dictionaries from arbitrary nested context."""
++        """
++        Extract products from explicit product containers only.
++
++        This method intentionally does not scan arbitrary dictionaries. Dashboard
++        KPI cards also contain labels such as "Total Revenue" and "Active Products";
++        treating those labels as product names causes incorrect answers.
++        """
+ 
+         products: list[dict[str, Any]] = []
+         seen_names: set[str] = set()
+ 
+-        for item in self._walk_context_values(business_context):
++        for container_key, item in self._iter_product_container_items(business_context):
+             if not isinstance(item, Mapping):
+                 continue
+ 
+-            product = self._coerce_product(item)
++            product = self._coerce_product(
++                item,
++                allow_ranked_key=container_key in self.RANKED_PRODUCT_CONTAINER_KEYS,
++            )
+             if product is None:
+                 continue
+ 
+@@ -417,20 +439,125 @@
+ 
+         return products
+ 
+-    def _coerce_product(self, item: Mapping[str, Any]) -> dict[str, Any] | None:
++    def _iter_product_container_items(
++        self,
++        value: Any,
++        *,
++        depth: int = 0,
++        max_depth: int = 5,
++    ) -> list[tuple[str, Any]]:
++        """
++        Return items from explicit product containers.
++
++        The container key is preserved so ranked analytics payloads such as
++        top_products_by_revenue can use {"key": product_name, "value": metric}
++        without allowing KPI cards to be misread as products.
++        """
++
++        if depth > max_depth:
++            return []
++
++        items: list[tuple[str, Any]] = []
++
++        if isinstance(value, Mapping):
++            for raw_key, nested_value in value.items():
++                key = str(raw_key).lower().strip()
++
++                if key in self.PRODUCT_CONTAINER_KEYS | self.RANKED_PRODUCT_CONTAINER_KEYS:
++                    items.extend(self._items_from_container(key, nested_value))
++
++                items.extend(
++                    self._iter_product_container_items(
++                        nested_value,
++                        depth=depth + 1,
++                        max_depth=max_depth,
++                    )
++                )
++
++        elif isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
++            for nested_value in value:
++                items.extend(
++                    self._iter_product_container_items(
++                        nested_value,
++                        depth=depth + 1,
++                        max_depth=max_depth,
++                    )
++                )
++
++        return items
++
++    def _items_from_container(self, container_key: str, value: Any) -> list[tuple[str, Any]]:
++        """Return item tuples from a product container."""
++
++        if isinstance(value, Mapping):
++            nested_items = value.get("items") or value.get("data") or value.get("records")
++            if isinstance(nested_items, list):
++                return [(container_key, item) for item in nested_items]
++
++            if container_key in self.RANKED_PRODUCT_CONTAINER_KEYS:
++                return [
++                    (container_key, {"key": key, "value": metric})
++                    for key, metric in value.items()
++                ]
++
++        if isinstance(value, list):
++            return [(container_key, item) for item in value]
++
++        return []
++
++    def _coerce_product(
++        self,
++        item: Mapping[str, Any],
++        *,
++        allow_ranked_key: bool,
++    ) -> dict[str, Any] | None:
+         """Coerce a mapping into normalized product info when possible."""
+ 
+-        name = self._first_non_empty_value(item, keys=tuple(self.PRODUCT_NAME_KEYS))
+-        if not name:
++        name_keys = tuple(self.PRODUCT_NAME_KEYS | ({"key"} if allow_ranked_key else set()))
++        name = self._first_non_empty_value(item, keys=name_keys)
++        if not name or not self._looks_like_product(item, allow_ranked_key=allow_ranked_key):
+             return None
+ 
++        metric = self._first_non_empty_value(item, keys=("value", "revenue", "quantity_sold"))
++
+         return {
+             "name": name,
+             "price": self._first_non_empty_value(item, keys=tuple(self.PRODUCT_PRICE_KEYS)),
+             "stock": self._first_non_empty_value(item, keys=tuple(self.PRODUCT_STOCK_KEYS)),
+             "sku": self._first_non_empty_value(item, keys=tuple(self.PRODUCT_SKU_KEYS)),
++            "metric": metric,
+         }
+ 
++    def _looks_like_product(
++        self,
++        item: Mapping[str, Any],
++        *,
++        allow_ranked_key: bool,
++    ) -> bool:
++        """Return whether a mapping is likely a real product payload."""
++
++        if allow_ranked_key and self._first_non_empty_value(item, keys=("key",)):
++            return True
++
++        product_evidence_keys = (
++            "id",
++            "business_id",
++            "category",
++            "description",
++            "unit",
++            "is_active",
++            "selling_price",
++            "cost_price",
++            "minimum_stock",
++            "sku",
++            "barcode",
++            "stock",
++            "current_stock",
++        )
++        lowered_keys = {str(key).lower() for key in item.keys()}
++
++        return any(key in lowered_keys for key in product_evidence_keys)
++
+     def _walk_context_values(
+         self,
+         value: Any,
+@@ -483,6 +610,10 @@
+         if sku not in (None, ""):
+             parts.append(f"SKU {sku}")
+ 
++        metric = product.get("metric")
++        if len(parts) == 1 and metric not in (None, ""):
++            parts.append(f"nilai {metric}")
++
+         return " - ".join(parts)
+ 
+     def _format_currency(self, value: Any) -> str:
+diff -ruN a/app/workflows/ai_conversation_workflow.py b/app/workflows/ai_conversation_workflow.py
+--- a/app/workflows/ai_conversation_workflow.py	2026-07-21 06:16:57.192308444 +0000
++++ b/app/workflows/ai_conversation_workflow.py	2026-07-21 06:20:13.088020637 +0000
+@@ -15,6 +15,7 @@
+ from app.services.ai_generation_service import AIGenerationService
+ from app.tools.analytics_tools import AnalyticsTools
+ from app.tools.conversation_tools import ConversationTools
++from app.tools.product_tools import ProductTools
+ from app.utils.logger import logger
+ 
+ 
+@@ -26,12 +27,14 @@
+         ai_generation_service: AIGenerationService,
+         analytics_tools: AnalyticsTools,
+         conversation_tools: ConversationTools,
++        product_tools: ProductTools | None = None,
+     ) -> None:
+         """Initialize workflow."""
+ 
+         self._ai_generation_service = ai_generation_service
+         self._analytics_tools = analytics_tools
+         self._conversation_tools = conversation_tools
++        self._product_tools = product_tools
+         self._logger = logger
+ 
+     def run_ai_conversation(
+@@ -162,8 +165,85 @@
+             if isinstance(dashboard_data, Mapping):
+                 context["dashboard"] = self._compact_dashboard_context(dashboard_data)
+ 
++        product_context = self._build_product_context(
++            business_id=business_id,
++            limit=limit,
++            steps=steps,
++        )
++        if product_context:
++            context["products"] = product_context
++
+         return context
+ 
++    def _build_product_context(
++        self,
++        *,
++        business_id: str,
++        limit: int,
++        steps: list[dict[str, Any]],
++    ) -> list[dict[str, Any]]:
++        """Build active product context using ProductTools when available."""
++
++        if self._product_tools is None:
++            return []
++
++        safe_limit = min(max(limit, 1), 100)
++        product_response = self._product_tools.list_active_products(
++            business_id=business_id,
++            limit=safe_limit,
++        )
++        steps.append(
++            {
++                "name": "build_active_product_context",
++                "success": bool(product_response.get("success")),
++                "tool": "list_active_products",
++            }
++        )
++
++        if not product_response.get("success"):
++            return []
++
++        product_data = product_response.get("data")
++        if not isinstance(product_data, list):
++            return []
++
++        return self._compact_products(product_data)
++
++    def _compact_products(
++        self,
++        products: list[Any],
++    ) -> list[dict[str, Any]]:
++        """Keep only useful product fields for prompt/local context."""
++
++        allowed_keys = (
++            "id",
++            "name",
++            "category",
++            "selling_price",
++            "cost_price",
++            "stock",
++            "minimum_stock",
++            "unit",
++            "sku",
++            "barcode",
++            "is_active",
++        )
++        compacted: list[dict[str, Any]] = []
++
++        for product in products:
++            if not isinstance(product, Mapping):
++                continue
++
++            compacted.append(
++                {
++                    key: product.get(key)
++                    for key in allowed_keys
++                    if key in product
++                }
++            )
++
++        return compacted
++
+     def _build_history(
+         self,
+         *,
+diff -ruN a/tests/test_ai_conversation_workflow_product_context.py b/tests/test_ai_conversation_workflow_product_context.py
+--- a/tests/test_ai_conversation_workflow_product_context.py	2026-07-21 06:21:14.921320264 +0000
++++ b/tests/test_ai_conversation_workflow_product_context.py	2026-07-21 06:20:35.772706851 +0000
+@@ -0,0 +1,102 @@
++from __future__ import annotations
++
++from typing import Any, Mapping
++
++from app.workflows.ai_conversation_workflow import AIConversationWorkflow
++
++
++class CapturingAIGenerationService:
++    def __init__(self) -> None:
++        self.business_context: Mapping[str, Any] | None = None
++
++    def generate_conversation_response(
++        self,
++        *,
++        user_input: str,
++        business_context: Mapping[str, Any] | None = None,
++        conversation_history: list[Mapping[str, Any]] | None = None,
++        temperature: float = 0.3,
++        max_output_tokens: int = 1024,
++    ) -> dict[str, Any]:
++        self.business_context = business_context
++        return {
++            "success": True,
++            "data": {
++                "answer": "Produk: Americano dan Latte",
++                "provider": "local-context",
++                "model": "deterministic-fallback",
++            },
++            "error": None,
++        }
++
++
++class FakeAnalyticsTools:
++    def build_dashboard_payload(self, business_id: str, limit: int = 1000) -> dict[str, Any]:
++        return {
++            "success": True,
++            "data": {"kpi_cards": [{"label": "Total Revenue", "value": 0}]},
++            "error": None,
++        }
++
++
++class FakeConversationTools:
++    def build_session_history(self, business_id: str, session_id: str, limit: int = 100) -> dict[str, Any]:
++        return {"success": True, "data": [], "error": None}
++
++    def save_message(
++        self,
++        business_id: str,
++        session_id: str,
++        role: str,
++        message: str,
++        agent: str | None = None,
++    ) -> dict[str, Any]:
++        return {"success": True, "data": {"message": message}, "error": None}
++
++
++class FakeProductTools:
++    def list_active_products(self, business_id: str, limit: int = 100) -> dict[str, Any]:
++        return {
++            "success": True,
++            "data": [
++                {
++                    "id": "p1",
++                    "business_id": business_id,
++                    "name": "Americano",
++                    "selling_price": 18000,
++                    "stock": 20,
++                    "is_active": True,
++                },
++                {
++                    "id": "p2",
++                    "business_id": business_id,
++                    "name": "Latte",
++                    "selling_price": 22000,
++                    "stock": 15,
++                    "is_active": True,
++                },
++            ],
++            "error": None,
++        }
++
++
++def test_ai_conversation_workflow_adds_active_products_to_context() -> None:
++    ai_service = CapturingAIGenerationService()
++    workflow = AIConversationWorkflow(
++        ai_generation_service=ai_service,  # type: ignore[arg-type]
++        analytics_tools=FakeAnalyticsTools(),  # type: ignore[arg-type]
++        conversation_tools=FakeConversationTools(),  # type: ignore[arg-type]
++        product_tools=FakeProductTools(),  # type: ignore[arg-type]
++    )
++
++    response = workflow.run_ai_conversation(
++        user_input="produk apa saja yang dijual?",
++        business_id="business-1",
++        session_id="session-1",
++    )
++
++    assert response["success"] is True
++    assert ai_service.business_context is not None
++    products = ai_service.business_context["products"]
++    assert products[0]["name"] == "Americano"
++    assert products[1]["name"] == "Latte"
+diff -ruN a/tests/test_ai_generation_service_product_context_guard.py b/tests/test_ai_generation_service_product_context_guard.py
+--- a/tests/test_ai_generation_service_product_context_guard.py	2026-07-21 06:21:14.920377145 +0000
++++ b/tests/test_ai_generation_service_product_context_guard.py	2026-07-21 06:20:35.764123416 +0000
+@@ -0,0 +1,86 @@
++from __future__ import annotations
++
++from app.llm.prompt_builder import PromptBuilder
++from app.llm.response_formatter import ResponseFormatter
++from app.services.ai_generation_service import AIGenerationService
++
++
++class FailingProviderManager:
++    def generate_text(self, prompt: str, **kwargs):
++        return {
++            "success": False,
++            "provider": None,
++            "model": None,
++            "text": "",
++            "raw": None,
++            "error": {
++                "type": "AIServiceUnavailable",
++                "message": "The AI service is temporarily unavailable. Please try again shortly.",
++            },
++        }
++
++    def health_snapshot(self):
++        return []
++
++
++def _service() -> AIGenerationService:
++    return AIGenerationService(
++        prompt_builder=PromptBuilder(),
++        response_formatter=ResponseFormatter(),
++        provider_manager=FailingProviderManager(),
++    )
++
++
++def test_product_query_does_not_treat_dashboard_kpi_cards_as_products() -> None:
++    response = _service().generate_conversation_response(
++        user_input="produk apa saja yang dijual?",
++        business_context={
++            "dashboard": {
++                "kpi_cards": [
++                    {"key": "total_revenue", "label": "Total Revenue", "value": 0},
++                    {
++                        "key": "transaction_count",
++                        "label": "Completed Transactions",
++                        "value": 0,
++                    },
++                    {"key": "active_products", "label": "Active Products", "value": 0},
++                    {"key": "low_stock_count", "label": "Low Stock Items", "value": 0},
++                ]
++            }
++        },
++        conversation_history=[],
++    )
++
++    assert response["success"] is True
++    assert "Total Revenue" not in response["data"]["answer"]
++    assert "Completed Transactions" not in response["data"]["answer"]
++    assert "belum menemukan daftar produk" in response["data"]["answer"]
++
++
++def test_product_query_reads_explicit_active_product_context() -> None:
++    response = _service().generate_conversation_response(
++        user_input="produk apa saja yang dijual?",
++        business_context={
++            "products": [
++                {
++                    "name": "Americano",
++                    "category": "Coffee",
++                    "selling_price": 18000,
++                    "stock": 20,
++                    "sku": "AMR-001",
++                },
++                {
++                    "name": "Latte",
++                    "category": "Coffee",
++                    "selling_price": 22000,
++                    "stock": 15,
++                },
++            ]
++        },
++        conversation_history=[],
++    )
++
++    assert response["success"] is True
++    assert "Americano" in response["data"]["answer"]
++    assert "Latte" in response["data"]["answer"]
++    assert "Total Revenue" not in response["data"]["answer"]

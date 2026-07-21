@@ -1,0 +1,2 @@
+Syntax validation passed with py_compile for modified files.
+Pytest collection was not executed in this artifact container because the local container does not provide the project Supabase package version expected by the uploaded project. Run the included pytest commands inside the project .venv/Codespace.

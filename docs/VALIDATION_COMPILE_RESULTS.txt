@@ -1,2 +1,5 @@
 app/services/ai_generation_service.py: OK
-tests/test_ai_generation_service_local_context_fallback.py: OK
+app/workflows/ai_conversation_workflow.py: OK
+app/api/dependencies.py: OK
+tests/test_ai_generation_service_product_catalog_ranking.py: OK
+tests/test_ai_conversation_workflow_product_context_ranking.py: OK

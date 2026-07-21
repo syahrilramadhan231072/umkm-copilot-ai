@@ -443,6 +443,7 @@ def get_ai_conversation_workflow(
     ai_generation_service: AIGenerationService = Depends(get_ai_generation_service),
     analytics_tools: AnalyticsTools = Depends(get_analytics_tools),
     conversation_tools: ConversationTools = Depends(get_conversation_tools),
+    product_tools: ProductTools = Depends(get_product_tools),
 ) -> AIConversationWorkflow:
     """Return AIConversationWorkflow dependency."""
 
@@ -450,6 +451,7 @@ def get_ai_conversation_workflow(
         ai_generation_service=ai_generation_service,
         analytics_tools=analytics_tools,
         conversation_tools=conversation_tools,
+        product_tools=product_tools,
     )
 
 def get_router_agent(

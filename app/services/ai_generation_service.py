@@ -67,8 +67,29 @@ Rules:
         "produk",
         "nama_produk",
         "nama",
-        "title",
-        "label",
+    }
+    PRODUCT_CONTAINER_KEYS = {
+        "products",
+        "active_products",
+        "active_product_items",
+        "product_items",
+        "product_list",
+        "product_catalog",
+        "catalog_products",
+    }
+    RANKED_PRODUCT_CONTAINER_KEYS = {
+        "top_products",
+        "top_products_by_revenue",
+        "top_products_by_quantity",
+        "best_selling_products",
+    }
+    QUANTITY_RANKED_PRODUCT_CONTAINER_KEYS = {
+        "top_products_by_quantity",
+        "best_selling_products",
+    }
+    REVENUE_RANKED_PRODUCT_CONTAINER_KEYS = {
+        "top_products_by_revenue",
+        "top_products",
     }
     PRODUCT_PRICE_KEYS = {
         "price",
@@ -279,6 +300,13 @@ Rules:
         if self._is_greeting(normalized_input):
             return self._build_greeting_answer(business_context)
 
+        if self._is_best_selling_product_query(normalized_input):
+            return self._build_best_selling_product_answer(
+                user_input=normalized_input,
+                business_context=business_context,
+                allow_no_data_answer=allow_no_data_answer,
+            )
+
         if self._is_product_query(normalized_input):
             return self._build_product_answer(
                 business_context,
@@ -360,9 +388,9 @@ Rules:
         *,
         allow_no_data_answer: bool,
     ) -> str | None:
-        """Build product-list answer from local context."""
+        """Build product-catalog answer from active product context only."""
 
-        products = self._extract_products(business_context)
+        products = self._extract_catalog_products(business_context)
 
         if not products:
             if not allow_no_data_answer:
@@ -386,7 +414,7 @@ Rules:
         lines = [f"{header}:"]
 
         for index, product in enumerate(visible_products, start=1):
-            lines.append(f"{index}. {self._format_product_line(product)}")
+            lines.append(f"{index}. {self._format_catalog_product_line(product)}")
 
         remaining_count = len(products) - len(visible_products)
         if remaining_count > 0:
@@ -394,17 +422,70 @@ Rules:
 
         return "\n".join(lines)
 
-    def _extract_products(self, business_context: Mapping[str, Any]) -> list[dict[str, Any]]:
-        """Extract product-like dictionaries from arbitrary nested context."""
+    def _build_best_selling_product_answer(
+        self,
+        *,
+        user_input: str,
+        business_context: Mapping[str, Any],
+        allow_no_data_answer: bool,
+    ) -> str | None:
+        """Build best-selling product answer from ranked analytics context."""
+
+        preference = self._ranked_product_preference(user_input)
+        ranked_products = self._extract_ranked_products(
+            business_context,
+            preferred_container_keys=preference,
+        )
+
+        if not ranked_products:
+            if not allow_no_data_answer:
+                return None
+
+            return (
+                "Saya belum menemukan data produk paling laku dalam konteks AI saat ini. "
+                "Data tersebut membutuhkan ringkasan transaksi/penjualan produk."
+            )
+
+        ranking_type = self._ranking_type(ranked_products[0].get("container_key"))
+        business_name = self._extract_business_name(business_context)
+        if ranking_type == "revenue":
+            header = "Produk dengan omzet penjualan tertinggi"
+        else:
+            header = "Produk paling laku berdasarkan jumlah terjual"
+
+        if business_name:
+            header += f" untuk {business_name}"
+
+        visible_products = ranked_products[:5]
+        lines = [f"{header}:"]
+        for index, product in enumerate(visible_products, start=1):
+            lines.append(f"{index}. {self._format_ranked_product_line(product)}")
+
+        return "\n".join(lines)
+
+    def _extract_catalog_products(
+        self,
+        business_context: Mapping[str, Any],
+    ) -> list[dict[str, Any]]:
+        """
+        Extract active catalog products from explicit catalog containers only.
+
+        Ranked analytics such as top_products_by_revenue and
+        top_products_by_quantity are intentionally excluded. They answer
+        "produk paling laku", not "produk apa yang dijual".
+        """
 
         products: list[dict[str, Any]] = []
         seen_names: set[str] = set()
 
-        for item in self._walk_context_values(business_context):
+        for container_key, item in self._iter_container_items(
+            business_context,
+            container_keys=self.PRODUCT_CONTAINER_KEYS,
+        ):
             if not isinstance(item, Mapping):
                 continue
 
-            product = self._coerce_product(item)
+            product = self._coerce_catalog_product(item)
             if product is None:
                 continue
 
@@ -417,11 +498,129 @@ Rules:
 
         return products
 
-    def _coerce_product(self, item: Mapping[str, Any]) -> dict[str, Any] | None:
-        """Coerce a mapping into normalized product info when possible."""
+    def _extract_ranked_products(
+        self,
+        business_context: Mapping[str, Any],
+        *,
+        preferred_container_keys: tuple[str, ...],
+    ) -> list[dict[str, Any]]:
+        """Extract ranked product analytics from explicit ranked containers."""
+
+        for container_keys in (
+            set(preferred_container_keys),
+            self.RANKED_PRODUCT_CONTAINER_KEYS,
+        ):
+            ranked_products = self._extract_ranked_products_from_containers(
+                business_context,
+                container_keys=container_keys,
+            )
+            if ranked_products:
+                return ranked_products
+
+        return []
+
+    def _extract_ranked_products_from_containers(
+        self,
+        business_context: Mapping[str, Any],
+        *,
+        container_keys: set[str],
+    ) -> list[dict[str, Any]]:
+        """Extract ranked products from selected ranked containers."""
+
+        products: list[dict[str, Any]] = []
+        seen: set[tuple[str, str]] = set()
+
+        for container_key, item in self._iter_container_items(
+            business_context,
+            container_keys=container_keys,
+        ):
+            if not isinstance(item, Mapping):
+                continue
+
+            product = self._coerce_ranked_product(item, container_key=container_key)
+            if product is None:
+                continue
+
+            seen_key = (
+                str(product.get("container_key") or ""),
+                self._normalize_text(str(product["name"])),
+            )
+            if seen_key in seen:
+                continue
+
+            seen.add(seen_key)
+            products.append(product)
+
+        return products
+
+    def _iter_container_items(
+        self,
+        value: Any,
+        *,
+        container_keys: set[str],
+        depth: int = 0,
+        max_depth: int = 5,
+    ) -> list[tuple[str, Any]]:
+        """Return items from explicit containers only."""
+
+        if depth > max_depth:
+            return []
+
+        items: list[tuple[str, Any]] = []
+
+        if isinstance(value, Mapping):
+            for raw_key, nested_value in value.items():
+                key = str(raw_key).lower().strip()
+
+                if key in container_keys:
+                    items.extend(self._items_from_container(key, nested_value))
+
+                items.extend(
+                    self._iter_container_items(
+                        nested_value,
+                        container_keys=container_keys,
+                        depth=depth + 1,
+                        max_depth=max_depth,
+                    )
+                )
+
+        elif isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+            for nested_value in value:
+                items.extend(
+                    self._iter_container_items(
+                        nested_value,
+                        container_keys=container_keys,
+                        depth=depth + 1,
+                        max_depth=max_depth,
+                    )
+                )
+
+        return items
+
+    def _items_from_container(self, container_key: str, value: Any) -> list[tuple[str, Any]]:
+        """Return item tuples from a context container."""
+
+        if isinstance(value, Mapping):
+            nested_items = value.get("items") or value.get("data") or value.get("records")
+            if isinstance(nested_items, list):
+                return [(container_key, item) for item in nested_items]
+
+            if container_key in self.RANKED_PRODUCT_CONTAINER_KEYS:
+                return [
+                    (container_key, {"key": key, "value": metric})
+                    for key, metric in value.items()
+                ]
+
+        if isinstance(value, list):
+            return [(container_key, item) for item in value]
+
+        return []
+
+    def _coerce_catalog_product(self, item: Mapping[str, Any]) -> dict[str, Any] | None:
+        """Coerce a mapping into normalized active product info."""
 
         name = self._first_non_empty_value(item, keys=tuple(self.PRODUCT_NAME_KEYS))
-        if not name:
+        if not name or not self._looks_like_catalog_product(item):
             return None
 
         return {
@@ -431,43 +630,82 @@ Rules:
             "sku": self._first_non_empty_value(item, keys=tuple(self.PRODUCT_SKU_KEYS)),
         }
 
-    def _walk_context_values(
+    def _coerce_ranked_product(
         self,
-        value: Any,
+        item: Mapping[str, Any],
         *,
-        depth: int = 0,
-        max_depth: int = 5,
-    ) -> list[Any]:
-        """Walk nested context values with bounded depth."""
+        container_key: str,
+    ) -> dict[str, Any] | None:
+        """Coerce a mapping into normalized ranked product info."""
 
-        if depth > max_depth:
-            return []
+        name = self._first_non_empty_value(
+            item,
+            keys=tuple(self.PRODUCT_NAME_KEYS | {"key"}),
+        )
+        metric = self._first_non_empty_value(
+            item,
+            keys=("value", "revenue", "total_revenue", "quantity_sold", "quantity", "qty"),
+        )
 
-        values: list[Any] = [value]
+        if not name or metric == "":
+            return None
 
-        if isinstance(value, Mapping):
-            for nested_value in value.values():
-                values.extend(
-                    self._walk_context_values(
-                        nested_value,
-                        depth=depth + 1,
-                        max_depth=max_depth,
-                    )
-                )
-        elif isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
-            for nested_value in value:
-                values.extend(
-                    self._walk_context_values(
-                        nested_value,
-                        depth=depth + 1,
-                        max_depth=max_depth,
-                    )
-                )
+        return {
+            "name": name,
+            "metric": metric,
+            "container_key": container_key,
+        }
 
-        return values
+    def _looks_like_catalog_product(self, item: Mapping[str, Any]) -> bool:
+        """Return whether a mapping is likely an active product payload."""
 
-    def _format_product_line(self, product: Mapping[str, Any]) -> str:
-        """Format one product line."""
+        product_evidence_keys = (
+            "id",
+            "business_id",
+            "category",
+            "description",
+            "unit",
+            "is_active",
+            "selling_price",
+            "cost_price",
+            "minimum_stock",
+            "sku",
+            "barcode",
+            "stock",
+            "current_stock",
+        )
+        lowered_keys = {str(key).lower() for key in item.keys()}
+
+        return any(key in lowered_keys for key in product_evidence_keys)
+
+    def _ranked_product_preference(self, normalized_input: str) -> tuple[str, ...]:
+        """Return ranked container preference for the query."""
+
+        if any(
+            marker in normalized_input
+            for marker in (
+                "omzet",
+                "revenue",
+                "pendapatan",
+                "penjualan tertinggi",
+                "nilai penjualan",
+                "hasil penjualan",
+            )
+        ):
+            return tuple(self.REVENUE_RANKED_PRODUCT_CONTAINER_KEYS)
+
+        return tuple(self.QUANTITY_RANKED_PRODUCT_CONTAINER_KEYS)
+
+    def _ranking_type(self, container_key: Any) -> str:
+        """Return ranking type for a ranked container."""
+
+        key = str(container_key or "").lower()
+        if key in self.REVENUE_RANKED_PRODUCT_CONTAINER_KEYS:
+            return "revenue"
+        return "quantity"
+
+    def _format_catalog_product_line(self, product: Mapping[str, Any]) -> str:
+        """Format one active product line."""
 
         parts = [str(product.get("name") or "").strip()]
 
@@ -484,6 +722,18 @@ Rules:
             parts.append(f"SKU {sku}")
 
         return " - ".join(parts)
+
+    def _format_ranked_product_line(self, product: Mapping[str, Any]) -> str:
+        """Format one ranked product line."""
+
+        name = str(product.get("name") or "").strip()
+        metric = product.get("metric")
+        ranking_type = self._ranking_type(product.get("container_key"))
+
+        if ranking_type == "revenue":
+            return f"{name} - omzet {self._format_currency(metric)}"
+
+        return f"{name} - terjual {metric} unit"
 
     def _format_currency(self, value: Any) -> str:
         """Format currency-like value."""
@@ -594,6 +844,28 @@ Rules:
         has_question_marker = any(marker in normalized_input for marker in question_markers)
 
         return has_product_marker and has_question_marker
+
+    def _is_best_selling_product_query(self, normalized_input: str) -> bool:
+        """Return whether input asks for best-selling products."""
+
+        markers = (
+            "paling laku",
+            "terlaris",
+            "paling laris",
+            "best seller",
+            "bestseller",
+            "top seller",
+            "top produk",
+            "produk terbaik",
+            "produk paling banyak",
+            "produk yang paling banyak",
+            "yang paling laku",
+            "yang laku",
+            "laku apa",
+            "laku yang mana",
+        )
+
+        return any(marker in normalized_input for marker in markers)
 
     def _is_business_identity_query(self, normalized_input: str) -> bool:
         """Return whether input asks about the connected app/business."""
