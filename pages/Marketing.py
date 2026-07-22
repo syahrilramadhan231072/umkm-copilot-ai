@@ -16,6 +16,9 @@ from app.frontend.session import (
     build_business_preferences,
     ensure_frontend_session,
     get_api_client_from_session_state,
+    get_backend_products,
+    set_active_product_from_response,
+    set_backend_products,
 )
 from app.frontend.ui_components import (
     error_message,
@@ -76,6 +79,10 @@ def render_page() -> None:
     if state.business_profile_ready:
         render_business_header(st, preferences)
 
+    flash_message = st.session_state.pop("go_marketing_flash", "")
+    if flash_message:
+        st.success(str(flash_message))
+
     if not state.marketing_ready:
         render_locked_page(
             st,
@@ -86,6 +93,26 @@ def render_page() -> None:
         )
         return
 
+    products = _load_products(st, client, business_id)
+    selected_product = _render_product_selector(
+        st,
+        products,
+        current_product_id=product_id,
+        key="go_marketing_product_context",
+    )
+    if selected_product is None:
+        render_empty_state(
+            st,
+            title="Produk belum tersedia",
+            description=(
+                "Tambahkan produk terlebih dahulu agar campaign dapat "
+                "dikaitkan dengan produk yang jelas."
+            ),
+            icon="📦",
+        )
+        return
+
+    product_id = _product_id(selected_product)
     context_response = client.get_marketing_context(
         {
             "product_id": product_id,
@@ -207,14 +234,15 @@ def _render_campaign_workspace(
                 "marketing_data": {
                     "platform": platform,
                     "caption": caption,
-                    "campaign_name": campaign,
+                    "prompt": campaign,
                     "product_id": product_id,
                 },
                 "session_id": session_id,
             }
         )
         if response.get("success"):
-            st.success("Campaign berhasil disimpan.")
+            st.session_state["go_marketing_flash"] = "Campaign berhasil disimpan."
+            st.rerun()
         else:
             st.error(error_message(response))
 
@@ -319,7 +347,10 @@ def _display_history(history: list[dict[str, Any]]) -> list[dict[str, Any]]:
         rows.append(
             {
                 "Campaign": safe_text(
-                    item.get("campaign_name") or item.get("campaign") or item.get("title"),
+                    item.get("campaign_name")
+                    or item.get("campaign")
+                    or item.get("title")
+                    or item.get("prompt"),
                     "-",
                 ),
                 "Platform": safe_text(item.get("platform"), "-"),
@@ -328,6 +359,88 @@ def _display_history(history: list[dict[str, Any]]) -> list[dict[str, Any]]:
             }
         )
     return rows
+
+
+def _load_products(st: Any, client: Any, business_id: str) -> list[dict[str, Any]]:
+    """Load products for product-scoped marketing actions."""
+
+    cached_products = get_backend_products(st.session_state)
+    response = client.list_products(business_id=business_id, limit=100)
+    if not response.get("success"):
+        return cached_products
+
+    products = find_items(response_data(response), ("products", "items", "records"))
+    if products:
+        set_backend_products(st.session_state, products)
+        return products
+
+    return cached_products
+
+
+def _render_product_selector(
+    st: Any,
+    products: list[dict[str, Any]],
+    *,
+    current_product_id: str,
+    key: str,
+) -> dict[str, Any] | None:
+    """Render product selector and return the selected product."""
+
+    options = [product for product in products if _product_id(product)]
+    if not options:
+        return None
+
+    selected_index = _selected_product_index(options, current_product_id)
+    selected_product = st.selectbox(
+        "Product context",
+        options,
+        index=selected_index,
+        format_func=_product_label,
+        key=key,
+    )
+    if not isinstance(selected_product, dict):
+        return None
+
+    set_active_product_from_response(st.session_state, selected_product)
+
+    return selected_product
+
+
+def _selected_product_index(
+    products: list[dict[str, Any]],
+    current_product_id: str,
+) -> int:
+    """Return selected product index."""
+
+    for index, product in enumerate(products):
+        if _product_id(product) == current_product_id:
+            return index
+
+    return 0
+
+
+def _product_id(product: Mapping[str, Any]) -> str:
+    """Return product identifier from flexible backend response keys."""
+
+    return safe_text(
+        product.get("product_id") or product.get("id") or product.get("uuid"),
+        "",
+    )
+
+
+def _product_label(product: Mapping[str, Any]) -> str:
+    """Return readable product label."""
+
+    name = safe_text(
+        product.get("name") or product.get("product_name"),
+        "Produk",
+    )
+    stock = safe_text(
+        product.get("stock") or product.get("current_stock") or product.get("stock_quantity"),
+        "-",
+    )
+
+    return f"{name} · Stock {stock}"
 
 
 def _get_streamlit() -> Any:

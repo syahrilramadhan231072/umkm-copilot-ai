@@ -1,4 +1,2 @@
-app.py: OK
-tests/test_router_agent_business_query_routing.py: OK
-app/services/ai_generation_service.py: OK
-app/agents/router_agent.py: OK
+pages/Marketing.py: OK
+pages/Insights.py: OK

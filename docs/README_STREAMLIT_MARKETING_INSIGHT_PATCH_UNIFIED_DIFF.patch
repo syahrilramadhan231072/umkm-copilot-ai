@@ -1,0 +1,1554 @@
+--- a/README.md
++++ b/README.md
+@@ -0,0 +1,522 @@
++# Go-UMKM AI 🤖
++
++### Grow Your Business with AI
++
++<p align="center">
++  <img src="docs/images/go-umkm-ai-design-system.png" alt="Go-UMKM AI Design System" width="100%">
++</p>
++
++**Go-UMKM AI** adalah aplikasi SaaS berbasis AI yang dirancang untuk membantu
++**Usaha Mikro, Kecil, dan Menengah (UMKM) Indonesia** mengelola bisnis secara
++lebih cerdas, praktis, dan berbasis data.
++
++Aplikasi ini membantu pelaku UMKM untuk mencatat transaksi, mengelola produk,
++membaca insight bisnis, membuat konten pemasaran, mengekspor laporan, dan
++berinteraksi dengan **AI Business Assistant** untuk mendukung pengambilan
++keputusan.
++
++Go-UMKM AI bukan sekadar chatbot. Aplikasi ini dibangun sebagai
++**AI-powered business assistant** dengan arsitektur berlapis, business context,
++workflow orchestration, analytics, dan dukungan Multi-LLM.
++
++---
++
++## 🚀 Fitur Utama
++
++### 1. Dashboard Bisnis
++
++Dashboard menampilkan ringkasan bisnis harian dalam satu workspace, antara lain:
++
++- pendapatan / revenue,
++- pengeluaran / expenses,
++- laba / profit,
++- cash flow,
++- performa produk,
++- transaksi terbaru,
++- sinyal kesehatan bisnis,
++- dan quick actions untuk operasional harian.
++
++### 2. Manajemen Transaksi
++
++Pengguna dapat:
++
++- mencatat transaksi penjualan,
++- melihat riwayat transaksi,
++- memantau status transaksi,
++- dan membaca data penjualan untuk kebutuhan analisis bisnis.
++
++### 3. Manajemen Produk
++
++Pengguna dapat:
++
++- melihat katalog produk,
++- memantau stok,
++- membaca sinyal produk aktif,
++- mengenali produk stok rendah,
++- mengidentifikasi produk stok habis,
++- dan meninjau performa produk.
++
++### 4. AI Business Assistant
++
++AI Business Assistant dapat membantu menjawab pertanyaan bisnis seperti:
++
++- produk apa saja yang dijual?
++- produk apa yang terjual?
++- produk paling laku?
++- produk kurang laku?
++- produk yang belum terjual?
++- stok apa yang menipis?
++- bagaimana kesehatan bisnis hari ini?
++- alert apa yang perlu diperhatikan?
++- margin produk mana yang tinggi atau rendah?
++
++Untuk sejumlah pertanyaan bisnis, sistem dapat menjawab langsung dari business
++context tanpa selalu bergantung pada provider AI eksternal.
++
++### 5. Marketing Workspace
++
++Pengguna dapat:
++
++- membuat ide campaign,
++- menulis caption promosi,
++- menyimpan riwayat campaign,
++- memilih product context,
++- dan menerima rekomendasi pemasaran berdasarkan data produk dan bisnis.
++
++### 6. Insights Workspace
++
++Pengguna dapat:
++
++- membuat insight bisnis,
++- menyimpan rekomendasi,
++- memilih kategori insight,
++- membaca sinyal bisnis,
++- dan meninjau rekomendasi tindakan berdasarkan konteks bisnis.
++
++### 7. Export Center
++
++Pengguna dapat menyiapkan dan mengekspor laporan bisnis untuk kebutuhan
++monitoring, evaluasi, dan analisis lanjutan.
++
++---
++
++## 🧠 Kapabilitas AI
++
++Go-UMKM AI memiliki dua lapisan kecerdasan utama.
++
++### A. Local Business Intelligence Layer
++
++Layer ini membaca data bisnis lokal dan business context untuk menjawab
++pertanyaan operasional secara cepat dan deterministik.
++
++Contoh intent yang didukung:
++
++- Product Catalog,
++- Best Selling Product,
++- High Revenue Product,
++- Slow Moving Product,
++- Zero Sales Product,
++- Out of Stock,
++- Low Stock,
++- Overstock,
++- High Margin Product,
++- Low Margin Product,
++- Business Health,
++- Alert Summary,
++- Follow Up,
++- Greeting,
++- Business Identity.
++
++### B. Multi-LLM Provider Layer
++
++Untuk kebutuhan generatif, penjelasan naratif, dan respons AI lanjutan, sistem
++mendukung arsitektur **Multi-LLM** dengan failover otomatis.
++
++Urutan prioritas provider:
++
++1. Gemini,
++2. OpenRouter,
++3. Hugging Face,
++4. OpenAI opsional,
++5. Ollama opsional.
++
++Jika satu provider gagal karena quota, rate limit, timeout, HTTP 5xx, atau
++gangguan sementara, sistem dapat mencoba provider berikutnya.
++
++---
++
++## 🏗 Arsitektur Proyek
++
++Arsitektur aplikasi mengikuti pola berlapis berikut:
++
++```text
++Repository
++    ↓
++Service
++    ↓
++Tools
++    ↓
++Workflow
++    ↓
++Agent
++    ↓
++FastAPI
++    ↓
++Streamlit Frontend
++```
++
++### Penjelasan Singkat
++
++| Layer | Peran |
++|---|---|
++| Repository | Akses database dan operasi data dasar |
++| Service | Logika layanan per domain |
++| Tools | Fungsi bisnis, analytics, dan operasi pendukung |
++| Workflow | Orkestrasi alur kerja bisnis |
++| Agent | Routing intent dan pengambilan keputusan domain |
++| FastAPI | Backend API contract |
++| Streamlit | Frontend dan user interface |
++
++Prinsip utama proyek:
++
++- separation of concerns,
++- dependency injection,
++- testability,
++- maintainability,
++- clean architecture,
++- backward compatibility,
++- dan struktur yang siap dikembangkan sebagai SaaS.
++
++---
++
++## 🧰 Technology Stack
++
++| Layer | Teknologi |
++|---|---|
++| Frontend | Streamlit |
++| Backend API | FastAPI |
++| Database | Supabase |
++| AI Provider | Gemini, OpenRouter, Hugging Face, OpenAI opsional, Ollama opsional |
++| Validation | Pydantic |
++| Analytics | Python |
++| Logging | Loguru |
++| Environment | python-dotenv |
++| Testing | Pytest |
++| Linting | Ruff |
++| Deployment Target | Render, Streamlit Community Cloud, atau platform sejenis |
++
++---
++
++## 📁 Struktur Proyek
++
++```text
++umkm-copilot-ai/
++│
++├── app.py
++├── requirements.txt
++├── pyproject.toml
++├── README.md
++├── .env.example
++│
++├── app/
++│   ├── agents/
++│   ├── analytics/
++│   ├── api/
++│   ├── config/
++│   ├── database/
++│   ├── frontend/
++│   ├── llm/
++│   ├── memory/
++│   ├── repositories/
++│   ├── schemas/
++│   ├── services/
++│   ├── tools/
++│   ├── utils/
++│   └── workflows/
++│
++├── pages/
++├── docs/
++├── prompts/
++├── scripts/
++├── storage/
++└── tests/
++```
++
++---
++
++## ⚙️ Instalasi Lokal
++
++### 1. Clone repository
++
++```bash
++git clone <repository-url>
++cd umkm-copilot-ai
++```
++
++### 2. Buat virtual environment
++
++```bash
++python -m venv .venv
++```
++
++### 3. Aktifkan virtual environment
++
++Linux / macOS:
++
++```bash
++source .venv/bin/activate
++```
++
++Windows:
++
++```bash
++.venv\Scripts\activate
++```
++
++### 4. Install dependency
++
++```bash
++pip install -r requirements.txt
++```
++
++---
++
++## 🔑 Environment Variables
++
++Buat file `.env` berdasarkan `.env.example`.
++
++Contoh konfigurasi lokal:
++
++```env
++APP_ENV=development
++APP_DEBUG=false
++LOG_LEVEL=INFO
++
++SUPABASE_URL=https://your-project.supabase.co
++SUPABASE_KEY=your-supabase-secret-or-service-role-key
++
++PRIMARY_LLM_PROVIDER=gemini
++LLM_PROVIDER_PRIORITY=gemini,openrouter,huggingface,openai,ollama
++
++GEMINI_API_KEY=
++OPENROUTER_API_KEY=
++HUGGINGFACE_API_KEY=
++OPENAI_API_KEY=
++OLLAMA_BASE_URL=http://localhost:11434
++
++ENABLE_PROVIDER_FAILOVER=true
++MAX_PROVIDER_RETRIES=2
++RETRY_BACKOFF_SECONDS=1
++HEALTHCHECK_INTERVAL=30
++
++CORS_ALLOWED_ORIGINS=http://localhost:8501,http://localhost:8000
++GO_UMKM_API_BASE_URL=http://localhost:8000
++```
++
++> Jangan commit file `.env` yang berisi secret asli ke GitHub.
++
++---
++
++## ▶️ Menjalankan Aplikasi
++
++### Backend FastAPI
++
++Jalankan backend di terminal pertama:
++
++```bash
++set -a
++source .env
++set +a
++
++uvicorn app.api.main:app --reload --host 0.0.0.0 --port 8000
++```
++
++Endpoint penting:
++
++- API base: `http://localhost:8000`
++- Swagger UI: `http://localhost:8000/docs`
++- Health check: `http://localhost:8000/health`
++
++### Frontend Streamlit
++
++Jalankan frontend di terminal kedua:
++
++```bash
++set -a
++source .env
++set +a
++
++export GO_UMKM_API_BASE_URL=http://localhost:8000
++
++python -m streamlit run app.py \
++  --server.address 0.0.0.0 \
++  --server.port 8501 \
++  --server.enableCORS false \
++  --server.enableXsrfProtection false
++```
++
++Frontend tersedia di:
++
++```text
++http://localhost:8501
++```
++
++---
++
++## 🧪 Menjalankan Pengujian
++
++```bash
++pytest
++```
++
++### Ruff Check
++
++```bash
++python -m ruff check app pages tests
++python -m ruff format app pages tests --check
++```
++
++Auto-fix:
++
++```bash
++python -m ruff check app pages tests --fix
++python -m ruff format app pages tests
++```
++
++### Integration Test Supabase
++
++Integration test Supabase hanya dijalankan jika environment variable berikut
++tersedia:
++
++```env
++RUN_SUPABASE_INTEGRATION_TESTS=1
++SUPABASE_URL=
++SUPABASE_KEY=
++```
++
++---
++
++## 🧩 Catatan untuk GitHub Codespaces
++
++Jika Streamlit menampilkan error seperti:
++
++```text
++TypeError: Failed to fetch dynamically imported module
++```
++
++biasanya penyebabnya adalah cache browser / port forwarding Codespaces, bukan
++business logic aplikasi.
++
++Langkah yang disarankan:
++
++```bash
++python -m streamlit cache clear
++```
++
++Lalu restart frontend dan lakukan hard refresh browser:
++
++```text
++Ctrl + Shift + R
++```
++
++Jika masih bermasalah, buka ulang dari panel:
++
++```text
++Codespaces → Ports → 8501 → Open in Browser
++```
++
++---
++
++## 📦 Kesiapan Deployment
++
++Target deployment yang dapat digunakan:
++
++### Backend
++
++- Render,
++- Railway,
++- Fly.io,
++- Google Cloud Run,
++- Azure App Service,
++- AWS App Runner.
++
++### Frontend
++
++- Streamlit Community Cloud,
++- atau layanan container yang menjalankan Streamlit.
++
++### Database
++
++- Supabase.
++
++---
++
++## 🎯 Tujuan Proyek
++
++Go-UMKM AI dibuat untuk menunjukkan bagaimana AI dapat membantu UMKM Indonesia
++melalui kombinasi:
++
++- data bisnis terstruktur,
++- workflow bisnis,
++- analytics,
++- AI assistant,
++- multi-provider LLM,
++- dan user interface SaaS yang mudah digunakan.
++
++Tujuan utama aplikasi ini bukan hanya menjawab pertanyaan pengguna, tetapi juga
++membantu pelaku usaha membaca kondisi bisnis dan mengambil keputusan yang lebih
++baik.
++
++---
++
++## 🛣 Roadmap Pengembangan
++
++### Tahap 1 — Fondasi
++
++- struktur proyek,
++- konfigurasi,
++- logger,
++- koneksi database,
++- skema data.
++
++### Tahap 2 — Data & Domain Layer
++
++- repository,
++- service,
++- tools,
++- analytics.
++
++### Tahap 3 — AI Core
++
++- workflow,
++- agent,
++- router,
++- prompt builder,
++- response formatter,
++- provider manager.
++
++### Tahap 4 — Frontend SaaS
++
++- landing page,
++- dashboard,
++- transactions,
++- marketing,
++- insights,
++- export,
++- AI assistant.
++
++### Tahap 5 — Production Readiness
++
++- deployment,
++- observability,
++- CI/CD,
++- dokumentasi,
++- QA final.
++
++---
++
++## 📄 Lisensi
++
++Proyek ini dikembangkan untuk tujuan edukasi, demonstrasi produk, kompetisi, dan
++pengembangan aplikasi AI. Lisensi dapat disesuaikan sesuai kebutuhan pemilik
++proyek.
+--- a/.streamlit/config.toml
++++ b/.streamlit/config.toml
+@@ -0,0 +1,15 @@
++[server]
++headless = true
++address = "0.0.0.0"
++port = 8501
++enableCORS = false
++enableXsrfProtection = false
++enableStaticServing = true
++fileWatcherType = "poll"
++
++[browser]
++gatherUsageStats = false
++
++[client]
++toolbarMode = "minimal"
++showErrorDetails = true
+--- a/docs/TROUBLESHOOTING_STREAMLIT_CODESPACES.md
++++ b/docs/TROUBLESHOOTING_STREAMLIT_CODESPACES.md
+@@ -0,0 +1,74 @@
++# Troubleshooting Streamlit di GitHub Codespaces
++
++## Error
++
++```text
++TypeError: Failed to fetch dynamically imported module
++```
++
++Contoh:
++
++```text
++/static/js/TextInput...
++/static/js/TextArea...
++/static/js/FormSubmitContent...
++```
++
++## Penyebab umum
++
++Ini biasanya bukan error business logic aplikasi. Penyebab paling umum adalah:
++
++1. browser masih menyimpan cache JavaScript lama,
++2. Streamlit direstart tetapi tab browser masih memakai bundle lama,
++3. port forwarding Codespaces belum sinkron,
++4. URL port lama masih dipakai setelah Codespace restart.
++
++## Perbaikan cepat
++
++### 1. Restart frontend
++
++```bash
++pkill -f streamlit || true
++
++python -m streamlit cache clear
++
++python -m streamlit run app.py \
++  --server.address 0.0.0.0 \
++  --server.port 8501 \
++  --server.enableCORS false \
++  --server.enableXsrfProtection false
++```
++
++### 2. Hard refresh browser
++
++Di tab frontend:
++
++```text
++Ctrl + Shift + R
++```
++
++Atau buka lewat incognito/private window.
++
++### 3. Buka dari Ports panel
++
++```text
++Codespaces → Ports → 8501 → Open in Browser
++```
++
++Jangan memakai tab URL lama.
++
++### 4. Cek local server
++
++```bash
++curl -s http://localhost:8501 | head -n 20
++```
++
++Jika muncul HTML Streamlit, local frontend sehat.
++
++### 5. Set port visibility
++
++```bash
++gh codespace ports visibility 8501:public -c "$CODESPACE_NAME"
++```
++
++Lalu buka ulang dari panel Ports.
+--- a/scripts/dev/run_frontend.sh
++++ b/scripts/dev/run_frontend.sh
+@@ -0,0 +1,20 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++cd "$(dirname "$0")/../.."
++
++set -a
++if [ -f .env ]; then
++  source .env
++fi
++set +a
++
++export GO_UMKM_API_BASE_URL="${GO_UMKM_API_BASE_URL:-http://localhost:8000}"
++
++python -m streamlit cache clear || true
++
++python -m streamlit run app.py \
++  --server.address 0.0.0.0 \
++  --server.port 8501 \
++  --server.enableCORS false \
++  --server.enableXsrfProtection false
+--- a/pages/Marketing.py
++++ b/pages/Marketing.py
+@@ -0,0 +1,472 @@
++"""
++Pemasaran
++=========
++"""
++
++from __future__ import annotations
++
++from collections.abc import Mapping
++from typing import Any
++
++from app.frontend.assets import load_frontend_assets
++from app.frontend.navigation import render_navigation
++from app.frontend.onboarding import build_onboarding_state, is_valid_uuid
++from app.frontend.session import (
++    DEFAULT_LIMIT,
++    build_business_preferences,
++    ensure_frontend_session,
++    get_api_client_from_session_state,
++    get_backend_products,
++    set_active_product_from_response,
++    set_backend_products,
++)
++from app.frontend.ui_components import (
++    error_message,
++    find_items,
++    format_number,
++    render_action_card,
++    render_business_header,
++    render_empty_state,
++    render_locked_page,
++    render_metric_card,
++    render_page_header,
++    render_section_header,
++    response_data,
++    safe_text,
++)
++
++
++PAGE_NAME = "marketing"
++
++
++def render_page() -> None:
++    """Render marketing workspace."""
++
++    st = _get_streamlit()
++    st.set_page_config(
++        page_title="Go-UMKM AI · Marketing", page_icon="📣", layout="wide"
++    )
++    load_frontend_assets(st, page_name=PAGE_NAME)
++    ensure_frontend_session(st.session_state)
++
++    client = get_api_client_from_session_state(st.session_state)
++    business_id = str(st.session_state.get("business_id", ""))
++    product_id = str(st.session_state.get("active_product_id", ""))
++    session_id = str(st.session_state.get("session_id", ""))
++    preferences = build_business_preferences(st.session_state)
++    limit = int(st.session_state.get("dashboard_limit", DEFAULT_LIMIT))
++
++    dashboard_response = (
++        client.get_dashboard(business_id=business_id, limit=limit)
++        if is_valid_uuid(business_id)
++        else None
++    )
++    state = build_onboarding_state(
++        business_id=business_id,
++        product_id=product_id,
++        dashboard_response=dashboard_response,
++    )
++    render_navigation(st, state)
++
++    render_page_header(
++        st,
++        eyebrow="Marketing",
++        title="Campaign Workspace",
++        description=(
++            "Bangun konteks promosi, simpan campaign, dan pantau riwayat "
++            "pemasaran dengan tampilan SaaS yang rapi."
++        ),
++        icon="📣",
++    )
++
++    if state.business_profile_ready:
++        render_business_header(st, preferences)
++
++    flash_message = st.session_state.pop("go_marketing_flash", "")
++    if flash_message:
++        st.success(str(flash_message))
++
++    if not state.marketing_ready:
++        render_locked_page(
++            st,
++            message="Marketing aktif setelah profil dan produk tersedia.",
++            state=state,
++            next_action_label="Buka Products",
++            next_page="pages/Products.py",
++        )
++        return
++
++    products = _load_products(st, client, business_id)
++    selected_product = _render_product_selector(
++        st,
++        products,
++        current_product_id=product_id,
++        key="go_marketing_product_context",
++    )
++    if selected_product is None:
++        render_empty_state(
++            st,
++            title="Produk belum tersedia",
++            description=(
++                "Tambahkan produk terlebih dahulu agar campaign dapat "
++                "dikaitkan dengan produk yang jelas."
++            ),
++            icon="📦",
++        )
++        return
++
++    product_id = _product_id(selected_product)
++    context_response = client.get_marketing_context(
++        {
++            "product_id": product_id,
++            "business_id": business_id,
++            "session_id": session_id,
++            "business_profile": preferences,
++        }
++    )
++    history_response = client.get_marketing_history(
++        business_id=business_id, keyword=None, limit=100
++    )
++
++    _render_marketing_metrics(st, context_response, history_response)
++    _render_campaign_workspace(st, client, business_id, product_id, session_id)
++    _render_recommendations(st, context_response)
++    _render_history(st, history_response)
++
++
++def _render_marketing_metrics(
++    st: Any,
++    context_response: Mapping[str, Any],
++    history_response: Mapping[str, Any],
++) -> None:
++    """Render marketing metrics."""
++
++    history = find_items(
++        response_data(history_response),
++        ("history", "records", "items", "marketing_history"),
++    )
++    context = response_data(context_response)
++    recommendations = find_items(
++        context, ("recommendations", "campaign_ideas", "suggestions")
++    )
++
++    cols = st.columns(4)
++    with cols[0]:
++        render_metric_card(
++            st,
++            label="Campaigns",
++            value=format_number(len(history)),
++            caption="saved records",
++            icon="📣",
++        )
++    with cols[1]:
++        render_metric_card(
++            st,
++            label="Ideas",
++            value=format_number(len(recommendations)),
++            caption="recommendations",
++            icon="💡",
++            tone="warning",
++        )
++    with cols[2]:
++        render_metric_card(
++            st,
++            label="Channels",
++            value="4",
++            caption="Instagram, WA, TikTok, Email",
++            icon="🌐",
++            tone="indigo",
++        )
++    with cols[3]:
++        render_metric_card(
++            st,
++            label="Status",
++            value="Ready",
++            caption="marketing workspace",
++            icon="🟢",
++            tone="success",
++        )
++
++
++def _render_campaign_workspace(
++    st: Any,
++    client: Any,
++    business_id: str,
++    product_id: str,
++    session_id: str,
++) -> None:
++    """Render save campaign form."""
++
++    render_section_header(
++        st,
++        eyebrow="Campaign Builder",
++        title="Create Marketing Record",
++        description="Simpan ide campaign agar dapat ditinjau kembali.",
++    )
++
++    form_col, guide_col = st.columns([0.6, 0.4])
++    with form_col:
++        with st.form("go_marketing_form"):
++            platform = st.selectbox(
++                "Platform", ["Instagram", "WhatsApp", "TikTok", "Facebook", "Email"]
++            )
++            campaign = st.text_input("Campaign name", value="Promo Mingguan")
++            caption = st.text_area(
++                "Caption / message",
++                value="Tulis caption promosi yang jelas, singkat, dan menarik untuk pelanggan.",
++                height=140,
++            )
++            submitted = st.form_submit_button(
++                "Save Campaign", type="primary", use_container_width=True
++            )
++
++    with guide_col:
++        render_action_card(
++            st,
++            title="Content checklist",
++            description=(
++                "Gunakan pesan yang spesifik, tawarkan manfaat, tambahkan CTA, "
++                "dan sesuaikan channel."
++            ),
++            icon="✅",
++            badge="Best Practice",
++        )
++
++    if submitted:
++        response = client.create_marketing_record(
++            {
++                "business_id": business_id,
++                "marketing_data": {
++                    "platform": platform,
++                    "caption": caption,
++                    "prompt": campaign,
++                    "product_id": product_id,
++                },
++                "session_id": session_id,
++            }
++        )
++        if response.get("success"):
++            st.session_state["go_marketing_flash"] = "Campaign berhasil disimpan."
++            st.rerun()
++        else:
++            st.error(error_message(response))
++
++
++def _render_recommendations(st: Any, response: Mapping[str, Any]) -> None:
++    """Render marketing recommendations."""
++
++    render_section_header(
++        st,
++        eyebrow="Recommendations",
++        title="Marketing Recommendations",
++        description="Kartu rekomendasi dari konteks produk dan campaign.",
++    )
++
++    if not response.get("success"):
++        render_empty_state(
++            st,
++            title="Rekomendasi belum tersedia",
++            description=error_message(response),
++            icon="💡",
++        )
++        return
++
++    data = response_data(response)
++    recommendations = find_items(
++        data, ("recommendations", "campaign_ideas", "suggestions")
++    )
++    if not recommendations:
++        recommendations = [
++            {
++                "title": "Promosi produk unggulan",
++                "description": "Gunakan produk paling aktif sebagai konten utama campaign.",
++            },
++            {
++                "title": "Caption berbasis manfaat",
++                "description": (
++                    "Tekankan manfaat praktis, harga, dan alasan pelanggan "
++                    "perlu membeli hari ini."
++                ),
++            },
++            {
++                "title": "Channel mix",
++                "description": "Mulai dari Instagram untuk awareness dan WhatsApp untuk closing.",
++            },
++        ]
++
++    cols = st.columns(3)
++    for index, recommendation in enumerate(recommendations[:6]):
++        with cols[index % 3]:
++            render_action_card(
++                st,
++                title=safe_text(
++                    recommendation.get("title")
++                    or recommendation.get("name")
++                    or f"Idea {index + 1}"
++                ),
++                description=safe_text(
++                    recommendation.get("description")
++                    or recommendation.get("message")
++                    or recommendation.get("caption"),
++                    "Gunakan ide ini untuk campaign berikutnya.",
++                ),
++                icon="💡",
++                badge="AI Suggestion",
++            )
++
++
++def _render_history(st: Any, response: Mapping[str, Any]) -> None:
++    """Render campaign history."""
++
++    render_section_header(
++        st,
++        eyebrow="History",
++        title="Campaign History",
++        description="Riwayat campaign tersimpan.",
++    )
++
++    if not response.get("success"):
++        render_empty_state(
++            st,
++            title="Riwayat belum tersedia",
++            description=error_message(response),
++            icon="📭",
++        )
++        return
++
++    history = find_items(
++        response_data(response), ("history", "records", "items", "marketing_history")
++    )
++    if not history:
++        render_empty_state(
++            st,
++            title="Belum ada campaign",
++            description="Campaign yang disimpan akan muncul di sini.",
++            icon="📣",
++        )
++        return
++
++    st.dataframe(_display_history(history), use_container_width=True, hide_index=True)
++
++
++def _display_history(history: list[dict[str, Any]]) -> list[dict[str, Any]]:
++    """Build history table."""
++
++    rows: list[dict[str, Any]] = []
++    for item in history[:50]:
++        rows.append(
++            {
++                "Campaign": safe_text(
++                    item.get("campaign_name")
++                    or item.get("campaign")
++                    or item.get("title")
++                    or item.get("prompt"),
++                    "-",
++                ),
++                "Platform": safe_text(item.get("platform"), "-"),
++                "Caption": safe_text(item.get("caption") or item.get("message"), "-")[
++                    :120
++                ],
++                "Created": safe_text(item.get("created_at") or item.get("date"), "-"),
++            }
++        )
++    return rows
++
++
++def _load_products(st: Any, client: Any, business_id: str) -> list[dict[str, Any]]:
++    """Load products for product-scoped marketing actions."""
++
++    cached_products = get_backend_products(st.session_state)
++    response = client.list_products(business_id=business_id, limit=100)
++    if not response.get("success"):
++        return cached_products
++
++    products = find_items(response_data(response), ("products", "items", "records"))
++    if products:
++        set_backend_products(st.session_state, products)
++        return products
++
++    return cached_products
++
++
++def _render_product_selector(
++    st: Any,
++    products: list[dict[str, Any]],
++    *,
++    current_product_id: str,
++    key: str,
++) -> dict[str, Any] | None:
++    """Render product selector and return the selected product."""
++
++    options = [product for product in products if _product_id(product)]
++    if not options:
++        return None
++
++    selected_index = _selected_product_index(options, current_product_id)
++    selected_product = st.selectbox(
++        "Product context",
++        options,
++        index=selected_index,
++        format_func=_product_label,
++        key=key,
++    )
++    if not isinstance(selected_product, dict):
++        return None
++
++    set_active_product_from_response(st.session_state, selected_product)
++
++    return selected_product
++
++
++def _selected_product_index(
++    products: list[dict[str, Any]],
++    current_product_id: str,
++) -> int:
++    """Return selected product index."""
++
++    for index, product in enumerate(products):
++        if _product_id(product) == current_product_id:
++            return index
++
++    return 0
++
++
++def _product_id(product: Mapping[str, Any]) -> str:
++    """Return product identifier from flexible backend response keys."""
++
++    return safe_text(
++        product.get("product_id")
++        or product.get("id")
++        or product.get("uuid"),
++        "",
++    )
++
++
++def _product_label(product: Mapping[str, Any]) -> str:
++    """Return readable product label."""
++
++    name = safe_text(
++        product.get("name")
++        or product.get("product_name"),
++        "Produk",
++    )
++    stock = safe_text(
++        product.get("stock")
++        or product.get("current_stock")
++        or product.get("stock_quantity"),
++        "-",
++    )
++
++    return f"{name} · Stock {stock}"
++
++
++def _get_streamlit() -> Any:
++    """Import Streamlit."""
++
++    import streamlit as st
++
++    return st
++
++
++if __name__ == "__main__":
++    render_page()
+--- a/pages/Insights.py
++++ b/pages/Insights.py
+@@ -0,0 +1,433 @@
++"""
++Insights
++========
++"""
++
++from __future__ import annotations
++
++from collections.abc import Mapping
++from typing import Any
++
++from app.frontend.assets import load_frontend_assets
++from app.frontend.navigation import render_navigation
++from app.frontend.onboarding import build_onboarding_state, is_valid_uuid
++from app.frontend.session import (
++    DEFAULT_LIMIT,
++    build_business_preferences,
++    ensure_frontend_session,
++    get_api_client_from_session_state,
++    get_backend_products,
++    set_active_product_from_response,
++    set_backend_products,
++)
++from app.frontend.ui_components import (
++    error_message,
++    find_items,
++    format_number,
++    render_action_card,
++    render_business_header,
++    render_empty_state,
++    render_locked_page,
++    render_metric_card,
++    render_page_header,
++    render_section_header,
++    response_data,
++    safe_text,
++)
++
++
++PAGE_NAME = "insights"
++
++
++def render_page() -> None:
++    """Render insights workspace."""
++
++    st = _get_streamlit()
++    st.set_page_config(
++        page_title="Go-UMKM AI · Insights", page_icon="💡", layout="wide"
++    )
++    load_frontend_assets(st, page_name=PAGE_NAME)
++    ensure_frontend_session(st.session_state)
++
++    client = get_api_client_from_session_state(st.session_state)
++    business_id = str(st.session_state.get("business_id", ""))
++    product_id = str(st.session_state.get("active_product_id", ""))
++    session_id = str(st.session_state.get("session_id", ""))
++    preferences = build_business_preferences(st.session_state)
++    limit = int(st.session_state.get("dashboard_limit", DEFAULT_LIMIT))
++
++    dashboard_response = (
++        client.get_dashboard(business_id=business_id, limit=limit)
++        if is_valid_uuid(business_id)
++        else None
++    )
++    state = build_onboarding_state(
++        business_id=business_id,
++        product_id=product_id,
++        dashboard_response=dashboard_response,
++    )
++    render_navigation(st, state)
++
++    render_page_header(
++        st,
++        eyebrow="Insights",
++        title="Business Insights & Recommendations",
++        description=(
++            "Ubah data operasional menjadi rekomendasi, forecast, "
++            "dan sinyal kesehatan bisnis."
++        ),
++        icon="💡",
++    )
++
++    if state.business_profile_ready:
++        render_business_header(st, preferences)
++
++    flash_message = st.session_state.pop("go_insight_flash", "")
++    if flash_message:
++        st.success(str(flash_message))
++
++    if not state.insights_ready:
++        render_locked_page(
++            st,
++            message="Insights aktif setelah profil, produk, dan data transaksi tersedia.",
++            state=state,
++            next_action_label="Buka Dashboard",
++            next_page="pages/Dashboard.py",
++        )
++        return
++
++    products = _load_products(st, client, business_id)
++    selected_product = _render_product_selector(
++        st,
++        products,
++        current_product_id=product_id,
++        key="go_insight_product_context",
++    )
++    if selected_product is not None:
++        product_id = _product_id(selected_product)
++
++    context_response = client.get_insight_context(
++        {
++            "business_id": business_id,
++            "product_id": product_id,
++            "session_id": session_id,
++            "business_profile": preferences,
++        }
++    )
++    review_response = client.get_insight_review(business_id=business_id, limit=100)
++
++    _render_insight_metrics(st, context_response, review_response)
++    _render_forecast_cards(st, context_response)
++    _render_recommendation_cards(st, review_response)
++    _render_create_insight(st, client, business_id, product_id, session_id)
++
++
++def _render_insight_metrics(
++    st: Any,
++    context_response: Mapping[str, Any],
++    review_response: Mapping[str, Any],
++) -> None:
++    """Render insight metrics."""
++
++    context = response_data(context_response)
++    review = response_data(review_response)
++    recommendations = find_items(
++        review, ("insights", "recommendations", "records", "items")
++    )
++    forecasts = find_items(context, ("forecasts", "forecast", "trends"))
++
++    cols = st.columns(4)
++    with cols[0]:
++        render_metric_card(
++            st,
++            label="Insights",
++            value=format_number(len(recommendations)),
++            caption="saved recommendations",
++            icon="💡",
++        )
++    with cols[1]:
++        render_metric_card(
++            st,
++            label="Forecasts",
++            value=format_number(len(forecasts)),
++            caption="trend signals",
++            icon="📈",
++            tone="indigo",
++        )
++    with cols[2]:
++        render_metric_card(
++            st,
++            label="Risk",
++            value="Low",
++            caption="current quick signal",
++            icon="🛡️",
++            tone="success",
++        )
++    with cols[3]:
++        render_metric_card(
++            st,
++            label="Priority",
++            value="Action",
++            caption="review next steps",
++            icon="⚡",
++            tone="warning",
++        )
++
++
++def _render_forecast_cards(st: Any, response: Mapping[str, Any]) -> None:
++    """Render forecast/insight context cards."""
++
++    render_section_header(
++        st,
++        eyebrow="Forecast",
++        title="Smart Forecasts",
++        description="Sinyal perkiraan bisnis dari konteks backend yang tersedia.",
++    )
++
++    if not response.get("success"):
++        render_empty_state(
++            st,
++            title="Forecast belum tersedia",
++            description=error_message(response),
++            icon="📈",
++        )
++        return
++
++    data = response_data(response)
++    forecasts = find_items(data, ("forecasts", "forecast", "trends", "signals"))
++    if not forecasts:
++        forecasts = [
++            {
++                "title": "Demand Signal",
++                "description": (
++                    "Pantau produk dengan penjualan meningkat untuk menentukan "
++                    "stok dan promosi."
++                ),
++            },
++            {
++                "title": "Inventory Signal",
++                "description": "Periksa item low stock sebelum membuat campaign besar.",
++            },
++            {
++                "title": "Revenue Signal",
++                "description": "Gunakan tren revenue harian untuk memilih waktu promosi terbaik.",
++            },
++        ]
++
++    cols = st.columns(3)
++    for index, forecast in enumerate(forecasts[:6]):
++        with cols[index % 3]:
++            render_action_card(
++                st,
++                title=safe_text(
++                    forecast.get("title")
++                    or forecast.get("name")
++                    or f"Forecast {index + 1}"
++                ),
++                description=safe_text(
++                    forecast.get("description")
++                    or forecast.get("message")
++                    or forecast.get("summary"),
++                    "Trend signal available.",
++                ),
++                icon="📈",
++                badge="Forecast",
++            )
++
++
++def _render_recommendation_cards(st: Any, response: Mapping[str, Any]) -> None:
++    """Render recommendation cards."""
++
++    render_section_header(
++        st,
++        eyebrow="Recommendations",
++        title="Actionable Business Recommendations",
++        description="Prioritaskan keputusan berdasarkan insight yang tersimpan.",
++    )
++
++    if not response.get("success"):
++        render_empty_state(
++            st,
++            title="Rekomendasi belum tersedia",
++            description=error_message(response),
++            icon="💡",
++        )
++        return
++
++    records = find_items(
++        response_data(response), ("insights", "recommendations", "records", "items")
++    )
++    if not records:
++        render_empty_state(
++            st,
++            title="Belum ada rekomendasi tersimpan",
++            description="Gunakan tombol Generate Insight untuk menyimpan rekomendasi baru.",
++            icon="💡",
++        )
++        return
++
++    cols = st.columns(3)
++    for index, record in enumerate(records[:9]):
++        with cols[index % 3]:
++            render_action_card(
++                st,
++                title=safe_text(
++                    record.get("title")
++                    or record.get("insight_title")
++                    or f"Insight {index + 1}"
++                ),
++                description=safe_text(
++                    record.get("description")
++                    or record.get("recommendation")
++                    or record.get("content")
++                    or record.get("summary"),
++                    "-",
++                ),
++                icon="💡",
++                badge=safe_text(
++                    record.get("category") or record.get("insight_category"), "Insight"
++                ),
++            )
++
++
++def _render_create_insight(
++    st: Any, client: Any, business_id: str, product_id: str, session_id: str
++) -> None:
++    """Render create insight action."""
++
++    render_section_header(
++        st,
++        eyebrow="Generate",
++        title="Create New Insight",
++        description="Simpan rekomendasi baru dari konteks bisnis saat ini.",
++    )
++
++    with st.form("go_insight_form"):
++        category = st.selectbox(
++            "Category", ["sales", "inventory", "marketing", "customer", "general"]
++        )
++        title = st.text_input("Insight title", value="Rekomendasi Bisnis Harian")
++        recommendation = st.text_area(
++            "Recommendation",
++            value="Tinjau produk terlaris dan stok rendah sebelum menjalankan promosi.",
++        )
++        submitted = st.form_submit_button(
++            "Save Insight", type="primary", use_container_width=True
++        )
++
++    if submitted:
++        response = client.create_insight(
++            {
++                "business_id": business_id,
++                "session_id": session_id,
++                "insight_data": {
++                    "insight_category": category,
++                    "title": title,
++                    "content": recommendation,
++                },
++            }
++        )
++        if response.get("success"):
++            st.session_state["go_insight_flash"] = "Insight berhasil disimpan."
++            st.rerun()
++        else:
++            st.error(error_message(response))
++
++
++def _load_products(st: Any, client: Any, business_id: str) -> list[dict[str, Any]]:
++    """Load products for product-scoped insight context."""
++
++    cached_products = get_backend_products(st.session_state)
++    response = client.list_products(business_id=business_id, limit=100)
++    if not response.get("success"):
++        return cached_products
++
++    products = find_items(response_data(response), ("products", "items", "records"))
++    if products:
++        set_backend_products(st.session_state, products)
++        return products
++
++    return cached_products
++
++
++def _render_product_selector(
++    st: Any,
++    products: list[dict[str, Any]],
++    *,
++    current_product_id: str,
++    key: str,
++) -> dict[str, Any] | None:
++    """Render product context selector."""
++
++    options = [product for product in products if _product_id(product)]
++    if not options:
++        return None
++
++    selected_index = _selected_product_index(options, current_product_id)
++    selected_product = st.selectbox(
++        "Product context",
++        options,
++        index=selected_index,
++        format_func=_product_label,
++        key=key,
++    )
++    if not isinstance(selected_product, dict):
++        return None
++
++    set_active_product_from_response(st.session_state, selected_product)
++
++    return selected_product
++
++
++def _selected_product_index(
++    products: list[dict[str, Any]],
++    current_product_id: str,
++) -> int:
++    """Return selected product index."""
++
++    for index, product in enumerate(products):
++        if _product_id(product) == current_product_id:
++            return index
++
++    return 0
++
++
++def _product_id(product: Mapping[str, Any]) -> str:
++    """Return product identifier from flexible backend response keys."""
++
++    return safe_text(
++        product.get("product_id")
++        or product.get("id")
++        or product.get("uuid"),
++        "",
++    )
++
++
++def _product_label(product: Mapping[str, Any]) -> str:
++    """Return readable product label."""
++
++    name = safe_text(
++        product.get("name")
++        or product.get("product_name"),
++        "Produk",
++    )
++    stock = safe_text(
++        product.get("stock")
++        or product.get("current_stock")
++        or product.get("stock_quantity"),
++        "-",
++    )
++
++    return f"{name} · Stock {stock}"
++
++
++def _get_streamlit() -> Any:
++    """Import Streamlit."""
++
++    import streamlit as st
++
++    return st
++
++
++if __name__ == "__main__":
++    render_page()

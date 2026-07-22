@@ -16,6 +16,9 @@ from app.frontend.session import (
     build_business_preferences,
     ensure_frontend_session,
     get_api_client_from_session_state,
+    get_backend_products,
+    set_active_product_from_response,
+    set_backend_products,
 )
 from app.frontend.ui_components import (
     error_message,
@@ -75,6 +78,10 @@ def render_page() -> None:
     if state.business_profile_ready:
         render_business_header(st, preferences)
 
+    flash_message = st.session_state.pop("go_insight_flash", "")
+    if flash_message:
+        st.success(str(flash_message))
+
     if not state.insights_ready:
         render_locked_page(
             st,
@@ -84,6 +91,16 @@ def render_page() -> None:
             next_page="pages/Dashboard.py",
         )
         return
+
+    products = _load_products(st, client, business_id)
+    selected_product = _render_product_selector(
+        st,
+        products,
+        current_product_id=product_id,
+        key="go_insight_product_context",
+    )
+    if selected_product is not None:
+        product_id = _product_id(selected_product)
 
     context_response = client.get_insight_context(
         {
@@ -251,6 +268,7 @@ def _render_recommendation_cards(st: Any, response: Mapping[str, Any]) -> None:
                 description=safe_text(
                     record.get("description")
                     or record.get("recommendation")
+                    or record.get("content")
                     or record.get("summary"),
                     "-",
                 ),
@@ -274,7 +292,9 @@ def _render_create_insight(
     )
 
     with st.form("go_insight_form"):
-        category = st.selectbox("Category", ["sales", "inventory", "marketing", "growth", "risk"])
+        category = st.selectbox(
+            "Category", ["sales", "inventory", "marketing", "customer", "general"]
+        )
         title = st.text_input("Insight title", value="Rekomendasi Bisnis Harian")
         recommendation = st.text_area(
             "Recommendation",
@@ -286,19 +306,101 @@ def _render_create_insight(
         response = client.create_insight(
             {
                 "business_id": business_id,
-                "product_id": product_id,
                 "session_id": session_id,
                 "insight_data": {
                     "insight_category": category,
                     "title": title,
-                    "recommendation": recommendation,
+                    "content": recommendation,
                 },
             }
         )
         if response.get("success"):
-            st.success("Insight berhasil disimpan.")
+            st.session_state["go_insight_flash"] = "Insight berhasil disimpan."
+            st.rerun()
         else:
             st.error(error_message(response))
+
+
+def _load_products(st: Any, client: Any, business_id: str) -> list[dict[str, Any]]:
+    """Load products for product-scoped insight context."""
+
+    cached_products = get_backend_products(st.session_state)
+    response = client.list_products(business_id=business_id, limit=100)
+    if not response.get("success"):
+        return cached_products
+
+    products = find_items(response_data(response), ("products", "items", "records"))
+    if products:
+        set_backend_products(st.session_state, products)
+        return products
+
+    return cached_products
+
+
+def _render_product_selector(
+    st: Any,
+    products: list[dict[str, Any]],
+    *,
+    current_product_id: str,
+    key: str,
+) -> dict[str, Any] | None:
+    """Render product context selector."""
+
+    options = [product for product in products if _product_id(product)]
+    if not options:
+        return None
+
+    selected_index = _selected_product_index(options, current_product_id)
+    selected_product = st.selectbox(
+        "Product context",
+        options,
+        index=selected_index,
+        format_func=_product_label,
+        key=key,
+    )
+    if not isinstance(selected_product, dict):
+        return None
+
+    set_active_product_from_response(st.session_state, selected_product)
+
+    return selected_product
+
+
+def _selected_product_index(
+    products: list[dict[str, Any]],
+    current_product_id: str,
+) -> int:
+    """Return selected product index."""
+
+    for index, product in enumerate(products):
+        if _product_id(product) == current_product_id:
+            return index
+
+    return 0
+
+
+def _product_id(product: Mapping[str, Any]) -> str:
+    """Return product identifier from flexible backend response keys."""
+
+    return safe_text(
+        product.get("product_id") or product.get("id") or product.get("uuid"),
+        "",
+    )
+
+
+def _product_label(product: Mapping[str, Any]) -> str:
+    """Return readable product label."""
+
+    name = safe_text(
+        product.get("name") or product.get("product_name"),
+        "Produk",
+    )
+    stock = safe_text(
+        product.get("stock") or product.get("current_stock") or product.get("stock_quantity"),
+        "-",
+    )
+
+    return f"{name} · Stock {stock}"
 
 
 def _get_streamlit() -> Any:
