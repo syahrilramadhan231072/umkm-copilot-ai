@@ -152,11 +152,7 @@ class GeminiClient:
     def _resolve_api_key(self, api_key: str | None) -> str:
         """Resolve Gemini API key from argument or environment."""
 
-        resolved_api_key = (
-            api_key
-            or os.getenv("GEMINI_API_KEY")
-            or os.getenv("GOOGLE_API_KEY")
-        )
+        resolved_api_key = api_key or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
 
         if resolved_api_key is None or not resolved_api_key.strip():
             raise RuntimeError("Gemini API key is required when no model is injected.")

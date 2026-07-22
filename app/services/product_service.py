@@ -7,7 +7,8 @@ Service layer for product use cases in UMKM Copilot AI.
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from app.repositories.product_repository import ProductRepository
 from app.services.base_service import BaseService

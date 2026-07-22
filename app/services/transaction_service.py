@@ -7,8 +7,9 @@ Service layer for transaction use cases in UMKM Copilot AI.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Any, Mapping
+from collections.abc import Mapping
+from datetime import UTC, datetime
+from typing import Any
 
 from app.repositories.product_repository import ProductRepository
 from app.repositories.transaction_repository import TransactionRepository
@@ -65,8 +66,7 @@ class TransactionService(BaseService):
             "payment_method": payment_method,
             "status": status,
             "notes": notes,
-            "transaction_date": transaction_date
-            or datetime.now(timezone.utc).isoformat(),
+            "transaction_date": transaction_date or datetime.now(UTC).isoformat(),
         }
 
         created = self._transaction_repository.create(data)
@@ -74,9 +74,7 @@ class TransactionService(BaseService):
             raise RuntimeError("Transaction creation failed.")
 
         if status == "completed":
-            self._product_repository.update_stock(
-                product_id, int(product["stock"]) - quantity
-            )
+            self._product_repository.update_stock(product_id, int(product["stock"]) - quantity)
 
         self._logger.info("Transaction created for business_id=%s.", business_id)
         return created
@@ -247,11 +245,7 @@ class TransactionService(BaseService):
         if business_id is None:
             return records
 
-        return [
-            record
-            for record in records
-            if str(record.get("business_id")) == str(business_id)
-        ]
+        return [record for record in records if str(record.get("business_id")) == str(business_id)]
 
     def _validate_transaction_data(self, data: Mapping[str, Any]) -> None:
         """Validate transaction creation values."""
@@ -261,9 +255,7 @@ class TransactionService(BaseService):
         self._non_negative_int(data.get("unit_price"), "unit_price")
         self._non_negative_int(data.get("total_price"), "total_price")
         if int(data["total_price"]) != int(data["quantity"]) * int(data["unit_price"]):
-            raise ValueError(
-                "total_price must equal quantity multiplied by unit_price."
-            )
+            raise ValueError("total_price must equal quantity multiplied by unit_price.")
         self._validate_payment_method(str(data.get("payment_method", "cash")))
         self._validate_status(str(data.get("status", "completed")))
 
@@ -283,9 +275,7 @@ class TransactionService(BaseService):
     def _validate_payment_method(self, value: str) -> None:
         """Validate transaction payment method."""
         if value not in self.VALID_PAYMENT_METHODS:
-            raise ValueError(
-                f"payment_method must be one of {sorted(self.VALID_PAYMENT_METHODS)}."
-            )
+            raise ValueError(f"payment_method must be one of {sorted(self.VALID_PAYMENT_METHODS)}.")
 
     def _validate_status(self, value: str) -> None:
         """Validate transaction status."""

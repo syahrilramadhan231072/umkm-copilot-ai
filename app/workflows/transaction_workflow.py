@@ -10,7 +10,8 @@ Author:
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from app.tools.analytics_tools import AnalyticsTools
 from app.tools.conversation_tools import ConversationTools
@@ -413,7 +414,14 @@ class TransactionWorkflow:
     ) -> dict[str, Any]:
         """Build failure response from exception."""
 
-        self._logger.exception("Workflow failed: %s", workflow_name)
+        if isinstance(error, ValueError):
+            self._logger.warning(
+                "Workflow validation failed: {} - {}",
+                workflow_name,
+                error,
+            )
+        else:
+            self._logger.exception("Workflow failed: {}", workflow_name)
 
         return {
             "success": False,

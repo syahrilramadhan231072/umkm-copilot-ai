@@ -267,9 +267,7 @@ def assert_sorted_desc(
         field_name: Field used for sorting.
     """
 
-    values = [
-        record[field_name] for record in records if record.get(field_name) is not None
-    ]
+    values = [record[field_name] for record in records if record.get(field_name) is not None]
 
     assert values == sorted(
         values,
@@ -289,9 +287,7 @@ def assert_sorted_asc(
         field_name: Field used for sorting.
     """
 
-    values = [
-        record[field_name] for record in records if record.get(field_name) is not None
-    ]
+    values = [record[field_name] for record in records if record.get(field_name) is not None]
 
     assert values == sorted(values)
 

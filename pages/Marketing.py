@@ -5,7 +5,8 @@ Pemasaran
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from app.frontend.assets import load_frontend_assets
 from app.frontend.navigation import render_navigation
@@ -31,7 +32,6 @@ from app.frontend.ui_components import (
     safe_text,
 )
 
-
 PAGE_NAME = "marketing"
 
 
@@ -39,9 +39,7 @@ def render_page() -> None:
     """Render marketing workspace."""
 
     st = _get_streamlit()
-    st.set_page_config(
-        page_title="Go-UMKM AI · Marketing", page_icon="📣", layout="wide"
-    )
+    st.set_page_config(page_title="Go-UMKM AI · Marketing", page_icon="📣", layout="wide")
     load_frontend_assets(st, page_name=PAGE_NAME)
     ensure_frontend_session(st.session_state)
 
@@ -68,7 +66,10 @@ def render_page() -> None:
         st,
         eyebrow="Marketing",
         title="Campaign Workspace",
-        description="Bangun konteks promosi, simpan campaign, dan pantau riwayat pemasaran dengan tampilan SaaS yang rapi.",
+        description=(
+            "Bangun konteks promosi, simpan campaign, dan pantau riwayat "
+            "pemasaran dengan tampilan SaaS yang rapi."
+        ),
         icon="📣",
     )
 
@@ -115,9 +116,7 @@ def _render_marketing_metrics(
         ("history", "records", "items", "marketing_history"),
     )
     context = response_data(context_response)
-    recommendations = find_items(
-        context, ("recommendations", "campaign_ideas", "suggestions")
-    )
+    recommendations = find_items(context, ("recommendations", "campaign_ideas", "suggestions"))
 
     cols = st.columns(4)
     with cols[0]:
@@ -193,7 +192,10 @@ def _render_campaign_workspace(
         render_action_card(
             st,
             title="Content checklist",
-            description="Gunakan pesan yang spesifik, tawarkan manfaat, tambahkan CTA, dan sesuaikan channel.",
+            description=(
+                "Gunakan pesan yang spesifik, tawarkan manfaat, tambahkan CTA, "
+                "dan sesuaikan channel."
+            ),
             icon="✅",
             badge="Best Practice",
         )
@@ -237,9 +239,7 @@ def _render_recommendations(st: Any, response: Mapping[str, Any]) -> None:
         return
 
     data = response_data(response)
-    recommendations = find_items(
-        data, ("recommendations", "campaign_ideas", "suggestions")
-    )
+    recommendations = find_items(data, ("recommendations", "campaign_ideas", "suggestions"))
     if not recommendations:
         recommendations = [
             {
@@ -248,7 +248,9 @@ def _render_recommendations(st: Any, response: Mapping[str, Any]) -> None:
             },
             {
                 "title": "Caption berbasis manfaat",
-                "description": "Tekankan manfaat praktis, harga, dan alasan pelanggan perlu membeli hari ini.",
+                "description": (
+                    "Tekankan manfaat praktis, harga, dan alasan pelanggan perlu membeli hari ini."
+                ),
             },
             {
                 "title": "Channel mix",
@@ -262,9 +264,7 @@ def _render_recommendations(st: Any, response: Mapping[str, Any]) -> None:
             render_action_card(
                 st,
                 title=safe_text(
-                    recommendation.get("title")
-                    or recommendation.get("name")
-                    or f"Idea {index + 1}"
+                    recommendation.get("title") or recommendation.get("name") or f"Idea {index + 1}"
                 ),
                 description=safe_text(
                     recommendation.get("description")
@@ -319,15 +319,11 @@ def _display_history(history: list[dict[str, Any]]) -> list[dict[str, Any]]:
         rows.append(
             {
                 "Campaign": safe_text(
-                    item.get("campaign_name")
-                    or item.get("campaign")
-                    or item.get("title"),
+                    item.get("campaign_name") or item.get("campaign") or item.get("title"),
                     "-",
                 ),
                 "Platform": safe_text(item.get("platform"), "-"),
-                "Caption": safe_text(item.get("caption") or item.get("message"), "-")[
-                    :120
-                ],
+                "Caption": safe_text(item.get("caption") or item.get("message"), "-")[:120],
                 "Created": safe_text(item.get("created_at") or item.get("date"), "-"),
             }
         )

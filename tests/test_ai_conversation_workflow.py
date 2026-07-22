@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from app.workflows.ai_conversation_workflow import AIConversationWorkflow
 
@@ -38,7 +39,12 @@ class FakeAnalyticsTools:
 
 
 class FakeConversationTools:
-    def build_session_history(self, business_id: str, session_id: str, limit: int = 100) -> dict[str, Any]:
+    def build_session_history(
+        self,
+        business_id: str,
+        session_id: str,
+        limit: int = 100,
+    ) -> dict[str, Any]:
         return {"success": True, "data": [], "error": None}
 
     def save_message(

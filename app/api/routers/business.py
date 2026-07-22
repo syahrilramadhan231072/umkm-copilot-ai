@@ -10,7 +10,8 @@ Author:
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from fastapi import APIRouter, Depends, Query
 
@@ -136,12 +137,7 @@ def business_health_check(
 def _normalize_business_profile(profile: Mapping[str, Any]) -> dict[str, Any]:
     """Normalize a repository business profile for frontend consumption."""
 
-    business_id = (
-        profile.get("business_id")
-        or profile.get("id")
-        or profile.get("uuid")
-        or ""
-    )
+    business_id = profile.get("business_id") or profile.get("id") or profile.get("uuid") or ""
 
     return {
         "business_id": str(business_id).strip(),

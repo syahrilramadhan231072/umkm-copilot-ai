@@ -51,7 +51,6 @@ class BaseRepository:
         """
 
         try:
-
             self.table.select("*").limit(1).execute()
 
             logger.success(f"{self.TABLE_NAME} repository OK.")
@@ -59,7 +58,6 @@ class BaseRepository:
             return True
 
         except Exception as exc:
-
             logger.exception(exc)
 
             return False

@@ -48,7 +48,6 @@ class ConversationRepository(BaseRepository):
         """
 
         try:
-
             result = self.table.insert(data).execute()
 
             if not result.data:
@@ -59,7 +58,6 @@ class ConversationRepository(BaseRepository):
             return result.data[0]
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -79,10 +77,7 @@ class ConversationRepository(BaseRepository):
         """
 
         try:
-
-            result = (
-                self.table.select("*").eq("id", str(conversation_id)).limit(1).execute()
-            )
+            result = self.table.select("*").eq("id", str(conversation_id)).limit(1).execute()
 
             if result.data:
                 return result.data[0]
@@ -90,7 +85,6 @@ class ConversationRepository(BaseRepository):
             return None
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -112,7 +106,6 @@ class ConversationRepository(BaseRepository):
         """
 
         try:
-
             query = (
                 self.table.select("*")
                 .order(
@@ -130,7 +123,6 @@ class ConversationRepository(BaseRepository):
             return result.data
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -155,7 +147,6 @@ class ConversationRepository(BaseRepository):
         """
 
         try:
-
             result = self.table.update(values).eq("id", str(conversation_id)).execute()
 
             if not result.data:
@@ -166,7 +157,6 @@ class ConversationRepository(BaseRepository):
             return result.data[0]
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -183,13 +173,11 @@ class ConversationRepository(BaseRepository):
         """
 
         try:
-
             (self.table.delete().eq("id", str(conversation_id)).execute())
 
             logger.success("AI conversation deleted.")
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -209,7 +197,6 @@ class ConversationRepository(BaseRepository):
         """
 
         try:
-
             query = self.table.select("id", count="exact").limit(1)
 
             if business_id is not None:
@@ -220,7 +207,6 @@ class ConversationRepository(BaseRepository):
             return int(result.count or 0)
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -240,18 +226,11 @@ class ConversationRepository(BaseRepository):
         """
 
         try:
-
-            result = (
-                self.table.select("id")
-                .eq("id", str(conversation_id))
-                .limit(1)
-                .execute()
-            )
+            result = self.table.select("id").eq("id", str(conversation_id)).limit(1).execute()
 
             return bool(result.data)
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -275,7 +254,6 @@ class ConversationRepository(BaseRepository):
         """
 
         try:
-
             result = (
                 self.table.select("*")
                 .eq("business_id", str(business_id))
@@ -288,7 +266,6 @@ class ConversationRepository(BaseRepository):
             return result.data
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -310,7 +287,6 @@ class ConversationRepository(BaseRepository):
         """
 
         try:
-
             result = (
                 self.table.select("*")
                 .eq("business_id", str(business_id))
@@ -325,7 +301,6 @@ class ConversationRepository(BaseRepository):
             return result.data
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -349,7 +324,6 @@ class ConversationRepository(BaseRepository):
         """
 
         try:
-
             result = (
                 self.table.select("*")
                 .eq("business_id", str(business_id))
@@ -365,7 +339,6 @@ class ConversationRepository(BaseRepository):
             return result.data
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -389,7 +362,6 @@ class ConversationRepository(BaseRepository):
         """
 
         try:
-
             result = (
                 self.table.select("*")
                 .eq("business_id", str(business_id))
@@ -405,7 +377,6 @@ class ConversationRepository(BaseRepository):
             return result.data
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -427,7 +398,6 @@ class ConversationRepository(BaseRepository):
         """
 
         try:
-
             result = (
                 self.table.select("id", count="exact")
                 .eq("business_id", str(business_id))
@@ -439,7 +409,6 @@ class ConversationRepository(BaseRepository):
             return int(result.count or 0)
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise

@@ -11,8 +11,9 @@ Author:
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Iterable, Mapping
 from decimal import Decimal, InvalidOperation
-from typing import Any, Iterable, Mapping
+from typing import Any
 
 from app.utils.logger import logger
 
@@ -369,9 +370,7 @@ class BaseAnalytics:
         """
 
         return [
-            dict(record)
-            for record in records
-            if str(record.get("business_id")) == str(business_id)
+            dict(record) for record in records if str(record.get("business_id")) == str(business_id)
         ]
 
     def _only_completed_transactions(

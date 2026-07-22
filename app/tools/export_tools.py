@@ -13,7 +13,8 @@ from __future__ import annotations
 import csv
 import io
 import json
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from app.tools.analytics_tools import AnalyticsTools
 from app.utils.logger import logger
@@ -219,9 +220,7 @@ class ExportTools:
             "filename": f"{filename_prefix}.{export_format}",
             "format": export_format,
             "content": content,
-            "content_type": (
-                "application/json" if export_format == "json" else "text/csv"
-            ),
+            "content_type": ("application/json" if export_format == "json" else "text/csv"),
         }
 
     def _to_json(
@@ -333,9 +332,7 @@ class ExportTools:
         """
 
         if export_format not in self.SUPPORTED_FORMATS:
-            raise ValueError(
-                f"export_format must be one of {sorted(self.SUPPORTED_FORMATS)}."
-            )
+            raise ValueError(f"export_format must be one of {sorted(self.SUPPORTED_FORMATS)}.")
 
     def _validate_text(self, value: Any, *, field_name: str) -> None:
         """

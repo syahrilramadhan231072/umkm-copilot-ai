@@ -5,7 +5,8 @@ AI Assistant
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from app.frontend.assets import load_frontend_assets
 from app.frontend.navigation import render_navigation
@@ -29,7 +30,6 @@ from app.frontend.ui_components import (
     safe_text,
 )
 
-
 PAGE_NAME = "ai_assistant"
 
 
@@ -46,9 +46,7 @@ def render_page() -> None:
     """Render AI assistant page."""
 
     st = _get_streamlit()
-    st.set_page_config(
-        page_title="Go-UMKM AI · AI Assistant", page_icon="🤖", layout="wide"
-    )
+    st.set_page_config(page_title="Go-UMKM AI · AI Assistant", page_icon="🤖", layout="wide")
     load_frontend_assets(st, page_name=PAGE_NAME)
     ensure_frontend_session(st.session_state)
     st.session_state.setdefault("chat_messages", [])
@@ -76,7 +74,10 @@ def render_page() -> None:
         st,
         eyebrow="AI Chat",
         title="AI Business Assistant",
-        description="Ajukan pertanyaan bisnis, transaksi, produk, marketing, dan insight tanpa melihat raw provider errors.",
+        description=(
+            "Ajukan pertanyaan bisnis, transaksi, produk, marketing, dan insight "
+            "tanpa melihat raw provider errors."
+        ),
         icon="🤖",
     )
 
@@ -104,9 +105,7 @@ def _render_ai_metrics(st: Any) -> None:
 
     cols = st.columns(4)
     with cols[0]:
-        render_metric_card(
-            st, label="Mode", value="Business", caption="context-aware", icon="🤖"
-        )
+        render_metric_card(st, label="Mode", value="Business", caption="context-aware", icon="🤖")
     with cols[1]:
         render_metric_card(
             st,
@@ -147,9 +146,7 @@ def _render_suggested_prompts(st: Any) -> None:
     cols = st.columns(len(SUGGESTED_PROMPTS))
     for index, prompt in enumerate(SUGGESTED_PROMPTS):
         with cols[index]:
-            if st.button(
-                prompt, key=f"suggested_prompt_{index}", use_container_width=True
-            ):
+            if st.button(prompt, key=f"suggested_prompt_{index}", use_container_width=True):
                 st.session_state["go_pending_prompt"] = prompt
                 st.rerun()
 
@@ -176,7 +173,9 @@ def _render_chat(
         render_empty_state(
             st,
             title="Belum ada percakapan",
-            description="Mulai dengan pertanyaan tentang produk, transaksi, insight, atau marketing.",
+            description=(
+                "Mulai dengan pertanyaan tentang produk, transaksi, insight, atau marketing."
+            ),
             icon="💬",
         )
 
@@ -187,14 +186,10 @@ def _render_chat(
             st.markdown(content)
 
     pending_prompt = str(st.session_state.pop("go_pending_prompt", "")).strip()
-    user_input = pending_prompt or st.chat_input(
-        "Tanyakan sesuatu tentang bisnis Anda..."
-    )
+    user_input = pending_prompt or st.chat_input("Tanyakan sesuatu tentang bisnis Anda...")
 
     if user_input:
-        st.session_state["chat_messages"].append(
-            {"role": "user", "content": user_input}
-        )
+        st.session_state["chat_messages"].append({"role": "user", "content": user_input})
         with st.spinner("Go-UMKM AI sedang menyusun jawaban..."):
             response = client.route(
                 user_input=user_input,
@@ -207,9 +202,7 @@ def _render_chat(
                 },
             )
         answer = _answer(response)
-        st.session_state["chat_messages"].append(
-            {"role": "assistant", "content": answer}
-        )
+        st.session_state["chat_messages"].append({"role": "assistant", "content": answer})
         st.rerun()
 
 
@@ -231,7 +224,10 @@ def _render_chat_controls(st: Any) -> None:
         render_action_card(
             st,
             title="Helpful assistant",
-            description="Gunakan bahasa natural. Sistem akan menyembunyikan error teknis provider dari user.",
+            description=(
+                "Gunakan bahasa natural. Sistem akan menyembunyikan error teknis "
+                "provider dari user."
+            ),
             icon="✨",
             badge="Safe UX",
         )
@@ -243,9 +239,7 @@ def _answer(response: Mapping[str, Any]) -> str:
     if not response.get("success"):
         return error_message(dict(response))
 
-    answer = _find_text_value(
-        response, keys=("answer", "text", "message", "response", "content")
-    )
+    answer = _find_text_value(response, keys=("answer", "text", "message", "response", "content"))
     if answer:
         return answer
 

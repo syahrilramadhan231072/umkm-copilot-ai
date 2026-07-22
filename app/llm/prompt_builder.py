@@ -12,8 +12,9 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Mapping
 from string import Formatter
-from typing import Any, Mapping
+from typing import Any
 
 from app.utils.logger import logger
 
@@ -64,9 +65,7 @@ class PromptBuilder:
 
         if missing_variables:
             raise ValueError(
-                "Missing prompt variables: "
-                + ", ".join(sorted(missing_variables))
-                + "."
+                "Missing prompt variables: " + ", ".join(sorted(missing_variables)) + "."
             )
 
         rendered = template.format_map(

@@ -26,9 +26,7 @@ class FakeAnalyticsTools:
 
         self.fail = fail
 
-    def build_dashboard_payload(
-        self, business_id: str, limit: int = 1000
-    ) -> dict[str, Any]:
+    def build_dashboard_payload(self, business_id: str, limit: int = 1000) -> dict[str, Any]:
         """Return dashboard response."""
 
         return self._response("build_dashboard_payload", business_id, limit)
@@ -38,23 +36,17 @@ class FakeAnalyticsTools:
 
         return self._response("get_sales_summary", business_id, limit)
 
-    def get_inventory_summary(
-        self, business_id: str, limit: int = 1000
-    ) -> dict[str, Any]:
+    def get_inventory_summary(self, business_id: str, limit: int = 1000) -> dict[str, Any]:
         """Return inventory response."""
 
         return self._response("get_inventory_summary", business_id, limit)
 
-    def get_product_summary(
-        self, business_id: str, limit: int = 1000
-    ) -> dict[str, Any]:
+    def get_product_summary(self, business_id: str, limit: int = 1000) -> dict[str, Any]:
         """Return product response."""
 
         return self._response("get_product_summary", business_id, limit)
 
-    def get_customer_summary(
-        self, business_id: str, limit: int = 1000
-    ) -> dict[str, Any]:
+    def get_customer_summary(self, business_id: str, limit: int = 1000) -> dict[str, Any]:
         """Return customer response."""
 
         return self._response("get_customer_summary", business_id, limit)
@@ -98,9 +90,7 @@ def test_analytics_sales_endpoint_returns_failure_status() -> None:
     """Assert analytics sales endpoint returns HTTP 400 on tool failure."""
 
     app = create_app()
-    app.dependency_overrides[get_analytics_tools] = lambda: FakeAnalyticsTools(
-        fail=True
-    )
+    app.dependency_overrides[get_analytics_tools] = lambda: FakeAnalyticsTools(fail=True)
     client = TestClient(app)
 
     response = client.get("/api/v1/analytics/sales/business-1")

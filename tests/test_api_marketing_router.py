@@ -10,7 +10,8 @@ Author:
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from fastapi.testclient import TestClient
 
@@ -110,19 +111,14 @@ def test_marketing_context_endpoint_returns_success() -> None:
     app.dependency_overrides.clear()
 
     assert response.status_code == 200
-    assert (
-        response.json()["data"]["product_marketing_context"]["product_id"]
-        == "product-1"
-    )
+    assert response.json()["data"]["product_marketing_context"]["product_id"] == "product-1"
 
 
 def test_marketing_context_endpoint_returns_failure_status() -> None:
     """Assert marketing context endpoint returns HTTP 400 on agent failure."""
 
     app = create_app()
-    app.dependency_overrides[get_marketing_agent] = lambda: FakeMarketingAgent(
-        fail=True
-    )
+    app.dependency_overrides[get_marketing_agent] = lambda: FakeMarketingAgent(fail=True)
     client = TestClient(app)
 
     response = client.post(

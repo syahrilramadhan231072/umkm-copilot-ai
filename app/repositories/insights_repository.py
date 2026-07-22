@@ -48,7 +48,6 @@ class InsightsRepository(BaseRepository):
         """
 
         try:
-
             result = self.table.insert(data).execute()
 
             if not result.data:
@@ -59,7 +58,6 @@ class InsightsRepository(BaseRepository):
             return result.data[0]
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -79,7 +77,6 @@ class InsightsRepository(BaseRepository):
         """
 
         try:
-
             result = self.table.select("*").eq("id", str(insight_id)).limit(1).execute()
 
             if result.data:
@@ -88,7 +85,6 @@ class InsightsRepository(BaseRepository):
             return None
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -110,7 +106,6 @@ class InsightsRepository(BaseRepository):
         """
 
         try:
-
             query = (
                 self.table.select("*")
                 .order(
@@ -128,7 +123,6 @@ class InsightsRepository(BaseRepository):
             return result.data
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -153,7 +147,6 @@ class InsightsRepository(BaseRepository):
         """
 
         try:
-
             result = self.table.update(values).eq("id", str(insight_id)).execute()
 
             if not result.data:
@@ -164,7 +157,6 @@ class InsightsRepository(BaseRepository):
             return result.data[0]
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -181,13 +173,11 @@ class InsightsRepository(BaseRepository):
         """
 
         try:
-
             (self.table.delete().eq("id", str(insight_id)).execute())
 
             logger.success("Insight deleted.")
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -207,7 +197,6 @@ class InsightsRepository(BaseRepository):
         """
 
         try:
-
             query = self.table.select("id", count="exact").limit(1)
 
             if business_id is not None:
@@ -218,7 +207,6 @@ class InsightsRepository(BaseRepository):
             return int(result.count or 0)
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -238,15 +226,11 @@ class InsightsRepository(BaseRepository):
         """
 
         try:
-
-            result = (
-                self.table.select("id").eq("id", str(insight_id)).limit(1).execute()
-            )
+            result = self.table.select("id").eq("id", str(insight_id)).limit(1).execute()
 
             return bool(result.data)
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -270,7 +254,6 @@ class InsightsRepository(BaseRepository):
         """
 
         try:
-
             result = (
                 self.table.select("*")
                 .eq("business_id", str(business_id))
@@ -286,7 +269,6 @@ class InsightsRepository(BaseRepository):
             return result.data
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -308,7 +290,6 @@ class InsightsRepository(BaseRepository):
         """
 
         try:
-
             result = (
                 self.table.select("*")
                 .eq("business_id", str(business_id))
@@ -323,7 +304,6 @@ class InsightsRepository(BaseRepository):
             return result.data
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -347,7 +327,6 @@ class InsightsRepository(BaseRepository):
         """
 
         try:
-
             keyword = keyword.strip()
 
             if not keyword:
@@ -368,7 +347,6 @@ class InsightsRepository(BaseRepository):
             return result.data
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise

@@ -34,9 +34,7 @@ def test_prompt_builder_detects_required_variables() -> None:
     """Assert PromptBuilder detects required variables."""
 
     builder = PromptBuilder()
-    variables = builder.get_required_variables(
-        "Halo {business_name}, context: {business_context}"
-    )
+    variables = builder.get_required_variables("Halo {business_name}, context: {business_context}")
 
     assert variables == ["business_context", "business_name"]
 

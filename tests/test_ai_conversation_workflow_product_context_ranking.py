@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from app.workflows.ai_conversation_workflow import AIConversationWorkflow
 
@@ -56,7 +57,12 @@ class FakeProductTools:
 
 
 class FakeConversationTools:
-    def build_session_history(self, business_id: str, session_id: str, limit: int = 100) -> dict[str, Any]:
+    def build_session_history(
+        self,
+        business_id: str,
+        session_id: str,
+        limit: int = 100,
+    ) -> dict[str, Any]:
         return {"success": True, "data": [], "error": None}
 
     def save_message(
@@ -88,4 +94,6 @@ def test_ai_conversation_workflow_adds_active_products_and_ranked_dashboard_cont
     assert response["success"] is True
     assert ai_service.context is not None
     assert ai_service.context["products"][0]["name"] == "Brownies Hot"
-    assert ai_service.context["dashboard"]["top_products_by_quantity"][0]["key"] == "Americano Large"
+    assert (
+        ai_service.context["dashboard"]["top_products_by_quantity"][0]["key"] == "Americano Large"
+    )

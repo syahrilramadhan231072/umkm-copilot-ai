@@ -1,0 +1,18 @@
+--- a/app/workflows/transaction_workflow.py
++++ b/app/workflows/transaction_workflow.py
+@@ -413,7 +413,14 @@
+     ) -> dict[str, Any]:
+         """Build failure response from exception."""
+ 
+-        self._logger.exception("Workflow failed: %s", workflow_name)
++        if isinstance(error, ValueError):
++            self._logger.warning(
++                "Workflow validation failed: {} - {}",
++                workflow_name,
++                error,
++            )
++        else:
++            self._logger.exception("Workflow failed: {}", workflow_name)
+ 
+         return {
+             "success": False,

@@ -7,9 +7,8 @@ Environment-backed configuration for ProviderManager and providers.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import os
-
+from dataclasses import dataclass
 
 DEFAULT_PROVIDER_PRIORITY = "gemini,openrouter,huggingface,ollama"
 
@@ -55,17 +54,10 @@ class ProviderManagerConfig:
 def _parse_provider_priority(raw_value: str) -> tuple[str, ...]:
     """Parse comma-separated provider priority."""
 
-    values = tuple(
-        value.strip().lower()
-        for value in raw_value.split(",")
-        if value.strip()
-    )
+    values = tuple(value.strip().lower() for value in raw_value.split(",") if value.strip())
 
     if not values:
-        return tuple(
-            value.strip()
-            for value in DEFAULT_PROVIDER_PRIORITY.split(",")
-        )
+        return tuple(value.strip() for value in DEFAULT_PROVIDER_PRIORITY.split(","))
 
     return values
 

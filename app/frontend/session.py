@@ -7,13 +7,14 @@ Helper session state untuk Streamlit.
 
 from __future__ import annotations
 
-from typing import Any, Mapping, MutableMapping
+from collections.abc import Mapping, MutableMapping
+from typing import Any
 from uuid import UUID, uuid4
 
 from app.frontend.api_client import FrontendApiClient
+from app.frontend.config import DEFAULT_LOCAL_API_BASE_URL, get_frontend_api_base_url
 
-
-DEFAULT_API_BASE_URL = "http://127.0.0.1:8000"
+DEFAULT_API_BASE_URL = DEFAULT_LOCAL_API_BASE_URL
 DEFAULT_BUSINESS_ID = ""
 DEFAULT_LIMIT = 1000
 DEFAULT_CURRENCY = "IDR"
@@ -25,7 +26,7 @@ DEFAULT_PRODUCT_ID = ""
 def ensure_frontend_session(session_state: MutableMapping[str, Any]) -> None:
     """Pastikan semua kunci session tersedia."""
 
-    session_state.setdefault("api_base_url", DEFAULT_API_BASE_URL)
+    session_state.setdefault("api_base_url", get_frontend_api_base_url())
     session_state.setdefault("business_id", DEFAULT_BUSINESS_ID)
     session_state.setdefault("dashboard_limit", DEFAULT_LIMIT)
     session_state.setdefault("business_name", "")

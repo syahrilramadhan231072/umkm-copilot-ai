@@ -10,7 +10,8 @@ Author:
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from app.agents.export_agent import ExportAgent
 from app.agents.insight_agent import InsightAgent
@@ -239,7 +240,15 @@ class RouterAgent:
         if self._is_conversation_prompt(lowered):
             return "conversation"
 
+        if self._is_business_intelligence_question(lowered):
+            return "conversation"
+
+        if self._is_transaction_record_prompt(lowered):
+            return "transaction"
+
         for route_name, keywords in self.ROUTE_KEYWORDS.items():
+            if route_name == "transaction":
+                continue
             if any(keyword in lowered for keyword in keywords):
                 return route_name
 
@@ -339,6 +348,79 @@ class RouterAgent:
             return True
 
         return lowered_input.startswith(self.QUESTION_PREFIXES)
+
+    def _is_business_intelligence_question(self, lowered_input: str) -> bool:
+        """Return True when user asks the assistant to read business data."""
+
+        direct_bi_phrases = (
+            "produk apa",
+            "produk yang",
+            "produk terjual",
+            "apa yang terjual",
+            "paling laku",
+            "terlaris",
+            "paling laris",
+            "kurang laku",
+            "tidak laku",
+            "belum terjual",
+            "tidak terjual",
+            "stok menipis",
+            "stok habis",
+            "margin",
+            "alert",
+            "kesehatan bisnis",
+            "business health",
+        )
+        if any(phrase in lowered_input for phrase in direct_bi_phrases):
+            return True
+
+        analysis_markers = (
+            "bantu",
+            "baca",
+            "membaca",
+            "analisa",
+            "analisis",
+            "ringkas",
+            "rangkum",
+            "cek data",
+            "lihat data",
+            "tampilkan data",
+        )
+        business_markers = (
+            "produk",
+            "transaksi",
+            "penjualan",
+            "stok",
+            "stock",
+            "margin",
+            "alert",
+            "kesehatan",
+        )
+
+        return any(marker in lowered_input for marker in analysis_markers) and any(
+            marker in lowered_input for marker in business_markers
+        )
+
+    def _is_transaction_record_prompt(self, lowered_input: str) -> bool:
+        """Return True when user wants to create or record a transaction."""
+
+        record_markers = (
+            "catat transaksi",
+            "catat penjualan",
+            "input transaksi",
+            "input penjualan",
+            "rekam transaksi",
+            "rekam penjualan",
+            "tambah transaksi",
+            "buat transaksi",
+            "record sale",
+            "record transaction",
+            "simpan transaksi",
+            "saya jual",
+            "terjual sebanyak",
+        )
+
+        return any(marker in lowered_input for marker in record_markers)
 
     def _save_optional_user_message(
         self,

@@ -8,8 +8,8 @@ providers.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import time
+from dataclasses import dataclass
 from typing import Any
 
 from app.llm.providers.base import BaseLLMProvider
@@ -257,9 +257,7 @@ class ProviderManager:
         if health.average_latency_seconds is None:
             health.average_latency_seconds = elapsed
         else:
-            health.average_latency_seconds = (
-                health.average_latency_seconds * 0.8 + elapsed * 0.2
-            )
+            health.average_latency_seconds = health.average_latency_seconds * 0.8 + elapsed * 0.2
 
     def _record_failure(self, provider: BaseLLMProvider, elapsed: float) -> None:
         """Record failed provider call and update circuit breaker."""
@@ -276,18 +274,11 @@ class ProviderManager:
         if health.average_latency_seconds is None:
             health.average_latency_seconds = elapsed
         else:
-            health.average_latency_seconds = (
-                health.average_latency_seconds * 0.8 + elapsed * 0.2
-            )
+            health.average_latency_seconds = health.average_latency_seconds * 0.8 + elapsed * 0.2
 
-        if (
-            health.consecutive_failures
-            >= self._config.circuit_breaker_failure_threshold
-        ):
+        if health.consecutive_failures >= self._config.circuit_breaker_failure_threshold:
             health.available = False
-            health.unavailable_until = (
-                now + self._config.circuit_breaker_cooldown_seconds
-            )
+            health.unavailable_until = now + self._config.circuit_breaker_cooldown_seconds
 
     def _sleep_before_retry(self, attempt_number: int) -> None:
         """Sleep with exponential backoff."""

@@ -10,7 +10,8 @@ Author:
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from app.analytics.base_analytics import BaseAnalytics
 from app.repositories.transaction_repository import TransactionRepository
@@ -64,9 +65,7 @@ class CustomerAnalytics(BaseAnalytics):
                 limit=limit,
             )
         )
-        customer_keys = [
-            self._extract_customer_key(transaction) for transaction in transactions
-        ]
+        customer_keys = [self._extract_customer_key(transaction) for transaction in transactions]
         known_customer_keys = [key for key in customer_keys if key != "anonymous"]
 
         return {

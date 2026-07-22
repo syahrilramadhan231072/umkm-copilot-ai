@@ -5,9 +5,10 @@ Status Onboarding
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
-from typing import Any, Mapping
+from typing import Any
 from uuid import UUID
 
 
@@ -42,9 +43,7 @@ def build_onboarding_state(
     business_profile_ready = is_valid_uuid(business_id)
     dashboard_data = _extract_dashboard_data(dashboard_response)
 
-    product_ready = bool(str(product_id).strip()) or _has_products_from_dashboard(
-        dashboard_data
-    )
+    product_ready = bool(str(product_id).strip()) or _has_products_from_dashboard(dashboard_data)
     has_transactions = _has_transactions_from_dashboard_data(dashboard_data)
 
     dashboard_ready = business_profile_ready and has_transactions
@@ -58,9 +57,7 @@ def build_onboarding_state(
     else:
         next_step = "dashboard"
 
-    completed_steps = (
-        int(business_profile_ready) + int(product_ready) + int(has_transactions)
-    )
+    completed_steps = int(business_profile_ready) + int(product_ready) + int(has_transactions)
     completion_percent = int((completed_steps / 3) * 100)
 
     return OnboardingState(

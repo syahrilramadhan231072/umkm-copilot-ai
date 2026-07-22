@@ -2,30 +2,61 @@
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from app.agents.router_agent import RouterAgent
 
 
 class FakeDomainAgent:
-    def handle_transaction(self, payload: Mapping[str, Any], *, intent: str = "record_transaction") -> dict[str, Any]:
+    def handle_transaction(
+        self,
+        payload: Mapping[str, Any],
+        *,
+        intent: str = "record_transaction",
+    ) -> dict[str, Any]:
         return {"success": True, "workflow": {}, "data": {}, "error": None}
 
-    def handle_marketing(self, payload: Mapping[str, Any], *, intent: str = "marketing_context") -> dict[str, Any]:
+    def handle_marketing(
+        self,
+        payload: Mapping[str, Any],
+        *,
+        intent: str = "marketing_context",
+    ) -> dict[str, Any]:
         return {"success": True, "workflow": {}, "data": {}, "error": None}
 
-    def handle_insight(self, payload: Mapping[str, Any], *, intent: str = "insight_context") -> dict[str, Any]:
+    def handle_insight(
+        self,
+        payload: Mapping[str, Any],
+        *,
+        intent: str = "insight_context",
+    ) -> dict[str, Any]:
         return {"success": True, "workflow": {}, "data": {}, "error": None}
 
-    def handle_export(self, payload: Mapping[str, Any], *, intent: str = "export_dashboard") -> dict[str, Any]:
+    def handle_export(
+        self,
+        payload: Mapping[str, Any],
+        *,
+        intent: str = "export_dashboard",
+    ) -> dict[str, Any]:
         return {"success": True, "workflow": {}, "data": {}, "error": None}
 
 
 class FakeBusinessWorkflow:
-    def run_business_overview(self, business_id: str, limit: int = 1000, session_id: str | None = None) -> dict[str, Any]:
+    def run_business_overview(
+        self,
+        business_id: str,
+        limit: int = 1000,
+        session_id: str | None = None,
+    ) -> dict[str, Any]:
         return {"success": True, "workflow": "business", "data": {}, "error": None}
 
-    def run_business_health_check(self, business_id: str, limit: int = 1000, session_id: str | None = None) -> dict[str, Any]:
+    def run_business_health_check(
+        self,
+        business_id: str,
+        limit: int = 1000,
+        session_id: str | None = None,
+    ) -> dict[str, Any]:
         return {"success": True, "workflow": "business", "data": {}, "error": None}
 
 

@@ -11,7 +11,7 @@ class FailingProvider(BaseLLMProvider):
     provider_name = "failing"
 
     @classmethod
-    def from_env(cls, *, timeout_seconds: float) -> "FailingProvider":
+    def from_env(cls, *, timeout_seconds: float) -> FailingProvider:
         return cls(model_name="fake", timeout_seconds=timeout_seconds)
 
     def is_configured(self) -> bool:
@@ -31,7 +31,7 @@ class UnauthorizedProvider(BaseLLMProvider):
     attempts = 0
 
     @classmethod
-    def from_env(cls, *, timeout_seconds: float) -> "UnauthorizedProvider":
+    def from_env(cls, *, timeout_seconds: float) -> UnauthorizedProvider:
         return cls(model_name="fake", timeout_seconds=timeout_seconds)
 
     def is_configured(self) -> bool:
@@ -51,7 +51,7 @@ class SuccessProvider(BaseLLMProvider):
     provider_name = "success"
 
     @classmethod
-    def from_env(cls, *, timeout_seconds: float) -> "SuccessProvider":
+    def from_env(cls, *, timeout_seconds: float) -> SuccessProvider:
         return cls(model_name="fake", timeout_seconds=timeout_seconds)
 
     def is_configured(self) -> bool:

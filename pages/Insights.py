@@ -5,7 +5,8 @@ Insights
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from app.frontend.assets import load_frontend_assets
 from app.frontend.navigation import render_navigation
@@ -31,7 +32,6 @@ from app.frontend.ui_components import (
     safe_text,
 )
 
-
 PAGE_NAME = "insights"
 
 
@@ -39,9 +39,7 @@ def render_page() -> None:
     """Render insights workspace."""
 
     st = _get_streamlit()
-    st.set_page_config(
-        page_title="Go-UMKM AI · Insights", page_icon="💡", layout="wide"
-    )
+    st.set_page_config(page_title="Go-UMKM AI · Insights", page_icon="💡", layout="wide")
     load_frontend_assets(st, page_name=PAGE_NAME)
     ensure_frontend_session(st.session_state)
 
@@ -68,7 +66,9 @@ def render_page() -> None:
         st,
         eyebrow="Insights",
         title="Business Insights & Recommendations",
-        description="Ubah data operasional menjadi rekomendasi, forecast, dan sinyal kesehatan bisnis.",
+        description=(
+            "Ubah data operasional menjadi rekomendasi, forecast, dan sinyal kesehatan bisnis."
+        ),
         icon="💡",
     )
 
@@ -110,9 +110,7 @@ def _render_insight_metrics(
 
     context = response_data(context_response)
     review = response_data(review_response)
-    recommendations = find_items(
-        review, ("insights", "recommendations", "records", "items")
-    )
+    recommendations = find_items(review, ("insights", "recommendations", "records", "items"))
     forecasts = find_items(context, ("forecasts", "forecast", "trends"))
 
     cols = st.columns(4)
@@ -178,7 +176,9 @@ def _render_forecast_cards(st: Any, response: Mapping[str, Any]) -> None:
         forecasts = [
             {
                 "title": "Demand Signal",
-                "description": "Pantau produk dengan penjualan meningkat untuk menentukan stok dan promosi.",
+                "description": (
+                    "Pantau produk dengan penjualan meningkat untuk menentukan stok dan promosi."
+                ),
             },
             {
                 "title": "Inventory Signal",
@@ -196,9 +196,7 @@ def _render_forecast_cards(st: Any, response: Mapping[str, Any]) -> None:
             render_action_card(
                 st,
                 title=safe_text(
-                    forecast.get("title")
-                    or forecast.get("name")
-                    or f"Forecast {index + 1}"
+                    forecast.get("title") or forecast.get("name") or f"Forecast {index + 1}"
                 ),
                 description=safe_text(
                     forecast.get("description")
@@ -248,9 +246,7 @@ def _render_recommendation_cards(st: Any, response: Mapping[str, Any]) -> None:
             render_action_card(
                 st,
                 title=safe_text(
-                    record.get("title")
-                    or record.get("insight_title")
-                    or f"Insight {index + 1}"
+                    record.get("title") or record.get("insight_title") or f"Insight {index + 1}"
                 ),
                 description=safe_text(
                     record.get("description")
@@ -278,17 +274,13 @@ def _render_create_insight(
     )
 
     with st.form("go_insight_form"):
-        category = st.selectbox(
-            "Category", ["sales", "inventory", "marketing", "growth", "risk"]
-        )
+        category = st.selectbox("Category", ["sales", "inventory", "marketing", "growth", "risk"])
         title = st.text_input("Insight title", value="Rekomendasi Bisnis Harian")
         recommendation = st.text_area(
             "Recommendation",
             value="Tinjau produk terlaris dan stok rendah sebelum menjalankan promosi.",
         )
-        submitted = st.form_submit_button(
-            "Save Insight", type="primary", use_container_width=True
-        )
+        submitted = st.form_submit_button("Save Insight", type="primary", use_container_width=True)
 
     if submitted:
         response = client.create_insight(

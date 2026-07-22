@@ -6,7 +6,8 @@ Export
 from __future__ import annotations
 
 import json
-from typing import Any, Callable, Mapping
+from collections.abc import Callable, Mapping
+from typing import Any
 
 from app.frontend.assets import load_frontend_assets
 from app.frontend.navigation import render_navigation
@@ -28,7 +29,6 @@ from app.frontend.ui_components import (
     render_section_header,
     safe_text,
 )
-
 
 PAGE_NAME = "export"
 
@@ -64,7 +64,9 @@ def render_page() -> None:
         st,
         eyebrow="Reports",
         title="Download Center",
-        description="Unduh laporan dashboard, sales summary, inventory summary, dan structured data.",
+        description=(
+            "Unduh laporan dashboard, sales summary, inventory summary, dan structured data."
+        ),
         icon="⬇️",
     )
 
@@ -260,10 +262,7 @@ def _extract_file_content(data: Any) -> str:
 
     if isinstance(data, Mapping):
         content = (
-            data.get("content")
-            or data.get("file_content")
-            or data.get("csv")
-            or data.get("json")
+            data.get("content") or data.get("file_content") or data.get("csv") or data.get("json")
         )
         if isinstance(content, str):
             return content

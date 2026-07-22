@@ -110,9 +110,7 @@ def test_load_frontend_assets_loads_css_and_html(tmp_path: Path) -> None:
 
     partial_dir = tmp_path / "partials"
     partial_dir.mkdir()
-    (partial_dir / "dashboard.html").write_text(
-        "<section>Dashboard</section>", encoding="utf-8"
-    )
+    (partial_dir / "dashboard.html").write_text("<section>Dashboard</section>", encoding="utf-8")
 
     st = FakeStreamlit()
     status = load_frontend_assets(

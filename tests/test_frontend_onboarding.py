@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from app.frontend.onboarding import build_onboarding_state, is_valid_uuid
 
-
 VALID_UUID = "11111111-1111-4111-8111-111111111111"
 
 

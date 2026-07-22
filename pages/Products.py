@@ -7,7 +7,8 @@ Halaman untuk melihat, memilih, dan menambahkan produk pada business aktif.
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from app.frontend.assets import load_frontend_assets
 from app.frontend.navigation import render_navigation, switch_page
@@ -35,7 +36,6 @@ from app.frontend.ui_components import (
     render_locked_page,
     render_progress_indicator,
 )
-
 
 PAGE_NAME = "products"
 
@@ -92,7 +92,10 @@ def render_page() -> None:
     if not state.business_profile_ready:
         render_locked_page(
             st,
-            message="Belum ada business aktif. Pilih business existing atau buat business baru terlebih dahulu.",
+            message=(
+                "Belum ada business aktif. Pilih business existing atau buat "
+                "business baru terlebih dahulu."
+            ),
             state=state,
             next_action_label="Kembali ke Profil Bisnis",
             next_page="pages/Business_Profile.py",
@@ -183,18 +186,14 @@ def _render_existing_products(st: Any, client: Any, business_id: str) -> None:
         products = _refresh_products(st, client, business_id)
 
     if not products:
-        st.info(
-            "Belum ada produk pada business aktif. Tambahkan produk baru di form bawah."
-        )
+        st.info("Belum ada produk pada business aktif. Tambahkan produk baru di form bawah.")
         return
 
     table_rows = [_product_table_row(product) for product in products]
     st.dataframe(table_rows, use_container_width=True, hide_index=True)
 
     product_options = {
-        _product_label(product): product
-        for product in products
-        if _get_product_id(product)
+        _product_label(product): product for product in products if _get_product_id(product)
     }
     if not product_options:
         st.warning("Produk ditemukan, tetapi tidak ada product_id yang valid.")
@@ -288,9 +287,7 @@ def _refresh_products(st: Any, client: Any, business_id: str) -> list[dict[str, 
     data = response.get("data", {})
     raw_products: Any
     if isinstance(data, Mapping):
-        raw_products = (
-            data.get("products") or data.get("items") or data.get("data") or []
-        )
+        raw_products = data.get("products") or data.get("items") or data.get("data") or []
     elif isinstance(data, list):
         raw_products = data
     else:
@@ -299,9 +296,7 @@ def _refresh_products(st: Any, client: Any, business_id: str) -> list[dict[str, 
     if isinstance(raw_products, Mapping):
         raw_products = [raw_products]
 
-    products = [
-        dict(product) for product in raw_products if isinstance(product, Mapping)
-    ]
+    products = [dict(product) for product in raw_products if isinstance(product, Mapping)]
     set_backend_products(st.session_state, products)
     return products
 
@@ -360,10 +355,7 @@ def _get_product_name(product: Mapping[str, Any]) -> str:
     """Ambil product name."""
 
     return str(
-        product.get("name")
-        or product.get("product_name")
-        or product.get("id")
-        or "Produk"
+        product.get("name") or product.get("product_name") or product.get("id") or "Produk"
     ).strip()
 
 

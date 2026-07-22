@@ -53,9 +53,7 @@ def _business_id(repository: BusinessRepository) -> str:
     return str(profile["id"])
 
 
-def _create_product(
-    business_id: str, repository: ProductRepository
-) -> dict[str, object]:
+def _create_product(business_id: str, repository: ProductRepository) -> dict[str, object]:
     """Create a product for transaction integration test."""
     token = uuid4().hex[:12]
     return ProductService(repository).create_product(

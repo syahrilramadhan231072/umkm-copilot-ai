@@ -14,11 +14,11 @@ Catatan:
 from __future__ import annotations
 
 import json
-from typing import Any, Callable, Mapping
+from collections.abc import Callable, Mapping
+from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
-
 
 Transport = Callable[
     [str, str, dict[str, str], bytes | None, float],
@@ -31,7 +31,7 @@ class FrontendApiClient:
 
     def __init__(
         self,
-        api_base_url: str = "http://127.0.0.1:8000",
+        api_base_url: str = "http://localhost:8000",
         *,
         timeout: float = 20.0,
         transport: Transport | None = None,
@@ -492,18 +492,21 @@ class FrontendApiClient:
 
         except HTTPError as exc:
             return self._handle_http_error(exc)
-        except URLError as exc:
+        except URLError:
             return self._failure_response(
                 "ConnectionError",
-                f"Tidak dapat terhubung ke layanan: {exc.reason}",
+                "Layanan backend belum dapat dijangkau. Periksa konfigurasi API base URL.",
             )
         except TimeoutError:
             return self._failure_response(
                 "TimeoutError",
-                "Permintaan melewati batas waktu.",
+                "Permintaan melewati batas waktu. Silakan coba lagi.",
             )
         except Exception as exc:
-            return self._failure_response(exc.__class__.__name__, str(exc))
+            return self._failure_response(
+                exc.__class__.__name__,
+                "Layanan belum dapat memproses permintaan. Silakan coba lagi.",
+            )
 
     def _urllib_transport(
         self,
@@ -535,7 +538,7 @@ class FrontendApiClient:
         except Exception:
             return self._failure_response(
                 "HTTPError",
-                f"Layanan mengembalikan status {error.code}.",
+                "Layanan mengembalikan respons yang belum dapat diproses.",
                 status_code=int(error.code),
             )
 

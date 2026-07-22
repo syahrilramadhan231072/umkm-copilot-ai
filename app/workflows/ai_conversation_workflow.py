@@ -10,7 +10,8 @@ language generation to AIGenerationService. It never calls Gemini directly.
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from app.services.ai_generation_service import AIGenerationService
 from app.tools.analytics_tools import AnalyticsTools
@@ -234,13 +235,7 @@ class AIConversationWorkflow:
             if not isinstance(product, Mapping):
                 continue
 
-            compacted.append(
-                {
-                    key: product.get(key)
-                    for key in allowed_keys
-                    if key in product
-                }
-            )
+            compacted.append({key: product.get(key) for key in allowed_keys if key in product})
 
         return compacted
 
@@ -328,11 +323,7 @@ class AIConversationWorkflow:
             "top_products_by_quantity",
         )
 
-        return {
-            key: dashboard_data.get(key)
-            for key in allowed_keys
-            if key in dashboard_data
-        }
+        return {key: dashboard_data.get(key) for key in allowed_keys if key in dashboard_data}
 
     def _failure(
         self,

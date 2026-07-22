@@ -62,8 +62,7 @@ class FakeConversationService:
                 "agent": "" if record.get("agent") is None else str(record["agent"]),
             }
             for record in self.records
-            if record["business_id"] == business_id
-            and record["session_id"] == session_id
+            if record["business_id"] == business_id and record["session_id"] == session_id
         ][-limit:]
 
     def count_session_messages(self, business_id: str, session_id: str) -> int:
@@ -73,8 +72,7 @@ class FakeConversationService:
             [
                 record
                 for record in self.records
-                if record["business_id"] == business_id
-                and record["session_id"] == session_id
+                if record["business_id"] == business_id and record["session_id"] == session_id
             ]
         )
 
@@ -82,9 +80,7 @@ class FakeConversationService:
         """Delete fake conversation message."""
 
         before_count = len(self.records)
-        self.records = [
-            record for record in self.records if record["id"] != conversation_id
-        ]
+        self.records = [record for record in self.records if record["id"] != conversation_id]
 
         return len(self.records) < before_count
 

@@ -7,7 +7,8 @@ Halaman untuk mencatat transaksi pada business aktif.
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from app.frontend.assets import load_frontend_assets
 from app.frontend.navigation import render_navigation, switch_page
@@ -31,7 +32,6 @@ from app.frontend.ui_components import (
     render_locked_page,
     render_progress_indicator,
 )
-
 
 PAGE_NAME = "transactions"
 
@@ -197,9 +197,7 @@ def _load_products(st: Any, client: Any, business_id: str) -> list[dict[str, Any
         loaded_products = data.get("products", []) if isinstance(data, Mapping) else []
         if isinstance(loaded_products, list):
             products = [
-                dict(product)
-                for product in loaded_products
-                if isinstance(product, Mapping)
+                dict(product) for product in loaded_products if isinstance(product, Mapping)
             ]
             set_backend_products(st.session_state, products)
             return products
@@ -210,11 +208,7 @@ def _load_products(st: Any, client: Any, business_id: str) -> list[dict[str, Any
 def _select_product(st: Any, products: list[dict[str, Any]]) -> dict[str, Any]:
     """Render pilihan produk."""
 
-    options = {
-        _product_label(product): product
-        for product in products
-        if _get_product_id(product)
-    }
+    options = {_product_label(product): product for product in products if _get_product_id(product)}
 
     if not options:
         return {}
@@ -249,10 +243,7 @@ def _get_product_name(product: Mapping[str, Any]) -> str:
     """Ambil product name."""
 
     return str(
-        product.get("name")
-        or product.get("product_name")
-        or product.get("id")
-        or "Produk"
+        product.get("name") or product.get("product_name") or product.get("id") or "Produk"
     ).strip()
 
 

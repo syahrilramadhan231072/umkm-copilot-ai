@@ -16,8 +16,9 @@ Author:
 
 from __future__ import annotations
 
+import builtins
 from datetime import date
-from typing import Any, List
+from typing import Any
 from uuid import UUID
 
 from app.repositories.base_repository import BaseRepository
@@ -49,7 +50,6 @@ class TransactionRepository(BaseRepository):
         """
 
         try:
-
             result = self.table.insert(data).execute()
 
             if not result.data:
@@ -60,7 +60,6 @@ class TransactionRepository(BaseRepository):
             return result.data[0]
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -80,10 +79,7 @@ class TransactionRepository(BaseRepository):
         """
 
         try:
-
-            result = (
-                self.table.select("*").eq("id", str(transaction_id)).limit(1).execute()
-            )
+            result = self.table.select("*").eq("id", str(transaction_id)).limit(1).execute()
 
             if result.data:
                 return result.data[0]
@@ -91,7 +87,6 @@ class TransactionRepository(BaseRepository):
             return None
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -100,7 +95,7 @@ class TransactionRepository(BaseRepository):
         self,
         business_id: UUID | str | None = None,
         limit: int = 100,
-    ) -> List[dict[str, Any]]:
+    ) -> builtins.list[dict[str, Any]]:
         """
         List transactions.
 
@@ -113,7 +108,6 @@ class TransactionRepository(BaseRepository):
         """
 
         try:
-
             query = (
                 self.table.select("*")
                 .order(
@@ -131,7 +125,6 @@ class TransactionRepository(BaseRepository):
             return result.data
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -156,7 +149,6 @@ class TransactionRepository(BaseRepository):
         """
 
         try:
-
             result = self.table.update(values).eq("id", str(transaction_id)).execute()
 
             if not result.data:
@@ -167,7 +159,6 @@ class TransactionRepository(BaseRepository):
             return result.data[0]
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -184,13 +175,11 @@ class TransactionRepository(BaseRepository):
         """
 
         try:
-
             (self.table.delete().eq("id", str(transaction_id)).execute())
 
             logger.success("Transaction deleted.")
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -210,7 +199,6 @@ class TransactionRepository(BaseRepository):
         """
 
         try:
-
             query = self.table.select("id", count="exact").limit(1)
 
             if business_id is not None:
@@ -221,7 +209,6 @@ class TransactionRepository(BaseRepository):
             return int(result.count or 0)
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -241,15 +228,11 @@ class TransactionRepository(BaseRepository):
         """
 
         try:
-
-            result = (
-                self.table.select("id").eq("id", str(transaction_id)).limit(1).execute()
-            )
+            result = self.table.select("id").eq("id", str(transaction_id)).limit(1).execute()
 
             return bool(result.data)
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -257,7 +240,7 @@ class TransactionRepository(BaseRepository):
     def get_today(
         self,
         business_id: UUID | str | None = None,
-    ) -> List[dict[str, Any]]:
+    ) -> builtins.list[dict[str, Any]]:
         """
         List transactions from today.
 
@@ -269,7 +252,6 @@ class TransactionRepository(BaseRepository):
         """
 
         try:
-
             today = date.today().isoformat()
 
             query = (
@@ -292,7 +274,6 @@ class TransactionRepository(BaseRepository):
             return result.data
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise

@@ -1,0 +1,548 @@
+--- a/app/api/routers/onboarding.py
++++ b/app/api/routers/onboarding.py
+@@ -292,7 +292,7 @@
+             raise HTTPException(
+                 status_code=500,
+                 detail="Response produk tidak valid: Backend tidak mengembalikan product_id.",
+-            )
++            ) from None
+ 
+     return _success_response(
+         data=ProductCreateResponse(**normalized).model_dump(),
+--- a/app/services/ai_generation_service.py
++++ b/app/services/ai_generation_service.py
+@@ -833,7 +833,8 @@
+                 "tetapi produk berikut tidak muncul pada data penjualan yang tersedia:"
+             ]
+             for product in zero_sales[:10]:
+-                lines.append(f"- {product.name} - stok {self._format_optional_number(product.stock)}")
++                stock_text = self._format_optional_number(product.stock)
++                lines.append(f"- {product.name} - stok {stock_text}")
+             return "\n".join(lines)
+ 
+         return (
+@@ -869,7 +870,8 @@
+                 "benar-benar tidak laku:"
+             ]
+             for product in derived_zero[:10]:
+-                lines.append(f"- {product.name} - stok {self._format_optional_number(product.stock)}")
++                stock_text = self._format_optional_number(product.stock)
++                lines.append(f"- {product.name} - stok {stock_text}")
+             return "\n".join(lines)
+ 
+         return (
+--- a/pages/AI_Assistant.py
++++ b/pages/AI_Assistant.py
+@@ -76,7 +76,10 @@
+         st,
+         eyebrow="AI Chat",
+         title="AI Business Assistant",
+-        description="Ajukan pertanyaan bisnis, transaksi, produk, marketing, dan insight tanpa melihat raw provider errors.",
++        description=(
++            "Ajukan pertanyaan bisnis, transaksi, produk, marketing, dan insight "
++            "tanpa melihat raw provider errors."
++        ),
+         icon="🤖",
+     )
+ 
+@@ -176,7 +179,10 @@
+         render_empty_state(
+             st,
+             title="Belum ada percakapan",
+-            description="Mulai dengan pertanyaan tentang produk, transaksi, insight, atau marketing.",
++            description=(
++                "Mulai dengan pertanyaan tentang produk, transaksi, insight, "
++                "atau marketing."
++            ),
+             icon="💬",
+         )
+ 
+@@ -231,7 +237,10 @@
+         render_action_card(
+             st,
+             title="Helpful assistant",
+-            description="Gunakan bahasa natural. Sistem akan menyembunyikan error teknis provider dari user.",
++            description=(
++                "Gunakan bahasa natural. Sistem akan menyembunyikan error teknis "
++                "provider dari user."
++            ),
+             icon="✨",
+             badge="Safe UX",
+         )
+--- a/pages/Dashboard.py
++++ b/pages/Dashboard.py
+@@ -76,7 +76,10 @@
+         st,
+         eyebrow="Dashboard",
+         title="Ringkasan Bisnis Hari Ini",
+-        description="Pantau revenue, profit, transaksi, kesehatan bisnis, dan peluang pertumbuhan dalam satu workspace.",
++        description=(
++            "Pantau revenue, profit, transaksi, kesehatan bisnis, dan peluang "
++            "pertumbuhan dalam satu workspace."
++        ),
+         icon="📊",
+     )
+ 
+@@ -191,7 +194,10 @@
+     expenses = _expenses(data)
+     profit = _profit(data, revenue, expenses)
+     cash_flow = _cash_flow(data, profit, revenue)
+-    transactions = find_numeric(data, ("total_transactions", "transaction_count", "completed_transactions"))
++    transactions = find_numeric(
++        data,
++        ("total_transactions", "transaction_count", "completed_transactions"),
++    )
+ 
+     cols = st.columns(4)
+     with cols[0]:
+@@ -239,7 +245,10 @@
+         st,
+         eyebrow="Analytics",
+         title="Sales, Revenue, and Product Performance",
+-        description="Visual indicators are generated from available dashboard data without changing backend calls.",
++        description=(
++            "Visual indicators are generated from available dashboard data "
++            "without changing backend calls."
++        ),
+     )
+ 
+     chart_a, chart_b = st.columns([0.56, 0.44])
+@@ -295,7 +304,10 @@
+             title="Recent Transactions",
+             description="Ringkasan transaksi terbaru untuk pemantauan harian.",
+         )
+-        transactions = find_items(data, ("recent_transactions", "transactions", "latest_transactions"))
++        transactions = find_items(
++            data,
++            ("recent_transactions", "transactions", "latest_transactions"),
++        )
+         if transactions:
+             st.dataframe(
+                 _display_rows(transactions[:10]),
+@@ -335,19 +347,39 @@
+     )
+     col_a, col_b, col_c, col_d = st.columns(4)
+     with col_a:
+-        render_action_card(st, title="Record Sale", description="Catat transaksi penjualan baru.", icon="🧾")
++        render_action_card(
++            st,
++            title="Record Sale",
++            description="Catat transaksi penjualan baru.",
++            icon="🧾",
++        )
+         if st.button("Open Transactions", use_container_width=True):
+             switch_page(st, "pages/Transactions.py")
+     with col_b:
+-        render_action_card(st, title="Ask AI", description="Tanyakan kondisi bisnis dan rekomendasi.", icon="🤖")
++        render_action_card(
++            st,
++            title="Ask AI",
++            description="Tanyakan kondisi bisnis dan rekomendasi.",
++            icon="🤖",
++        )
+         if st.button("Open AI Assistant", use_container_width=True):
+             switch_page(st, "pages/AI_Assistant.py")
+     with col_c:
+-        render_action_card(st, title="Marketing", description="Bangun campaign dan caption promosi.", icon="📣")
++        render_action_card(
++            st,
++            title="Marketing",
++            description="Bangun campaign dan caption promosi.",
++            icon="📣",
++        )
+         if st.button("Open Marketing", use_container_width=True):
+             switch_page(st, "pages/Marketing.py")
+     with col_d:
+-        render_action_card(st, title="Export Reports", description="Unduh laporan bisnis untuk analisis.", icon="⬇️")
++        render_action_card(
++            st,
++            title="Export Reports",
++            description="Unduh laporan bisnis untuk analisis.",
++            icon="⬇️",
++        )
+         if st.button("Open Export", use_container_width=True):
+             switch_page(st, "pages/Export.py")
+ 
+@@ -397,7 +429,11 @@
+ def _cash_flow(data: Mapping[str, Any], profit: Decimal, revenue: Decimal) -> Decimal:
+     """Get cash flow value."""
+ 
+-    explicit = find_numeric(data, ("cash_flow", "net_cash_flow", "available_cash"), default=Decimal("-1"))
++    explicit = find_numeric(
++        data,
++        ("cash_flow", "net_cash_flow", "available_cash"),
++        default=Decimal("-1"),
++    )
+     if explicit >= 0:
+         return explicit
+ 
+@@ -472,25 +508,37 @@
+     """Build health cards."""
+ 
+     low_stock = find_numeric(data, ("low_stock_count", "low_stock_items", "low_stock"))
+-    active_products = find_numeric(data, ("active_products", "active_product_count", "total_products"))
++    active_products = find_numeric(
++        data,
++        ("active_products", "active_product_count", "total_products"),
++    )
+     customers = find_numeric(data, ("unique_customers", "estimated_unique_customers", "customers"))
+ 
+     return [
+         {
+             "title": "AI Insights",
+-            "description": "Gunakan Asisten AI untuk membaca pola transaksi dan rekomendasi tindakan.",
++            "description": (
++                "Gunakan Asisten AI untuk membaca pola transaksi "
++                "dan rekomendasi tindakan."
++            ),
+             "icon": "🤖",
+             "badge": "Smart",
+         },
+         {
+             "title": "Inventory Signal",
+-            "description": f"{format_number(low_stock)} item berpotensi low stock dari {format_number(active_products)} produk aktif.",
++            "description": (
++                f"{format_number(low_stock)} item berpotensi low stock dari "
++                f"{format_number(active_products)} produk aktif."
++            ),
+             "icon": "📦",
+             "badge": "Stock",
+         },
+         {
+             "title": "Customer Signal",
+-            "description": f"Estimasi {format_number(customers)} pelanggan unik terdeteksi dari data transaksi.",
++            "description": (
++                f"Estimasi {format_number(customers)} pelanggan unik terdeteksi "
++                "dari data transaksi."
++            ),
+             "icon": "👥",
+             "badge": "Growth",
+         },
+@@ -504,10 +552,25 @@
+     for record in records:
+         display_rows.append(
+             {
+-                "Date": safe_text(record.get("date") or record.get("transaction_date") or record.get("created_at"), "-"),
+-                "Product": safe_text(record.get("product_name") or record.get("product") or record.get("name"), "-"),
++                "Date": safe_text(
++                    record.get("date")
++                    or record.get("transaction_date")
++                    or record.get("created_at"),
++                    "-",
++                ),
++                "Product": safe_text(
++                    record.get("product_name")
++                    or record.get("product")
++                    or record.get("name"),
++                    "-",
++                ),
+                 "Quantity": safe_text(record.get("quantity") or record.get("qty"), "-"),
+-                "Amount": format_currency(record.get("amount") or record.get("total") or record.get("revenue") or 0),
++                "Amount": format_currency(
++                    record.get("amount")
++                    or record.get("total")
++                    or record.get("revenue")
++                    or 0
++                ),
+                 "Status": safe_text(record.get("status"), "completed").title(),
+             }
+         )
+--- a/pages/Export.py
++++ b/pages/Export.py
+@@ -64,7 +64,10 @@
+         st,
+         eyebrow="Reports",
+         title="Download Center",
+-        description="Unduh laporan dashboard, sales summary, inventory summary, dan structured data.",
++        description=(
++            "Unduh laporan dashboard, sales summary, inventory summary, "
++            "dan structured data."
++        ),
+         icon="⬇️",
+     )
+ 
+--- a/pages/Insights.py
++++ b/pages/Insights.py
+@@ -68,7 +68,10 @@
+         st,
+         eyebrow="Insights",
+         title="Business Insights & Recommendations",
+-        description="Ubah data operasional menjadi rekomendasi, forecast, dan sinyal kesehatan bisnis.",
++        description=(
++            "Ubah data operasional menjadi rekomendasi, forecast, "
++            "dan sinyal kesehatan bisnis."
++        ),
+         icon="💡",
+     )
+ 
+@@ -178,7 +181,10 @@
+         forecasts = [
+             {
+                 "title": "Demand Signal",
+-                "description": "Pantau produk dengan penjualan meningkat untuk menentukan stok dan promosi.",
++                "description": (
++                    "Pantau produk dengan penjualan meningkat untuk menentukan "
++                    "stok dan promosi."
++                ),
+             },
+             {
+                 "title": "Inventory Signal",
+--- a/pages/Marketing.py
++++ b/pages/Marketing.py
+@@ -68,7 +68,10 @@
+         st,
+         eyebrow="Marketing",
+         title="Campaign Workspace",
+-        description="Bangun konteks promosi, simpan campaign, dan pantau riwayat pemasaran dengan tampilan SaaS yang rapi.",
++        description=(
++            "Bangun konteks promosi, simpan campaign, dan pantau riwayat "
++            "pemasaran dengan tampilan SaaS yang rapi."
++        ),
+         icon="📣",
+     )
+ 
+@@ -193,7 +196,10 @@
+         render_action_card(
+             st,
+             title="Content checklist",
+-            description="Gunakan pesan yang spesifik, tawarkan manfaat, tambahkan CTA, dan sesuaikan channel.",
++            description=(
++                "Gunakan pesan yang spesifik, tawarkan manfaat, tambahkan CTA, "
++                "dan sesuaikan channel."
++            ),
+             icon="✅",
+             badge="Best Practice",
+         )
+@@ -248,7 +254,10 @@
+             },
+             {
+                 "title": "Caption berbasis manfaat",
+-                "description": "Tekankan manfaat praktis, harga, dan alasan pelanggan perlu membeli hari ini.",
++                "description": (
++                    "Tekankan manfaat praktis, harga, dan alasan pelanggan "
++                    "perlu membeli hari ini."
++                ),
+             },
+             {
+                 "title": "Channel mix",
+--- a/pages/Products.py
++++ b/pages/Products.py
+@@ -92,7 +92,10 @@
+     if not state.business_profile_ready:
+         render_locked_page(
+             st,
+-            message="Belum ada business aktif. Pilih business existing atau buat business baru terlebih dahulu.",
++            message=(
++                "Belum ada business aktif. Pilih business existing atau buat "
++                "business baru terlebih dahulu."
++            ),
+             state=state,
+             next_action_label="Kembali ke Profil Bisnis",
+             next_page="pages/Business_Profile.py",
+--- a/pages/Transactions.py
++++ b/pages/Transactions.py
+@@ -81,7 +81,10 @@
+         st,
+         eyebrow="Sales",
+         title="Transactions Workspace",
+-        description="Catat penjualan, pantau riwayat transaksi, dan jaga operasional harian tetap rapi.",
++        description=(
++            "Catat penjualan, pantau riwayat transaksi, dan jaga operasional "
++            "harian tetap rapi."
++        ),
+         icon="🧾",
+     )
+ 
+@@ -216,10 +219,15 @@
+             )
+ 
+     with preview_col:
++        selling_price = selected_product.get("selling_price")
++        price = selected_product.get("price")
++        price_text = format_currency(selling_price or price or 0)
++        stock_text = safe_text(selected_product.get("stock"), "-")
++
+         render_action_card(
+             st,
+             title=_get_product_name(selected_product),
+-            description=f"Price {format_currency(selected_product.get('selling_price') or selected_product.get('price') or 0)} · Stock {safe_text(selected_product.get('stock'), '-')}",
++            description=f"Price {price_text} · Stock {stock_text}",
+             icon="🛍️",
+             badge="Selected Product",
+         )
+--- a/tests/test_ai_conversation_workflow.py
++++ b/tests/test_ai_conversation_workflow.py
+@@ -38,7 +38,12 @@
+ 
+ 
+ class FakeConversationTools:
+-    def build_session_history(self, business_id: str, session_id: str, limit: int = 100) -> dict[str, Any]:
++    def build_session_history(
++        self,
++        business_id: str,
++        session_id: str,
++        limit: int = 100,
++    ) -> dict[str, Any]:
+         return {"success": True, "data": [], "error": None}
+ 
+     def save_message(
+--- a/tests/test_ai_conversation_workflow_product_context.py
++++ b/tests/test_ai_conversation_workflow_product_context.py
+@@ -40,7 +40,12 @@
+ 
+ 
+ class FakeConversationTools:
+-    def build_session_history(self, business_id: str, session_id: str, limit: int = 100) -> dict[str, Any]:
++    def build_session_history(
++        self,
++        business_id: str,
++        session_id: str,
++        limit: int = 100,
++    ) -> dict[str, Any]:
+         return {"success": True, "data": [], "error": None}
+ 
+     def save_message(
+--- a/tests/test_ai_conversation_workflow_product_context_ranking.py
++++ b/tests/test_ai_conversation_workflow_product_context_ranking.py
+@@ -56,7 +56,12 @@
+ 
+ 
+ class FakeConversationTools:
+-    def build_session_history(self, business_id: str, session_id: str, limit: int = 100) -> dict[str, Any]:
++    def build_session_history(
++        self,
++        business_id: str,
++        session_id: str,
++        limit: int = 100,
++    ) -> dict[str, Any]:
+         return {"success": True, "data": [], "error": None}
+ 
+     def save_message(
+@@ -88,4 +93,7 @@
+     assert response["success"] is True
+     assert ai_service.context is not None
+     assert ai_service.context["products"][0]["name"] == "Brownies Hot"
+-    assert ai_service.context["dashboard"]["top_products_by_quantity"][0]["key"] == "Americano Large"
++    assert (
++        ai_service.context["dashboard"]["top_products_by_quantity"][0]["key"]
++        == "Americano Large"
++    )
+--- a/tests/test_frontend_api_client.py
++++ b/tests/test_frontend_api_client.py
+@@ -14,8 +14,23 @@
+         self.response = response or {'success': True, 'data': {'ok': True}, 'error': None}
+         self.calls: list[dict[str, Any]] = []
+ 
+-    def __call__(self, method: str, url: str, headers: dict[str, str], body: bytes | None, timeout: float) -> tuple[int, str]:
+-        self.calls.append({'method': method, 'url': url, 'headers': headers, 'body': body.decode('utf-8') if body else None, 'timeout': timeout})
++    def __call__(
++        self,
++        method: str,
++        url: str,
++        headers: dict[str, str],
++        body: bytes | None,
++        timeout: float,
++    ) -> tuple[int, str]:
++        self.calls.append(
++            {
++                "method": method,
++                "url": url,
++                "headers": headers,
++                "body": body.decode("utf-8") if body else None,
++                "timeout": timeout,
++            }
++        )
+         return self.status, json.dumps(self.response)
+ 
+ 
+@@ -30,7 +45,10 @@
+     transport = FakeTransport()
+     client = FrontendApiClient('http://api.test/', transport=transport)
+     client.get_dashboard('business-1', 25)
+-    assert transport.calls[0]['url'] == 'http://api.test/api/v1/analytics/dashboard/business-1?limit=25'
++    assert (
++        transport.calls[0]["url"]
++        == "http://api.test/api/v1/analytics/dashboard/business-1?limit=25"
++    )
+ 
+ 
+ def test_record_transaction_posts_body() -> None:
+@@ -53,7 +71,14 @@
+ 
+ 
+ def test_non_2xx_response() -> None:
+-    transport = FakeTransport(400, {'success': False, 'data': {}, 'error': {'message': 'Bad request.'}})
++    transport = FakeTransport(
++        400,
++        {
++            "success": False,
++            "data": {},
++            "error": {"message": "Bad request."},
++        },
++    )
+     client = FrontendApiClient('http://api.test', transport=transport)
+     response = client.get_sales_summary('b1')
+     assert response['success'] is False
+--- a/tests/test_router_agent_ai_conversation.py
++++ b/tests/test_router_agent_ai_conversation.py
+@@ -8,24 +8,54 @@
+ 
+ 
+ class FakeDomainAgent:
+-    def handle_transaction(self, payload: Mapping[str, Any], *, intent: str = "record_transaction") -> dict[str, Any]:
++    def handle_transaction(
++        self,
++        payload: Mapping[str, Any],
++        *,
++        intent: str = "record_transaction",
++    ) -> dict[str, Any]:
+         return {"success": True, "workflow": {}, "data": {}, "error": None}
+ 
+-    def handle_marketing(self, payload: Mapping[str, Any], *, intent: str = "marketing_context") -> dict[str, Any]:
++    def handle_marketing(
++        self,
++        payload: Mapping[str, Any],
++        *,
++        intent: str = "marketing_context",
++    ) -> dict[str, Any]:
+         return {"success": True, "workflow": {}, "data": {}, "error": None}
+ 
+-    def handle_insight(self, payload: Mapping[str, Any], *, intent: str = "insight_context") -> dict[str, Any]:
++    def handle_insight(
++        self,
++        payload: Mapping[str, Any],
++        *,
++        intent: str = "insight_context",
++    ) -> dict[str, Any]:
+         return {"success": True, "workflow": {}, "data": {}, "error": None}
+ 
+-    def handle_export(self, payload: Mapping[str, Any], *, intent: str = "export_dashboard") -> dict[str, Any]:
++    def handle_export(
++        self,
++        payload: Mapping[str, Any],
++        *,
++        intent: str = "export_dashboard",
++    ) -> dict[str, Any]:
+         return {"success": True, "workflow": {}, "data": {}, "error": None}
+ 
+ 
+ class FakeBusinessWorkflow:
+-    def run_business_overview(self, business_id: str, limit: int = 1000, session_id: str | None = None) -> dict[str, Any]:
++    def run_business_overview(
++        self,
++        business_id: str,
++        limit: int = 1000,
++        session_id: str | None = None,
++    ) -> dict[str, Any]:
+         return {"success": True, "workflow": "business", "data": {}, "error": None}
+ 
+-    def run_business_health_check(self, business_id: str, limit: int = 1000, session_id: str | None = None) -> dict[str, Any]:
++    def run_business_health_check(
++        self,
++        business_id: str,
++        limit: int = 1000,
++        session_id: str | None = None,
++    ) -> dict[str, Any]:
+         return {"success": True, "workflow": "business", "data": {}, "error": None}
+ 
+ 

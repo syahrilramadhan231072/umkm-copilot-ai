@@ -7,8 +7,6 @@ Registry pattern for LLM providers.
 
 from __future__ import annotations
 
-from typing import Type
-
 from app.llm.providers.base import BaseLLMProvider
 
 
@@ -18,12 +16,12 @@ class ProviderRegistry:
     def __init__(self) -> None:
         """Initialize registry."""
 
-        self._providers: dict[str, Type[BaseLLMProvider]] = {}
+        self._providers: dict[str, type[BaseLLMProvider]] = {}
 
     def register(
         self,
         name: str,
-        provider_class: Type[BaseLLMProvider],
+        provider_class: type[BaseLLMProvider],
     ) -> None:
         """Register provider class."""
 

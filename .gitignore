@@ -13,7 +13,9 @@ __pycache__/
 # ==========================================
 # Streamlit
 # ==========================================
-.streamlit/
+.streamlit/*
+!.streamlit/config.toml
+!.streamlit/secrets.example.toml
 
 # ==========================================
 # Logs
@@ -47,3 +49,7 @@ storage/uploads/*
 # ==========================================
 .DS_Store
 Thumbs.db
+
+# Tool caches
+.ruff_cache/
+.mypy_cache/

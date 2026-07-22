@@ -39,9 +39,7 @@ class GeminiProvider(BaseLLMProvider):
         """Create Gemini provider from environment."""
 
         model_name = (
-            os.getenv("GEMINI_MODEL")
-            or os.getenv("GEMINI_MODEL_NAME")
-            or cls.DEFAULT_MODEL_NAME
+            os.getenv("GEMINI_MODEL") or os.getenv("GEMINI_MODEL_NAME") or cls.DEFAULT_MODEL_NAME
         )
 
         return cls(

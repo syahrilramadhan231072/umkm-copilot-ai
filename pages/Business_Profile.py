@@ -29,7 +29,6 @@ from app.frontend.ui_components import (
     render_progress_indicator,
 )
 
-
 PAGE_NAME = "business_profile"
 
 
@@ -94,9 +93,7 @@ def render_page() -> None:
     render_progress_indicator(st, state)
 
     if create_new_mode:
-        st.info(
-            "Mode buat business baru aktif. Isi form berikut untuk membuat business_id baru."
-        )
+        st.info("Mode buat business baru aktif. Isi form berikut untuk membuat business_id baru.")
 
     with st.form("business_profile_form"):
         business_name = st.text_input("Nama Bisnis", placeholder="Contoh: Cabang Baru")
@@ -110,11 +107,7 @@ def render_page() -> None:
         submitted = st.form_submit_button("Simpan Business Baru", type="primary")
 
     if submitted:
-        if (
-            not business_name.strip()
-            or not owner_name.strip()
-            or not business_type.strip()
-        ):
+        if not business_name.strip() or not owner_name.strip() or not business_type.strip():
             st.warning("Lengkapi Nama Bisnis, Nama Pemilik, dan Jenis Usaha.")
             return
 

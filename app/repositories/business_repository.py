@@ -49,7 +49,6 @@ class BusinessRepository(BaseRepository):
         """
 
         try:
-
             result = self.table.insert(data).execute()
 
             if not result.data:
@@ -60,7 +59,6 @@ class BusinessRepository(BaseRepository):
             return result.data[0]
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -74,7 +72,6 @@ class BusinessRepository(BaseRepository):
         """
 
         try:
-
             result = self.table.select("*").limit(1).execute()
 
             if result.data:
@@ -83,7 +80,6 @@ class BusinessRepository(BaseRepository):
             return None
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -103,13 +99,11 @@ class BusinessRepository(BaseRepository):
         """
 
         try:
-
             result = self.table.select("*").limit(limit).execute()
 
             return result.data
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -132,7 +126,6 @@ class BusinessRepository(BaseRepository):
         """
 
         try:
-
             profile = self.get_profile()
 
             if profile is None:
@@ -148,7 +141,6 @@ class BusinessRepository(BaseRepository):
             return result.data[0]
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -159,7 +151,6 @@ class BusinessRepository(BaseRepository):
         """
 
         try:
-
             profile = self.get_profile()
 
             if profile is None:
@@ -170,7 +161,6 @@ class BusinessRepository(BaseRepository):
             logger.success("Business profile deleted.")
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -184,13 +174,11 @@ class BusinessRepository(BaseRepository):
         """
 
         try:
-
             result = self.table.select("id", count="exact").limit(1).execute()
 
             return int(result.count or 0)
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -204,13 +192,11 @@ class BusinessRepository(BaseRepository):
         """
 
         try:
-
             result = self.table.select("id").limit(1).execute()
 
             return bool(result.data)
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -224,11 +210,9 @@ class BusinessRepository(BaseRepository):
         """
 
         try:
-
             return self.get()
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -248,11 +232,9 @@ class BusinessRepository(BaseRepository):
         """
 
         try:
-
             return self.update(values)
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise

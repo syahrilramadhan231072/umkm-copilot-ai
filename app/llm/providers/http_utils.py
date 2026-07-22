@@ -8,7 +8,8 @@ Small standard-library HTTP helper for providers that call REST APIs.
 from __future__ import annotations
 
 import json
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 

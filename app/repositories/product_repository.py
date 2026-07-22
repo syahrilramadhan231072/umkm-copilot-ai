@@ -17,7 +17,8 @@ Author:
 
 from __future__ import annotations
 
-from typing import Any, List
+import builtins
+from typing import Any
 from uuid import UUID
 
 from app.repositories.base_repository import BaseRepository
@@ -49,7 +50,6 @@ class ProductRepository(BaseRepository):
         """
 
         try:
-
             result = self.table.insert(data).execute()
 
             if not result.data:
@@ -60,7 +60,6 @@ class ProductRepository(BaseRepository):
             return result.data[0]
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -80,7 +79,6 @@ class ProductRepository(BaseRepository):
         """
 
         try:
-
             result = self.table.select("*").eq("id", str(product_id)).limit(1).execute()
 
             if result.data:
@@ -89,7 +87,6 @@ class ProductRepository(BaseRepository):
             return None
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -98,7 +95,7 @@ class ProductRepository(BaseRepository):
         self,
         business_id: UUID | str | None = None,
         limit: int = 100,
-    ) -> List[dict[str, Any]]:
+    ) -> builtins.list[dict[str, Any]]:
         """
         List products.
 
@@ -111,7 +108,6 @@ class ProductRepository(BaseRepository):
         """
 
         try:
-
             query = self.table.select("*").order("name").limit(limit)
 
             if business_id is not None:
@@ -122,7 +118,6 @@ class ProductRepository(BaseRepository):
             return result.data
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -147,7 +142,6 @@ class ProductRepository(BaseRepository):
         """
 
         try:
-
             result = self.table.update(values).eq("id", str(product_id)).execute()
 
             if not result.data:
@@ -158,7 +152,6 @@ class ProductRepository(BaseRepository):
             return result.data[0]
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -175,13 +168,11 @@ class ProductRepository(BaseRepository):
         """
 
         try:
-
             (self.table.delete().eq("id", str(product_id)).execute())
 
             logger.success("Product deleted.")
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -201,7 +192,6 @@ class ProductRepository(BaseRepository):
         """
 
         try:
-
             query = self.table.select("id", count="exact").limit(1)
 
             if business_id is not None:
@@ -212,7 +202,6 @@ class ProductRepository(BaseRepository):
             return int(result.count or 0)
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -232,15 +221,11 @@ class ProductRepository(BaseRepository):
         """
 
         try:
-
-            result = (
-                self.table.select("id").eq("id", str(product_id)).limit(1).execute()
-            )
+            result = self.table.select("id").eq("id", str(product_id)).limit(1).execute()
 
             return bool(result.data)
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -262,7 +247,6 @@ class ProductRepository(BaseRepository):
         """
 
         try:
-
             result = (
                 self.table.select("*")
                 .eq("business_id", str(business_id))
@@ -277,7 +261,6 @@ class ProductRepository(BaseRepository):
             return None
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -299,7 +282,6 @@ class ProductRepository(BaseRepository):
         """
 
         try:
-
             result = (
                 self.table.select("*")
                 .eq("business_id", str(business_id))
@@ -314,7 +296,6 @@ class ProductRepository(BaseRepository):
             return None
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -323,7 +304,7 @@ class ProductRepository(BaseRepository):
         self,
         business_id: UUID | str,
         limit: int = 100,
-    ) -> List[dict[str, Any]]:
+    ) -> builtins.list[dict[str, Any]]:
         """
         List active products for a business.
 
@@ -336,7 +317,6 @@ class ProductRepository(BaseRepository):
         """
 
         try:
-
             result = (
                 self.table.select("*")
                 .eq("business_id", str(business_id))
@@ -349,7 +329,6 @@ class ProductRepository(BaseRepository):
             return result.data
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -358,7 +337,7 @@ class ProductRepository(BaseRepository):
         self,
         business_id: UUID | str,
         limit: int = 100,
-    ) -> List[dict[str, Any]]:
+    ) -> builtins.list[dict[str, Any]]:
         """
         List active products with low stock for a business.
 
@@ -371,7 +350,6 @@ class ProductRepository(BaseRepository):
         """
 
         try:
-
             result = (
                 self.table.select("*")
                 .eq("business_id", str(business_id))
@@ -381,15 +359,12 @@ class ProductRepository(BaseRepository):
             )
 
             products = [
-                product
-                for product in result.data
-                if product["stock"] <= product["minimum_stock"]
+                product for product in result.data if product["stock"] <= product["minimum_stock"]
             ]
 
             return products[:limit]
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -414,7 +389,6 @@ class ProductRepository(BaseRepository):
         """
 
         try:
-
             result = (
                 self.table.update(
                     {
@@ -433,7 +407,6 @@ class ProductRepository(BaseRepository):
             return result.data[0]
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -443,7 +416,7 @@ class ProductRepository(BaseRepository):
         business_id: UUID | str,
         keyword: str,
         limit: int = 100,
-    ) -> List[dict[str, Any]]:
+    ) -> builtins.list[dict[str, Any]]:
         """
         Search products by keyword.
 
@@ -457,7 +430,6 @@ class ProductRepository(BaseRepository):
         """
 
         try:
-
             keyword = keyword.strip()
 
             if not keyword:
@@ -487,7 +459,6 @@ class ProductRepository(BaseRepository):
             return result.data
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -507,7 +478,6 @@ class ProductRepository(BaseRepository):
         """
 
         try:
-
             result = (
                 self.table.select("id", count="exact")
                 .eq("business_id", str(business_id))
@@ -519,7 +489,6 @@ class ProductRepository(BaseRepository):
             return int(result.count or 0)
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -541,7 +510,6 @@ class ProductRepository(BaseRepository):
         """
 
         try:
-
             result = (
                 self.table.select("id")
                 .eq("business_id", str(business_id))
@@ -553,7 +521,6 @@ class ProductRepository(BaseRepository):
             return bool(result.data)
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise
@@ -575,7 +542,6 @@ class ProductRepository(BaseRepository):
         """
 
         try:
-
             result = (
                 self.table.select("id")
                 .eq("business_id", str(business_id))
@@ -587,7 +553,6 @@ class ProductRepository(BaseRepository):
             return bool(result.data)
 
         except Exception as exc:
-
             logger.exception(exc)
 
             raise

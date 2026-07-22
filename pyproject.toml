@@ -1,13 +1,20 @@
 [project]
-name = "umkm-copilot-ai"
+name = "go-umkm-ai"
 version = "0.1.0"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 
-[tool.mypy]
-python_version = "3.12"
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["app", "pages", "tests"]
 
-show_error_codes = true
-pretty = true
-warn_unused_configs = true
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["B008"]
 
-disable_error_code = ["prop-decorator"]
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

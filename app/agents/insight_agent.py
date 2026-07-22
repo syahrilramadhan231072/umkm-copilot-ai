@@ -10,7 +10,8 @@ Author:
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from app.memory.conversation_memory import ConversationMemory
 from app.utils.logger import logger
@@ -78,9 +79,7 @@ class InsightAgent:
             elif intent == "insight_review":
                 workflow_response = self._insight_workflow.run_insight_review(
                     business_id=str(payload.get("business_id", "")),
-                    insight_category=self._optional_text(
-                        payload.get("insight_category")
-                    ),
+                    insight_category=self._optional_text(payload.get("insight_category")),
                     keyword=self._optional_text(payload.get("keyword")),
                     limit=self._get_int(payload, "limit", default=100),
                 )

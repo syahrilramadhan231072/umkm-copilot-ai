@@ -7,7 +7,8 @@ Production transaction workspace.
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from app.frontend.assets import load_frontend_assets
 from app.frontend.navigation import render_navigation, switch_page
@@ -38,7 +39,6 @@ from app.frontend.ui_components import (
     safe_text,
 )
 
-
 PAGE_NAME = "transactions"
 
 
@@ -46,9 +46,7 @@ def render_page() -> None:
     """Render transaction page."""
 
     st = _get_streamlit()
-    st.set_page_config(
-        page_title="Go-UMKM AI · Transactions", page_icon="🧾", layout="wide"
-    )
+    st.set_page_config(page_title="Go-UMKM AI · Transactions", page_icon="🧾", layout="wide")
     load_frontend_assets(st, page_name=PAGE_NAME)
     ensure_frontend_session(st.session_state)
     set_onboarding_step(st.session_state, "transactions")
@@ -81,7 +79,9 @@ def render_page() -> None:
         st,
         eyebrow="Sales",
         title="Transactions Workspace",
-        description="Catat penjualan, pantau riwayat transaksi, dan jaga operasional harian tetap rapi.",
+        description=(
+            "Catat penjualan, pantau riwayat transaksi, dan jaga operasional harian tetap rapi."
+        ),
         icon="🧾",
     )
 
@@ -131,9 +131,7 @@ def render_page() -> None:
 def _render_transaction_metrics(st: Any, data: Mapping[str, Any]) -> None:
     """Render transaction metrics."""
 
-    records = find_items(
-        data, ("transactions", "recent_transactions", "items", "records")
-    )
+    records = find_items(data, ("transactions", "recent_transactions", "items", "records"))
     completed = len(
         [
             item
@@ -216,10 +214,15 @@ def _render_transaction_form(
             )
 
     with preview_col:
+        selling_price = selected_product.get("selling_price")
+        price = selected_product.get("price")
+        price_text = format_currency(selling_price or price or 0)
+        stock_text = safe_text(selected_product.get("stock"), "-")
+
         render_action_card(
             st,
             title=_get_product_name(selected_product),
-            description=f"Price {format_currency(selected_product.get('selling_price') or selected_product.get('price') or 0)} · Stock {safe_text(selected_product.get('stock'), '-')}",
+            description=f"Price {price_text} · Stock {stock_text}",
             icon="🛍️",
             badge="Selected Product",
         )
@@ -265,9 +268,7 @@ def _render_transaction_history(st: Any, data: Mapping[str, Any]) -> None:
         description="Filter dan urutkan transaksi tanpa mengekspos raw JSON backend.",
     )
 
-    records = find_items(
-        data, ("transactions", "recent_transactions", "items", "records")
-    )
+    records = find_items(data, ("transactions", "recent_transactions", "items", "records"))
     if not records:
         render_empty_state(
             st,
@@ -290,9 +291,7 @@ def _render_transaction_history(st: Any, data: Mapping[str, Any]) -> None:
     filtered = _filter_records(records, keyword)
     sorted_records = _sort_records(filtered, sort_by)
 
-    st.dataframe(
-        _display_records(sorted_records), use_container_width=True, hide_index=True
-    )
+    st.dataframe(_display_records(sorted_records), use_container_width=True, hide_index=True)
 
 
 def _load_products(st: Any, client: Any, business_id: str) -> list[dict[str, Any]]:
@@ -308,9 +307,7 @@ def _load_products(st: Any, client: Any, business_id: str) -> list[dict[str, Any
         loaded_products = data.get("products", []) if isinstance(data, Mapping) else []
         if isinstance(loaded_products, list):
             products = [
-                dict(product)
-                for product in loaded_products
-                if isinstance(product, Mapping)
+                dict(product) for product in loaded_products if isinstance(product, Mapping)
             ]
             set_backend_products(st.session_state, products)
             return products
@@ -321,11 +318,7 @@ def _load_products(st: Any, client: Any, business_id: str) -> list[dict[str, Any
 def _select_product(st: Any, products: list[dict[str, Any]]) -> dict[str, Any]:
     """Render product selectbox."""
 
-    options = {
-        _product_label(product): product
-        for product in products
-        if _get_product_id(product)
-    }
+    options = {_product_label(product): product for product in products if _get_product_id(product)}
     if not options:
         return {}
 
@@ -374,9 +367,7 @@ def _payment_label(value: str) -> str:
     return labels.get(value, value)
 
 
-def _filter_records(
-    records: list[dict[str, Any]], keyword: str
-) -> list[dict[str, Any]]:
+def _filter_records(records: list[dict[str, Any]], keyword: str) -> list[dict[str, Any]]:
     """Filter records."""
 
     if not keyword.strip():
@@ -425,17 +416,12 @@ def _display_records(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
                     "-",
                 ),
                 "Product": safe_text(
-                    record.get("product_name")
-                    or record.get("product")
-                    or record.get("name"),
+                    record.get("product_name") or record.get("product") or record.get("name"),
                     "-",
                 ),
                 "Qty": safe_text(record.get("quantity") or record.get("qty"), "-"),
                 "Amount": format_currency(
-                    record.get("amount")
-                    or record.get("total")
-                    or record.get("revenue")
-                    or 0
+                    record.get("amount") or record.get("total") or record.get("revenue") or 0
                 ),
                 "Payment": safe_text(record.get("payment_method"), "-").title(),
                 "Status": safe_text(record.get("status"), "completed").title(),

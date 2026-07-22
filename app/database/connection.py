@@ -3,19 +3,6 @@ Database Connection
 ===================
 
 Centralized Supabase connection.
-
-Responsibilities
-----------------
-- Create Supabase client
-- Validate configuration
-- Singleton connection
-- Health check
-
-This module MUST NOT know anything about database tables.
-Repositories are responsible for interacting with tables.
-
-Author:
-    UMKM Copilot AI
 """
 
 from __future__ import annotations
@@ -35,23 +22,14 @@ def get_supabase() -> Client:
     """
     Return singleton Supabase client.
 
-    Returns
-    -------
-    Client
-        Configured Supabase client.
-
-    Raises
-    ------
-    RuntimeError
-        If Supabase configuration is invalid.
+    Repositories are responsible for database table access.
     """
 
     settings.validate_supabase()
 
-    logger.info("Connecting to Supabase...")
-
-    logger.info(f"SUPABASE_URL = {settings.SUPABASE_URL}")
-    logger.info(f"SUPABASE_KEY prefix = {settings.supabase_key()[:20]}")
+    logger.info("Connecting to Supabase.")
+    logger.info("SUPABASE_URL configured: {}", bool(settings.SUPABASE_URL.strip()))
+    logger.info("SUPABASE_KEY configured: {}", settings.supabase_key_is_configured)
 
     client = create_client(
         supabase_url=settings.SUPABASE_URL,
@@ -64,30 +42,14 @@ def get_supabase() -> Client:
 
 
 def health_check() -> bool:
-    """
-    Verify that the Supabase client can be initialized.
-
-    This function intentionally does NOT query any tables.
-    Repository classes are responsible for database operations.
-
-    Returns
-    -------
-    bool
-        True if the client is initialized successfully.
-    """
+    """Verify that the Supabase client can be initialized."""
 
     try:
-
         get_supabase()
-
         logger.success("Supabase health check passed.")
-
         return True
-
     except Exception as exc:
-
         logger.exception(exc)
-
         return False
 
 

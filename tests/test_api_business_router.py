@@ -94,9 +94,7 @@ def test_business_health_endpoint_returns_failure_status() -> None:
     """Assert business health endpoint returns HTTP 400 on workflow failure."""
 
     app = create_app()
-    app.dependency_overrides[get_business_workflow] = lambda: FakeBusinessWorkflow(
-        fail=True
-    )
+    app.dependency_overrides[get_business_workflow] = lambda: FakeBusinessWorkflow(fail=True)
     client = TestClient(app)
 
     response = client.post(

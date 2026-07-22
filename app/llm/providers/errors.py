@@ -10,7 +10,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-
 FRIENDLY_AI_UNAVAILABLE_MESSAGE = (
     "The AI service is temporarily unavailable. Please try again shortly."
 )

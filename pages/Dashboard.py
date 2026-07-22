@@ -5,8 +5,9 @@ Dashboard
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from decimal import Decimal
-from typing import Any, Mapping
+from typing import Any
 
 from app.frontend.assets import load_frontend_assets
 from app.frontend.navigation import render_navigation, switch_page
@@ -39,7 +40,6 @@ from app.frontend.ui_components import (
     safe_text,
     to_decimal,
 )
-
 
 PAGE_NAME = "dashboard"
 
@@ -76,7 +76,10 @@ def render_page() -> None:
         st,
         eyebrow="Dashboard",
         title="Ringkasan Bisnis Hari Ini",
-        description="Pantau revenue, profit, transaksi, kesehatan bisnis, dan peluang pertumbuhan dalam satu workspace.",
+        description=(
+            "Pantau revenue, profit, transaksi, kesehatan bisnis, dan peluang "
+            "pertumbuhan dalam satu workspace."
+        ),
         icon="📊",
     )
 
@@ -103,7 +106,6 @@ def render_page() -> None:
     _render_kpis(st, data)
     _render_charts(st, data)
     _render_dashboard_sections(st, data)
-
 
 
 def _render_business_workspace_controls(st: Any, client: Any) -> None:
@@ -183,7 +185,6 @@ def _business_option_label(profile: Mapping[str, Any]) -> str:
     return f"{business_name} · {business_type}"
 
 
-
 def _render_kpis(st: Any, data: Mapping[str, Any]) -> None:
     """Render KPI cards."""
 
@@ -191,7 +192,10 @@ def _render_kpis(st: Any, data: Mapping[str, Any]) -> None:
     expenses = _expenses(data)
     profit = _profit(data, revenue, expenses)
     cash_flow = _cash_flow(data, profit, revenue)
-    transactions = find_numeric(data, ("total_transactions", "transaction_count", "completed_transactions"))
+    transactions = find_numeric(
+        data,
+        ("total_transactions", "transaction_count", "completed_transactions"),
+    )
 
     cols = st.columns(4)
     with cols[0]:
@@ -239,7 +243,10 @@ def _render_charts(st: Any, data: Mapping[str, Any]) -> None:
         st,
         eyebrow="Analytics",
         title="Sales, Revenue, and Product Performance",
-        description="Visual indicators are generated from available dashboard data without changing backend calls.",
+        description=(
+            "Visual indicators are generated from available dashboard data "
+            "without changing backend calls."
+        ),
     )
 
     chart_a, chart_b = st.columns([0.56, 0.44])
@@ -295,7 +302,10 @@ def _render_dashboard_sections(st: Any, data: Mapping[str, Any]) -> None:
             title="Recent Transactions",
             description="Ringkasan transaksi terbaru untuk pemantauan harian.",
         )
-        transactions = find_items(data, ("recent_transactions", "transactions", "latest_transactions"))
+        transactions = find_items(
+            data,
+            ("recent_transactions", "transactions", "latest_transactions"),
+        )
         if transactions:
             st.dataframe(
                 _display_rows(transactions[:10]),
@@ -335,19 +345,39 @@ def _render_dashboard_sections(st: Any, data: Mapping[str, Any]) -> None:
     )
     col_a, col_b, col_c, col_d = st.columns(4)
     with col_a:
-        render_action_card(st, title="Record Sale", description="Catat transaksi penjualan baru.", icon="🧾")
+        render_action_card(
+            st,
+            title="Record Sale",
+            description="Catat transaksi penjualan baru.",
+            icon="🧾",
+        )
         if st.button("Open Transactions", use_container_width=True):
             switch_page(st, "pages/Transactions.py")
     with col_b:
-        render_action_card(st, title="Ask AI", description="Tanyakan kondisi bisnis dan rekomendasi.", icon="🤖")
+        render_action_card(
+            st,
+            title="Ask AI",
+            description="Tanyakan kondisi bisnis dan rekomendasi.",
+            icon="🤖",
+        )
         if st.button("Open AI Assistant", use_container_width=True):
             switch_page(st, "pages/AI_Assistant.py")
     with col_c:
-        render_action_card(st, title="Marketing", description="Bangun campaign dan caption promosi.", icon="📣")
+        render_action_card(
+            st,
+            title="Marketing",
+            description="Bangun campaign dan caption promosi.",
+            icon="📣",
+        )
         if st.button("Open Marketing", use_container_width=True):
             switch_page(st, "pages/Marketing.py")
     with col_d:
-        render_action_card(st, title="Export Reports", description="Unduh laporan bisnis untuk analisis.", icon="⬇️")
+        render_action_card(
+            st,
+            title="Export Reports",
+            description="Unduh laporan bisnis untuk analisis.",
+            icon="⬇️",
+        )
         if st.button("Open Export", use_container_width=True):
             switch_page(st, "pages/Export.py")
 
@@ -397,7 +427,11 @@ def _profit(data: Mapping[str, Any], revenue: Decimal, expenses: Decimal) -> Dec
 def _cash_flow(data: Mapping[str, Any], profit: Decimal, revenue: Decimal) -> Decimal:
     """Get cash flow value."""
 
-    explicit = find_numeric(data, ("cash_flow", "net_cash_flow", "available_cash"), default=Decimal("-1"))
+    explicit = find_numeric(
+        data,
+        ("cash_flow", "net_cash_flow", "available_cash"),
+        default=Decimal("-1"),
+    )
     if explicit >= 0:
         return explicit
 
@@ -472,25 +506,36 @@ def _business_health_items(data: Mapping[str, Any]) -> list[dict[str, str]]:
     """Build health cards."""
 
     low_stock = find_numeric(data, ("low_stock_count", "low_stock_items", "low_stock"))
-    active_products = find_numeric(data, ("active_products", "active_product_count", "total_products"))
+    active_products = find_numeric(
+        data,
+        ("active_products", "active_product_count", "total_products"),
+    )
     customers = find_numeric(data, ("unique_customers", "estimated_unique_customers", "customers"))
 
     return [
         {
             "title": "AI Insights",
-            "description": "Gunakan Asisten AI untuk membaca pola transaksi dan rekomendasi tindakan.",
+            "description": (
+                "Gunakan Asisten AI untuk membaca pola transaksi dan rekomendasi tindakan."
+            ),
             "icon": "🤖",
             "badge": "Smart",
         },
         {
             "title": "Inventory Signal",
-            "description": f"{format_number(low_stock)} item berpotensi low stock dari {format_number(active_products)} produk aktif.",
+            "description": (
+                f"{format_number(low_stock)} item berpotensi low stock dari "
+                f"{format_number(active_products)} produk aktif."
+            ),
             "icon": "📦",
             "badge": "Stock",
         },
         {
             "title": "Customer Signal",
-            "description": f"Estimasi {format_number(customers)} pelanggan unik terdeteksi dari data transaksi.",
+            "description": (
+                f"Estimasi {format_number(customers)} pelanggan unik terdeteksi "
+                "dari data transaksi."
+            ),
             "icon": "👥",
             "badge": "Growth",
         },
@@ -504,10 +549,20 @@ def _display_rows(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
     for record in records:
         display_rows.append(
             {
-                "Date": safe_text(record.get("date") or record.get("transaction_date") or record.get("created_at"), "-"),
-                "Product": safe_text(record.get("product_name") or record.get("product") or record.get("name"), "-"),
+                "Date": safe_text(
+                    record.get("date")
+                    or record.get("transaction_date")
+                    or record.get("created_at"),
+                    "-",
+                ),
+                "Product": safe_text(
+                    record.get("product_name") or record.get("product") or record.get("name"),
+                    "-",
+                ),
                 "Quantity": safe_text(record.get("quantity") or record.get("qty"), "-"),
-                "Amount": format_currency(record.get("amount") or record.get("total") or record.get("revenue") or 0),
+                "Amount": format_currency(
+                    record.get("amount") or record.get("total") or record.get("revenue") or 0
+                ),
                 "Status": safe_text(record.get("status"), "completed").title(),
             }
         )

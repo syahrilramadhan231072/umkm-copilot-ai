@@ -10,7 +10,8 @@ Author:
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from app.memory.conversation_memory import ConversationMemory
 from app.utils.logger import logger
@@ -62,30 +63,24 @@ class MarketingAgent:
             self._save_optional_user_message(payload=payload, agent_name=agent_name)
 
             if intent == "marketing_context":
-                workflow_response = (
-                    self._marketing_workflow.run_product_marketing_context(
-                        product_id=str(payload.get("product_id", "")),
-                        business_id=self._optional_text(payload.get("business_id")),
-                        session_id=self._optional_text(payload.get("session_id")),
-                    )
+                workflow_response = self._marketing_workflow.run_product_marketing_context(
+                    product_id=str(payload.get("product_id", "")),
+                    business_id=self._optional_text(payload.get("business_id")),
+                    session_id=self._optional_text(payload.get("session_id")),
                 )
             elif intent == "create_marketing_record":
                 marketing_data = payload.get("marketing_data", payload)
                 self._validate_mapping(marketing_data, field_name="marketing_data")
-                workflow_response = (
-                    self._marketing_workflow.run_create_marketing_record(
-                        business_id=str(payload.get("business_id", "")),
-                        marketing_data=marketing_data,
-                        session_id=self._optional_text(payload.get("session_id")),
-                    )
+                workflow_response = self._marketing_workflow.run_create_marketing_record(
+                    business_id=str(payload.get("business_id", "")),
+                    marketing_data=marketing_data,
+                    session_id=self._optional_text(payload.get("session_id")),
                 )
             elif intent == "marketing_history":
-                workflow_response = (
-                    self._marketing_workflow.run_marketing_history_review(
-                        business_id=str(payload.get("business_id", "")),
-                        keyword=self._optional_text(payload.get("keyword")),
-                        limit=self._get_int(payload, "limit", default=100),
-                    )
+                workflow_response = self._marketing_workflow.run_marketing_history_review(
+                    business_id=str(payload.get("business_id", "")),
+                    keyword=self._optional_text(payload.get("keyword")),
+                    limit=self._get_int(payload, "limit", default=100),
                 )
             else:
                 raise ValueError(f"Unsupported marketing intent: {intent}.")

@@ -10,10 +10,10 @@ does not contain business logic.
 
 from __future__ import annotations
 
+import json
 from collections.abc import Mapping, Sequence
 from decimal import Decimal, InvalidOperation
 from html import escape
-import json
 from typing import Any
 
 from app.frontend.navigation import switch_page
@@ -66,9 +66,7 @@ def render_business_header(st: Any, preferences: Mapping[str, Any]) -> None:
     """Render ringkasan profil bisnis."""
 
     business_name = safe_text(preferences.get("business_name"), "Bisnis Anda")
-    business_type = safe_text(
-        preferences.get("business_type"), "Jenis usaha belum diisi"
-    )
+    business_type = safe_text(preferences.get("business_type"), "Jenis usaha belum diisi")
     currency = safe_text(preferences.get("currency"), "IDR")
 
     st.markdown(

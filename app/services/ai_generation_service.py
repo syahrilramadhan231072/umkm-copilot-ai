@@ -573,6 +573,11 @@ Rules:
                 "yang paling laku",
                 "laku apa",
                 "laku yang mana",
+                "produk apa yang terjual",
+                "produk yang terjual",
+                "produk terjual",
+                "apa yang terjual",
+                "jualan apa yang terjual",
             ),
         ):
             return LocalBIIntent.BEST_SELLING_PRODUCT
@@ -833,7 +838,8 @@ Rules:
                 "tetapi produk berikut tidak muncul pada data penjualan yang tersedia:"
             ]
             for product in zero_sales[:10]:
-                lines.append(f"- {product.name} - stok {self._format_optional_number(product.stock)}")
+                stock_text = self._format_optional_number(product.stock)
+                lines.append(f"- {product.name} - stok {stock_text}")
             return "\n".join(lines)
 
         return (
@@ -869,7 +875,8 @@ Rules:
                 "benar-benar tidak laku:"
             ]
             for product in derived_zero[:10]:
-                lines.append(f"- {product.name} - stok {self._format_optional_number(product.stock)}")
+                stock_text = self._format_optional_number(product.stock)
+                lines.append(f"- {product.name} - stok {stock_text}")
             return "\n".join(lines)
 
         return (

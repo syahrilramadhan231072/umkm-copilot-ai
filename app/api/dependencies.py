@@ -12,11 +12,6 @@ from __future__ import annotations
 
 from fastapi import Depends
 
-from app.workflows.ai_conversation_workflow import AIConversationWorkflow
-from app.services.ai_generation_service import AIGenerationService
-from app.llm.response_formatter import ResponseFormatter
-from app.llm.prompt_builder import PromptBuilder
-from app.llm.gemini_client import GeminiClient
 from app.agents.export_agent import ExportAgent
 from app.agents.insight_agent import InsightAgent
 from app.agents.marketing_agent import MarketingAgent
@@ -27,6 +22,9 @@ from app.analytics.dashboard_analytics import DashboardAnalytics
 from app.analytics.inventory_analytics import InventoryAnalytics
 from app.analytics.product_analytics import ProductAnalytics
 from app.analytics.sales_analytics import SalesAnalytics
+from app.llm.gemini_client import GeminiClient
+from app.llm.prompt_builder import PromptBuilder
+from app.llm.response_formatter import ResponseFormatter
 from app.memory.conversation_memory import ConversationMemory
 from app.repositories.business_repository import BusinessRepository
 from app.repositories.conversation_repository import ConversationRepository
@@ -34,6 +32,7 @@ from app.repositories.insights_repository import InsightsRepository
 from app.repositories.marketing_repository import MarketingRepository
 from app.repositories.product_repository import ProductRepository
 from app.repositories.transaction_repository import TransactionRepository
+from app.services.ai_generation_service import AIGenerationService
 from app.services.business_service import BusinessService
 from app.services.conversation_service import ConversationService
 from app.services.insight_service import InsightService
@@ -47,6 +46,7 @@ from app.tools.insight_tools import InsightTools
 from app.tools.marketing_tools import MarketingTools
 from app.tools.product_tools import ProductTools
 from app.tools.transaction_tools import TransactionTools
+from app.workflows.ai_conversation_workflow import AIConversationWorkflow
 from app.workflows.business_workflow import BusinessWorkflow
 from app.workflows.export_workflow import ExportWorkflow
 from app.workflows.insight_workflow import InsightWorkflow
@@ -107,9 +107,7 @@ def get_product_service(
 
 
 def get_transaction_service(
-    transaction_repository: TransactionRepository = Depends(
-        get_transaction_repository
-    ),
+    transaction_repository: TransactionRepository = Depends(get_transaction_repository),
     product_repository: ProductRepository = Depends(get_product_repository),
 ) -> TransactionService:
     """Return TransactionService dependency."""
@@ -133,9 +131,7 @@ def get_marketing_service(
 
 
 def get_conversation_service(
-    conversation_repository: ConversationRepository = Depends(
-        get_conversation_repository
-    ),
+    conversation_repository: ConversationRepository = Depends(get_conversation_repository),
 ) -> ConversationService:
     """Return ConversationService dependency."""
 
@@ -145,9 +141,7 @@ def get_conversation_service(
 def get_insight_service(
     insights_repository: InsightsRepository = Depends(get_insights_repository),
     product_repository: ProductRepository = Depends(get_product_repository),
-    transaction_repository: TransactionRepository = Depends(
-        get_transaction_repository
-    ),
+    transaction_repository: TransactionRepository = Depends(get_transaction_repository),
     marketing_repository: MarketingRepository = Depends(get_marketing_repository),
 ) -> InsightService:
     """Return InsightService dependency."""
@@ -161,9 +155,7 @@ def get_insight_service(
 
 
 def get_sales_analytics(
-    transaction_repository: TransactionRepository = Depends(
-        get_transaction_repository
-    ),
+    transaction_repository: TransactionRepository = Depends(get_transaction_repository),
 ) -> SalesAnalytics:
     """Return SalesAnalytics dependency."""
 
@@ -180,9 +172,7 @@ def get_inventory_analytics(
 
 def get_product_analytics(
     product_repository: ProductRepository = Depends(get_product_repository),
-    transaction_repository: TransactionRepository = Depends(
-        get_transaction_repository
-    ),
+    transaction_repository: TransactionRepository = Depends(get_transaction_repository),
 ) -> ProductAnalytics:
     """Return ProductAnalytics dependency."""
 
@@ -193,9 +183,7 @@ def get_product_analytics(
 
 
 def get_customer_analytics(
-    transaction_repository: TransactionRepository = Depends(
-        get_transaction_repository
-    ),
+    transaction_repository: TransactionRepository = Depends(get_transaction_repository),
 ) -> CustomerAnalytics:
     """Return CustomerAnalytics dependency."""
 
@@ -408,7 +396,6 @@ def get_export_agent(
     )
 
 
-
 def get_gemini_client() -> GeminiClient:
     """Return GeminiClient dependency."""
 
@@ -453,6 +440,7 @@ def get_ai_conversation_workflow(
         conversation_tools=conversation_tools,
         product_tools=product_tools,
     )
+
 
 def get_router_agent(
     transaction_agent: TransactionAgent = Depends(get_transaction_agent),

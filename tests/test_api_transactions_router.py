@@ -10,7 +10,8 @@ Author:
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from fastapi.testclient import TestClient
 
@@ -114,9 +115,7 @@ def test_record_transaction_endpoint_returns_failure_status() -> None:
     """Assert record transaction endpoint returns HTTP 400 on agent failure."""
 
     app = create_app()
-    app.dependency_overrides[get_transaction_agent] = lambda: FakeTransactionAgent(
-        fail=True
-    )
+    app.dependency_overrides[get_transaction_agent] = lambda: FakeTransactionAgent(fail=True)
     client = TestClient(app)
 
     response = client.post(

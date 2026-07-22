@@ -1,0 +1,28 @@
+--- a/app.py
++++ b/app.py
+@@ -167,7 +167,7 @@
+             ("💡", "Recommendations", "Get AI-powered suggestions"),
+             ("🚀", "Business Growth", "Make better decisions"),
+         ]
+-        for column, (icon, title, description) in zip(benefit_cols, benefits):
++        for column, (icon, title, description) in zip(benefit_cols, benefits, strict=True):
+             with column:
+                 st.markdown(f"### {icon}")
+                 st.markdown(f"**{title}**")
+@@ -208,6 +208,7 @@
+         for column, (icon, title, description) in zip(
+             columns,
+             features[row_start : row_start + 4],
++            strict=False,
+         ):
+             with column:
+                 st.markdown(f"### {icon}")
+@@ -251,7 +252,7 @@
+         ("Actionable insights", "Outputs focus on business action."),
+         ("SaaS-ready frontend", "Reusable sections, spacing, and brand tokens."),
+     ]
+-    for column, (title, description) in zip(why_cols, why_items):
++    for column, (title, description) in zip(why_cols, why_items, strict=True):
+         with column:
+             st.markdown("### ✓")
+             st.markdown(f"**{title}**")

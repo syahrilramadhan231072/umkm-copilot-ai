@@ -7,7 +7,8 @@ Service layer for insight data use cases in UMKM Copilot AI.
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from app.repositories.insights_repository import InsightsRepository
 from app.repositories.marketing_repository import MarketingRepository
@@ -182,11 +183,7 @@ class InsightService(BaseService):
             )
         except TypeError:
             records = self._transaction_repository.list(limit=limit)
-        return [
-            record
-            for record in records
-            if str(record.get("business_id")) == str(business_id)
-        ]
+        return [record for record in records if str(record.get("business_id")) == str(business_id)]
 
     def _validate_insight(
         self,
@@ -210,9 +207,7 @@ class InsightService(BaseService):
     def _validate_category(self, value: str) -> None:
         """Validate insight category."""
         if value not in self.VALID_CATEGORIES:
-            raise ValueError(
-                f"insight_category must be one of {sorted(self.VALID_CATEGORIES)}."
-            )
+            raise ValueError(f"insight_category must be one of {sorted(self.VALID_CATEGORIES)}.")
 
     def _to_dict(self, value: Mapping[str, Any], field_name: str) -> dict[str, Any]:
         """Convert mapping input into a non-empty dictionary."""

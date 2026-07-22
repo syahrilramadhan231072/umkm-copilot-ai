@@ -10,7 +10,8 @@ Author:
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from app.memory.conversation_memory import ConversationMemory
 from app.utils.logger import logger
@@ -76,17 +77,13 @@ class TransactionAgent:
                     session_id=self._optional_text(payload.get("session_id")),
                 )
             elif intent == "record_transaction_from_payload":
-                workflow_response = (
-                    self._transaction_workflow.run_record_transaction_from_payload(
-                        transaction_data=payload,
-                    )
+                workflow_response = self._transaction_workflow.run_record_transaction_from_payload(
+                    transaction_data=payload,
                 )
             elif intent == "transaction_summary":
-                workflow_response = (
-                    self._transaction_workflow.run_transaction_summary_refresh(
-                        business_id=str(payload.get("business_id", "")),
-                        limit=self._get_int(payload, "limit", default=1000),
-                    )
+                workflow_response = self._transaction_workflow.run_transaction_summary_refresh(
+                    business_id=str(payload.get("business_id", "")),
+                    limit=self._get_int(payload, "limit", default=1000),
                 )
             else:
                 raise ValueError(f"Unsupported transaction intent: {intent}.")

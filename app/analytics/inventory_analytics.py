@@ -10,7 +10,8 @@ Author:
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from app.analytics.base_analytics import BaseAnalytics
 from app.repositories.product_repository import ProductRepository
@@ -66,8 +67,7 @@ class InventoryAnalytics(BaseAnalytics):
             for product in products
         )
         inventory_selling_value = sum(
-            self._to_int(product.get("stock"))
-            * self._to_int(product.get("selling_price"))
+            self._to_int(product.get("stock")) * self._to_int(product.get("selling_price"))
             for product in products
         )
 
@@ -80,9 +80,7 @@ class InventoryAnalytics(BaseAnalytics):
             "safe_stock_count": status_distribution.get("safe", 0),
             "inventory_cost_value": inventory_cost_value,
             "inventory_selling_value": inventory_selling_value,
-            "inventory_potential_margin": (
-                inventory_selling_value - inventory_cost_value
-            ),
+            "inventory_potential_margin": (inventory_selling_value - inventory_cost_value),
             "stock_status_distribution": status_distribution,
         }
 
@@ -147,9 +145,7 @@ class InventoryAnalytics(BaseAnalytics):
                 limit=limit,
             )
             return [
-                product
-                for product in products
-                if self._get_stock_status(product) == "low_stock"
+                product for product in products if self._get_stock_status(product) == "low_stock"
             ]
 
         products = self._ensure_list(records, field_name="low_stock_products")
@@ -178,9 +174,7 @@ class InventoryAnalytics(BaseAnalytics):
         )
 
         return [
-            product
-            for product in products
-            if self._get_stock_status(product) == "out_of_stock"
+            product for product in products if self._get_stock_status(product) == "out_of_stock"
         ]
 
     def get_inventory_value_by_category(

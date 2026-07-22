@@ -74,12 +74,8 @@ class InventoryService(BaseService):
     ) -> dict[str, Any]:
         """Return inventory summary for a business."""
         records = self.list_inventory(business_id, limit=limit)
-        low_stock = [
-            item for item in records if self._stock_status(item) == "low_stock"
-        ]
-        out_of_stock = [
-            item for item in records if self._stock_status(item) == "out_of_stock"
-        ]
+        low_stock = [item for item in records if self._stock_status(item) == "low_stock"]
+        out_of_stock = [item for item in records if self._stock_status(item) == "out_of_stock"]
 
         return {
             "business_id": str(business_id),
@@ -88,12 +84,10 @@ class InventoryService(BaseService):
             "out_of_stock_count": len(out_of_stock),
             "safe_stock_count": len(records) - len(low_stock) - len(out_of_stock),
             "inventory_cost_value": sum(
-                int(item.get("stock", 0)) * int(item.get("cost_price", 0))
-                for item in records
+                int(item.get("stock", 0)) * int(item.get("cost_price", 0)) for item in records
             ),
             "inventory_sales_value": sum(
-                int(item.get("stock", 0)) * int(item.get("selling_price", 0))
-                for item in records
+                int(item.get("stock", 0)) * int(item.get("selling_price", 0)) for item in records
             ),
             "low_stock_items": low_stock,
             "out_of_stock_items": out_of_stock,

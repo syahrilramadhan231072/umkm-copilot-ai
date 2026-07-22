@@ -8,7 +8,8 @@ OpenRouter implementation of BaseLLMProvider.
 from __future__ import annotations
 
 import os
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from app.llm.providers.base import BaseLLMProvider, LLMProviderResponse
 from app.llm.providers.errors import LLMProviderError

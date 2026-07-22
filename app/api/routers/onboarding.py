@@ -33,7 +33,6 @@ from app.repositories.product_repository import ProductRepository
 from app.services.business_service import BusinessService
 from app.services.product_service import ProductService
 
-
 router = APIRouter(prefix="/api/v1/onboarding", tags=["onboarding"])
 
 
@@ -107,9 +106,7 @@ async def create_business_profile(
     payload = _business_payload(request)
     language = request.language.strip()
 
-    existing = await _maybe_await(
-        _find_existing_business_profile(payload["business_name"])
-    )
+    existing = await _maybe_await(_find_existing_business_profile(payload["business_name"]))
 
     if existing:
         normalized_existing = _normalize_business_response(
@@ -154,9 +151,7 @@ async def create_business_profile(
                 )
 
                 return _success_response(
-                    data=BusinessProfileCreateResponse(
-                        **normalized_existing
-                    ).model_dump(),
+                    data=BusinessProfileCreateResponse(**normalized_existing).model_dump(),
                     message="Profil bisnis sudah ada dan digunakan.",
                 )
 
@@ -213,9 +208,7 @@ async def create_product(request: ProductCreateRequest) -> dict[str, Any]:
             message="Produk sudah ada dan digunakan.",
         )
 
-    direct_created, direct_errors = await _maybe_await(
-        _create_product_via_supabase(payload)
-    )
+    direct_created, direct_errors = await _maybe_await(_create_product_via_supabase(payload))
     if direct_created:
         normalized_direct = _normalize_product_response(
             direct_created,
@@ -292,7 +285,7 @@ async def create_product(request: ProductCreateRequest) -> dict[str, Any]:
             raise HTTPException(
                 status_code=500,
                 detail="Response produk tidak valid: Backend tidak mengembalikan product_id.",
-            )
+            ) from None
 
     return _success_response(
         data=ProductCreateResponse(**normalized).model_dump(),
@@ -431,9 +424,7 @@ def _first_successful_constructor(
         except Exception as exc:
             last_error = exc
 
-    raise RuntimeError(
-        f"{object_name} belum dapat dibuat. Error terakhir: {last_error}"
-    )
+    raise RuntimeError(f"{object_name} belum dapat dibuat. Error terakhir: {last_error}")
 
 
 def _get_database_client() -> Any:
@@ -724,9 +715,7 @@ def _create_product_via_supabase(
 
                 if missing_column and missing_column in working_payload:
                     working_payload.pop(missing_column)
-                    errors.append(
-                        f"hapus kolom tidak tersedia '{missing_column}' lalu coba ulang"
-                    )
+                    errors.append(f"hapus kolom tidak tersedia '{missing_column}' lalu coba ulang")
                     continue
 
                 errors.append(message)
@@ -831,8 +820,7 @@ def _call_first_available_on_targets(
             errors.append(f"{target.__class__.__name__}: {exc}")
 
     raise AttributeError(
-        "Tidak ada target yang dapat menjalankan method. "
-        f"Detail: {' | '.join(errors)}"
+        f"Tidak ada target yang dapat menjalankan method. Detail: {' | '.join(errors)}"
     )
 
 
@@ -865,9 +853,7 @@ def _call_first_available(
             if callable(method):
                 return _call_method(method, payload)
 
-    raise AttributeError(
-        f"Tidak ada method yang tersedia: {', '.join(method_names)}"
-    )
+    raise AttributeError(f"Tidak ada method yang tersedia: {', '.join(method_names)}")
 
 
 def _call_method(method: Any, payload: dict[str, Any]) -> Any:
@@ -924,8 +910,7 @@ def _call_method(method: Any, payload: dict[str, Any]) -> Any:
                 raise
 
     raise TypeError(
-        f"Signature method service/repository tidak dikenali. "
-        f"Error terakhir: {last_error}"
+        f"Signature method service/repository tidak dikenali. Error terakhir: {last_error}"
     )
 
 
@@ -949,9 +934,7 @@ def _is_retryable_call_error(exc: Exception) -> bool:
         "signature",
     )
 
-    return isinstance(exc, TypeError) or any(
-        phrase in message for phrase in retryable_phrases
-    )
+    return isinstance(exc, TypeError) or any(phrase in message for phrase in retryable_phrases)
 
 
 async def _maybe_await(value: Any) -> Any:
@@ -973,26 +956,16 @@ def _normalize_business_response(
 
     data = _extract_data_mapping(created)
 
-    business_id = (
-        data.get("business_id")
-        or data.get("id")
-        or data.get("uuid")
-    )
+    business_id = data.get("business_id") or data.get("id") or data.get("uuid")
 
     if not business_id:
         raise ValueError("Backend tidak mengembalikan business_id.")
 
     return {
         "business_id": str(business_id),
-        "business_name": str(
-            data.get("business_name") or fallback_payload["business_name"]
-        ),
-        "owner_name": str(
-            data.get("owner_name") or fallback_payload["owner_name"]
-        ),
-        "business_type": str(
-            data.get("business_type") or fallback_payload["business_type"]
-        ),
+        "business_name": str(data.get("business_name") or fallback_payload["business_name"]),
+        "owner_name": str(data.get("owner_name") or fallback_payload["owner_name"]),
+        "business_type": str(data.get("business_type") or fallback_payload["business_type"]),
         "currency": str(data.get("currency") or fallback_payload["currency"]),
         "timezone": str(data.get("timezone") or fallback_payload["timezone"]),
         "language": language or "Bahasa Indonesia",
@@ -1008,33 +981,19 @@ def _normalize_product_response(
 
     data = _extract_data_mapping(created)
 
-    product_id = (
-        data.get("product_id")
-        or data.get("id")
-        or data.get("uuid")
-    )
+    product_id = data.get("product_id") or data.get("id") or data.get("uuid")
 
     if not product_id:
         raise ValueError("Backend tidak mengembalikan product_id.")
 
     return {
         "product_id": str(product_id),
-        "business_id": str(
-            data.get("business_id") or fallback_payload["business_id"]
-        ),
-        "name": str(
-            data.get("name")
-            or data.get("product_name")
-            or fallback_payload["name"]
-        ),
+        "business_id": str(data.get("business_id") or fallback_payload["business_id"]),
+        "name": str(data.get("name") or data.get("product_name") or fallback_payload["name"]),
         "selling_price": int(
-            data.get("selling_price")
-            or data.get("price")
-            or fallback_payload["selling_price"]
+            data.get("selling_price") or data.get("price") or fallback_payload["selling_price"]
         ),
-        "cost_price": int(
-            data.get("cost_price") or fallback_payload["cost_price"]
-        ),
+        "cost_price": int(data.get("cost_price") or fallback_payload["cost_price"]),
         "stock": int(
             data.get("stock")
             or data.get("current_stock")
@@ -1042,9 +1001,7 @@ def _normalize_product_response(
             or fallback_payload["stock"]
         ),
         "unit": str(data.get("unit") or fallback_payload.get("unit", "pcs")),
-        "category": str(
-            data.get("category") or fallback_payload.get("category", "Umum")
-        ),
+        "category": str(data.get("category") or fallback_payload.get("category", "Umum")),
     }
 
 

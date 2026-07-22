@@ -63,9 +63,7 @@ class ProductAnalytics(BaseAnalytics):
             limit=limit,
             active_only=False,
         )
-        active_products = [
-            product for product in products if product.get("is_active") is True
-        ]
+        active_products = [product for product in products if product.get("is_active") is True]
         inactive_products = [
             product for product in products if product.get("is_active") is not True
         ]

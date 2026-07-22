@@ -1,0 +1,414 @@
+--- a/app.py
++++ b/app.py
+@@ -11,8 +11,9 @@
+ 
+ from __future__ import annotations
+ 
++from collections.abc import Mapping
+ from html import escape
+-from typing import Any, Mapping
++from typing import Any
+ 
+ from app.frontend.assets import load_custom_css
+ from app.frontend.navigation import switch_page
+@@ -136,22 +137,125 @@
+     primary_label: str,
+     state_label: str,
+ ) -> None:
+-    """Render landing page sections."""
++    """Render landing page sections with native Streamlit components."""
+ 
+     business_name = str(preferences.get("business_name") or "").strip()
+     business_type = str(preferences.get("business_type") or "").strip()
+     workspace_label = business_name or "Indonesian MSMEs"
+     workspace_subtitle = business_type or "AI-powered business workspace"
+ 
+-    st.markdown(
+-        _landing_html(
+-            workspace_label=workspace_label,
+-            workspace_subtitle=workspace_subtitle,
+-            primary_label=primary_label,
+-            state_label=state_label,
+-        ),
+-        unsafe_allow_html=True,
+-    )
++    st.markdown("## 🛍️ Go-UMKM AI")
++    st.caption("Grow Your Business with AI")
++
++    hero_col, workspace_col = st.columns([0.62, 0.38], vertical_alignment="center")
++
++    with hero_col:
++        st.markdown("### AI-Powered Business Assistant")
++        st.markdown(
++            "# Grow Indonesian MSMEs with intelligent business insights."
++        )
++        st.write(
++            "AI-powered assistant for Indonesian MSMEs. Analyze transactions, "
++            "generate insights, forecast trends, and receive intelligent "
++            "recommendations."
++        )
++
++        benefit_cols = st.columns(4)
++        benefits = [
++            ("📊", "AI Insights", "Understand your business better"),
++            ("📈", "Smart Forecast", "Predict trends and demand"),
++            ("💡", "Recommendations", "Get AI-powered suggestions"),
++            ("🚀", "Business Growth", "Make better decisions"),
++        ]
++        for column, (icon, title, description) in zip(benefit_cols, benefits):
++            with column:
++                st.markdown(f"### {icon}")
++                st.markdown(f"**{title}**")
++                st.caption(description)
++
++    with workspace_col:
++        st.info(state_label)
++        st.markdown(f"### {workspace_label}")
++        st.write(workspace_subtitle)
++        st.markdown(f"**Primary action:** {primary_label}")
++
++    _render_native_feature_sections(st)
++
++
++def _render_native_feature_sections(st: Any) -> None:
++    """Render feature, technology, and value sections without raw HTML blocks."""
++
++    st.divider()
++    st.markdown("## Features")
++    st.write(
++        "Professional tools for daily sales, inventory awareness, analytics, "
++        "marketing, and decision support."
++    )
++
++    features = [
++        ("📊", "Sales Analytics", "Track revenue movement and daily transactions."),
++        ("📦", "Product Insights", "Read stock signals and catalog health."),
++        ("🤖", "AI Business Assistant", "Ask practical questions about your business."),
++        ("📈", "Forecast", "Anticipate demand patterns and trends."),
++        ("🛡️", "Business Health", "Monitor signals that indicate risk or strength."),
++        ("📣", "Marketing", "Generate campaign ideas and customer messages."),
++        ("📄", "Reports", "Prepare summaries for monitoring and planning."),
++        ("⬇️", "Export", "Download structured business summaries."),
++    ]
++
++    for row_start in range(0, len(features), 4):
++        columns = st.columns(4)
++        for column, (icon, title, description) in zip(
++            columns,
++            features[row_start : row_start + 4],
++        ):
++            with column:
++                st.markdown(f"### {icon}")
++                st.markdown(f"**{title}**")
++                st.caption(description)
++
++    st.divider()
++    stack_col, failover_col = st.columns(2)
++
++    with stack_col:
++        st.markdown("## Technology Stack")
++        st.write(
++            "Frontend and backend stay decoupled through the approved FastAPI "
++            "contract while Streamlit provides an interactive user interface."
++        )
++        st.markdown(
++            "`Python` · `FastAPI` · `Streamlit` · `Supabase` · "
++            "`Multi-LLM Architecture`"
++        )
++
++    with failover_col:
++        st.markdown("## Automatic AI Failover")
++        st.write(
++            "Provider priority is designed for stable demos and production "
++            "continuity when quota, rate limits, or temporary failures happen."
++        )
++        st.markdown(
++            "1. Gemini\n"
++            "2. OpenRouter\n"
++            "3. Hugging Face\n"
++            "4. OpenAI optional\n"
++            "5. Ollama optional"
++        )
++
++    st.divider()
++    st.markdown("## Why Go-UMKM AI")
++    why_cols = st.columns(4)
++    why_items = [
++        ("MSME-first UX", "Practical wording for daily operators."),
++        ("Demo resilient", "Presentable even when AI vendors are rate limited."),
++        ("Actionable insights", "Outputs focus on business action."),
++        ("SaaS-ready frontend", "Reusable sections, spacing, and brand tokens."),
++    ]
++    for column, (title, description) in zip(why_cols, why_items):
++        with column:
++            st.markdown("### ✓")
++            st.markdown(f"**{title}**")
++            st.caption(description)
+ 
+ 
+ def _render_cta_buttons(
+--- a/app/agents/router_agent.py
++++ b/app/agents/router_agent.py
+@@ -10,7 +10,8 @@
+ 
+ from __future__ import annotations
+ 
+-from typing import Any, Mapping
++from collections.abc import Mapping
++from typing import Any
+ 
+ from app.agents.export_agent import ExportAgent
+ from app.agents.insight_agent import InsightAgent
+@@ -239,7 +240,15 @@
+         if self._is_conversation_prompt(lowered):
+             return "conversation"
+ 
++        if self._is_business_intelligence_question(lowered):
++            return "conversation"
++
++        if self._is_transaction_record_prompt(lowered):
++            return "transaction"
++
+         for route_name, keywords in self.ROUTE_KEYWORDS.items():
++            if route_name == "transaction":
++                continue
+             if any(keyword in lowered for keyword in keywords):
+                 return route_name
+ 
+@@ -340,6 +349,79 @@
+ 
+         return lowered_input.startswith(self.QUESTION_PREFIXES)
+ 
++    def _is_business_intelligence_question(self, lowered_input: str) -> bool:
++        """Return True when user asks the assistant to read business data."""
++
++        direct_bi_phrases = (
++            "produk apa",
++            "produk yang",
++            "produk terjual",
++            "apa yang terjual",
++            "paling laku",
++            "terlaris",
++            "paling laris",
++            "kurang laku",
++            "tidak laku",
++            "belum terjual",
++            "tidak terjual",
++            "stok menipis",
++            "stok habis",
++            "margin",
++            "alert",
++            "kesehatan bisnis",
++            "business health",
++        )
++        if any(phrase in lowered_input for phrase in direct_bi_phrases):
++            return True
++
++        analysis_markers = (
++            "bantu",
++            "baca",
++            "membaca",
++            "analisa",
++            "analisis",
++            "ringkas",
++            "rangkum",
++            "cek data",
++            "lihat data",
++            "tampilkan data",
++        )
++        business_markers = (
++            "produk",
++            "transaksi",
++            "penjualan",
++            "stok",
++            "stock",
++            "margin",
++            "alert",
++            "kesehatan",
++        )
++
++        return any(marker in lowered_input for marker in analysis_markers) and any(
++            marker in lowered_input for marker in business_markers
++        )
++
++    def _is_transaction_record_prompt(self, lowered_input: str) -> bool:
++        """Return True when user wants to create or record a transaction."""
++
++        record_markers = (
++            "catat transaksi",
++            "catat penjualan",
++            "input transaksi",
++            "input penjualan",
++            "rekam transaksi",
++            "rekam penjualan",
++            "tambah transaksi",
++            "buat transaksi",
++            "record sale",
++            "record transaction",
++            "simpan transaksi",
++            "saya jual",
++            "terjual sebanyak",
++        )
++
++        return any(marker in lowered_input for marker in record_markers)
++
+     def _save_optional_user_message(
+         self,
+         *,
+--- a/app/services/ai_generation_service.py
++++ b/app/services/ai_generation_service.py
+@@ -573,6 +573,11 @@
+                 "yang paling laku",
+                 "laku apa",
+                 "laku yang mana",
++                "produk apa yang terjual",
++                "produk yang terjual",
++                "produk terjual",
++                "apa yang terjual",
++                "jualan apa yang terjual",
+             ),
+         ):
+             return LocalBIIntent.BEST_SELLING_PRODUCT
+--- a/tests/test_router_agent_business_query_routing.py
++++ b/tests/test_router_agent_business_query_routing.py
+@@ -0,0 +1,140 @@
++"""Tests for RouterAgent business intelligence query routing."""
++
++from __future__ import annotations
++
++from collections.abc import Mapping
++from typing import Any
++
++from app.agents.router_agent import RouterAgent
++
++
++class FakeDomainAgent:
++    """Fake domain agent."""
++
++    def handle_transaction(
++        self,
++        payload: Mapping[str, Any],
++        *,
++        intent: str = "record_transaction",
++    ) -> dict[str, Any]:
++        """Return transaction response."""
++
++        return {"success": True, "workflow": {}, "data": {}, "error": None}
++
++    def handle_marketing(
++        self,
++        payload: Mapping[str, Any],
++        *,
++        intent: str = "marketing_context",
++    ) -> dict[str, Any]:
++        """Return marketing response."""
++
++        return {"success": True, "workflow": {}, "data": {}, "error": None}
++
++    def handle_insight(
++        self,
++        payload: Mapping[str, Any],
++        *,
++        intent: str = "insight_context",
++    ) -> dict[str, Any]:
++        """Return insight response."""
++
++        return {"success": True, "workflow": {}, "data": {}, "error": None}
++
++    def handle_export(
++        self,
++        payload: Mapping[str, Any],
++        *,
++        intent: str = "export_dashboard",
++    ) -> dict[str, Any]:
++        """Return export response."""
++
++        return {"success": True, "workflow": {}, "data": {}, "error": None}
++
++
++class FakeBusinessWorkflow:
++    """Fake business workflow."""
++
++    def run_business_overview(
++        self,
++        business_id: str,
++        limit: int = 1000,
++        session_id: str | None = None,
++    ) -> dict[str, Any]:
++        """Return business overview."""
++
++        return {"success": True, "workflow": "business", "data": {}, "error": None}
++
++    def run_business_health_check(
++        self,
++        business_id: str,
++        limit: int = 1000,
++        session_id: str | None = None,
++    ) -> dict[str, Any]:
++        """Return business health."""
++
++        return {"success": True, "workflow": "business", "data": {}, "error": None}
++
++
++class FakeAIConversationWorkflow:
++    """Fake AI conversation workflow."""
++
++    def run_ai_conversation(
++        self,
++        *,
++        user_input: str,
++        business_id: str | None = None,
++        session_id: str | None = None,
++        business_profile: Mapping[str, Any] | None = None,
++        limit: int = 1000,
++    ) -> dict[str, Any]:
++        """Return AI conversation response."""
++
++        return {
++            "success": True,
++            "workflow": "run_ai_conversation",
++            "data": {"answer": user_input},
++            "error": None,
++        }
++
++
++def _build_router() -> RouterAgent:
++    """Build router with fake dependencies."""
++
++    return RouterAgent(
++        transaction_agent=FakeDomainAgent(),  # type: ignore[arg-type]
++        marketing_agent=FakeDomainAgent(),  # type: ignore[arg-type]
++        insight_agent=FakeDomainAgent(),  # type: ignore[arg-type]
++        export_agent=FakeDomainAgent(),  # type: ignore[arg-type]
++        business_workflow=FakeBusinessWorkflow(),  # type: ignore[arg-type]
++        ai_conversation_workflow=FakeAIConversationWorkflow(),  # type: ignore[arg-type]
++    )
++
++
++def test_product_sold_question_routes_to_conversation() -> None:
++    """Assert product sales questions do not route to transaction creation."""
++
++    router = _build_router()
++
++    assert router.classify_intent("produk apa yang terjual") == "conversation"
++
++
++def test_business_data_reading_prompt_routes_to_conversation() -> None:
++    """Assert broad BI prompts do not route to transaction creation."""
++
++    router = _build_router()
++
++    assert (
++        router.classify_intent(
++            "bantu saya membaca data produk, transaksi, stok, margin, dan alert"
++        )
++        == "conversation"
++    )
++
++
++def test_record_transaction_prompt_still_routes_to_transaction() -> None:
++    """Assert real transaction creation still routes to transaction agent."""
++
++    router = _build_router()
++
++    assert router.classify_intent("catat transaksi penjualan") == "transaction"

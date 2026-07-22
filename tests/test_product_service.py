@@ -75,9 +75,7 @@ def test_product_service_create_update_delete(
 
     try:
         created = service.create_product(business_id, data)
-        updated = service.update_product(
-            product_id, {"name": data["name"] + " Updated"}
-        )
+        updated = service.update_product(product_id, {"name": data["name"] + " Updated"})
 
         assert str(created["id"]) == product_id
         assert updated["name"].endswith("Updated")

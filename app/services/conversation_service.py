@@ -7,7 +7,8 @@ Service layer for AI conversation history use cases in UMKM Copilot AI.
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from app.repositories.conversation_repository import ConversationRepository
 from app.services.base_service import BaseService
@@ -189,9 +190,7 @@ class ConversationService(BaseService):
                 "message": str(record["message"]),
                 "agent": "" if record.get("agent") is None else str(record["agent"]),
             }
-            for record in self.list_session_messages(
-                business_id, session_id, limit=limit
-            )
+            for record in self.list_session_messages(business_id, session_id, limit=limit)
         ]
 
     def _validate_role(self, role: str) -> None:

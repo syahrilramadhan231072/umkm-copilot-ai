@@ -1,0 +1,2247 @@
+--- a/app.py
++++ b/app.py
+@@ -1,14 +1,21 @@
+ """
+-Beranda UMKM Copilot AI
++Go-UMKM AI Landing Page
+ =======================
++
++Production SaaS welcome page for Go-UMKM AI.
++
++This file is Streamlit frontend only. It does not modify backend contracts,
++business workflows, repositories, services, tools, agents, APIs, database
++schema, or the AI provider layer.
+ """
+ 
+ from __future__ import annotations
+ 
+-from typing import Any
++from html import escape
++from typing import Any, Mapping
+ 
+ from app.frontend.assets import load_custom_css
+-from app.frontend.navigation import render_navigation, switch_page
++from app.frontend.navigation import switch_page
+ from app.frontend.onboarding import build_onboarding_state, is_valid_uuid
+ from app.frontend.session import (
+     DEFAULT_LIMIT,
+@@ -16,28 +23,26 @@
+     ensure_frontend_session,
+     get_api_client_from_session_state,
+     hydrate_business_from_backend,
+-    return_to_welcome,
+     start_create_new_business_flow,
+ )
+-from app.frontend.ui_components import (
+-    render_business_header,
+-    render_hero,
+-    render_progress_indicator,
+-)
++
++
++DICODING_EMAIL = "syahril231072@gmail.com"
+ 
+ 
+ def render_app() -> None:
+-    """Render halaman beranda."""
++    """Render Go-UMKM AI landing and welcome page."""
+ 
+     st = _get_streamlit()
+     st.set_page_config(
+-        page_title="UMKM Copilot AI",
+-        page_icon="🤖",
++        page_title="Go-UMKM AI",
++        page_icon="🛍️",
+         layout="wide",
+     )
+     load_custom_css(st)
++    _inject_dicoding_meta(st)
++
+     ensure_frontend_session(st.session_state)
+-
+     client = get_api_client_from_session_state(st.session_state)
+ 
+     if not bool(st.session_state.get("create_new_business_mode")):
+@@ -63,86 +68,589 @@
+         dashboard_response=dashboard_response,
+     )
+ 
+-    render_navigation(st, state)
+-
+-    render_hero(
+-        st,
+-        eyebrow="Welcome",
+-        title="UMKM Copilot AI",
+-        description=(
+-            "Pilih business workspace, tambahkan produk, lalu catat transaksi. "
+-            "Pengguna dapat maju dan mundur antar langkah tanpa kehilangan business aktif."
+-        ),
+-    )
+-
+-    if bool(st.session_state.get("create_new_business_mode")):
+-        st.info("Anda sedang berada dalam mode buat business baru.")
+-        col_back, col_continue = st.columns(2)
+-        with col_back:
+-            if st.button("Kembali ke Welcome / Dashboard Awal", type="primary"):
+-                return_to_welcome(st.session_state)
+-                st.rerun()
+-        with col_continue:
+-            if st.button("Lanjut Isi Business Baru"):
+-                switch_page(st, "pages/Business_Profile.py")
++    primary_label, primary_target = _resolve_primary_cta(
++        state=state,
++        create_new_business_mode=bool(
++            st.session_state.get("create_new_business_mode")
++        ),
++    )
++
++    _render_landing_page(
++        st=st,
++        preferences=preferences,
++        primary_label=primary_label,
++        state_label=_resolve_state_label(state),
++    )
++
++    _render_cta_buttons(
++        st=st,
++        primary_label=primary_label,
++        primary_target=primary_target,
++        can_create_new_business=state.business_profile_ready,
++    )
++
++
++def _inject_dicoding_meta(st: Any) -> None:
++    """
++    Inject Dicoding verification meta tag.
++
++    Streamlit renders markdown inside the app body. To make verification more
++    robust, this function also attempts a zero-height component that appends
++    the meta tag to the parent document head.
++    """
++
++    meta_tag = (
++        f'<meta name="dicoding:email" content="{escape(DICODING_EMAIL)}">'
++    )
++    st.markdown(meta_tag, unsafe_allow_html=True)
++
++    script = f"""
++    <script>
++    const metaName = "dicoding:email";
++    const metaContent = "{escape(DICODING_EMAIL)}";
++    const doc = window.parent && window.parent.document;
++    if (doc) {{
++      let meta = doc.querySelector('meta[name="' + metaName + '"]');
++      if (!meta) {{
++        meta = doc.createElement("meta");
++        meta.setAttribute("name", metaName);
++        doc.head.appendChild(meta);
++      }}
++      meta.setAttribute("content", metaContent);
++    }}
++    </script>
++    """
++
++    try:
++        import streamlit.components.v1 as components
++
++        components.html(script, height=0, width=0)
++    except Exception:
+         return
+ 
+-    if state.business_profile_ready:
+-        render_business_header(st, preferences)
+-
+-    render_progress_indicator(st, state)
+-    st.divider()
+-
+-    if state.dashboard_ready:
+-        st.success("Bisnis sudah siap digunakan.")
+-        col_a, col_b = st.columns(2)
+-        with col_a:
+-            if st.button("Buka Dashboard", type="primary"):
+-                switch_page(st, "pages/Dashboard.py")
+-        with col_b:
+-            if st.button("Buat Business Baru"):
++
++def _render_landing_page(
++    *,
++    st: Any,
++    preferences: Mapping[str, Any],
++    primary_label: str,
++    state_label: str,
++) -> None:
++    """Render landing page sections."""
++
++    business_name = str(preferences.get("business_name") or "").strip()
++    business_type = str(preferences.get("business_type") or "").strip()
++    workspace_label = business_name or "Indonesian MSMEs"
++    workspace_subtitle = business_type or "AI-powered business workspace"
++
++    st.markdown(
++        _landing_html(
++            workspace_label=workspace_label,
++            workspace_subtitle=workspace_subtitle,
++            primary_label=primary_label,
++            state_label=state_label,
++        ),
++        unsafe_allow_html=True,
++    )
++
++
++def _render_cta_buttons(
++    *,
++    st: Any,
++    primary_label: str,
++    primary_target: str,
++    can_create_new_business: bool,
++) -> None:
++    """Render working Streamlit CTA buttons below the HTML hero."""
++
++    col_primary, col_secondary, col_spacer = st.columns([0.22, 0.24, 0.54])
++
++    with col_primary:
++        if st.button(
++            primary_label,
++            type="primary",
++            use_container_width=True,
++            key="go_landing_primary_cta",
++        ):
++            switch_page(st, primary_target)
++
++    with col_secondary:
++        if can_create_new_business:
++            if st.button(
++                "Create New Business",
++                use_container_width=True,
++                key="go_landing_secondary_cta",
++            ):
+                 start_create_new_business_flow(st.session_state)
+                 switch_page(st, "pages/Business_Profile.py")
+-        return
+-
+-    if state.next_step == "business_profile":
+-        st.markdown("### Mulai dengan profil bisnis")
+-        st.caption(
+-            "Belum ada business profile yang ditemukan dari backend, "
+-            "atau Anda sedang membuat business baru."
+-        )
+-        if st.button("Get Started", type="primary"):
+-            switch_page(st, "pages/Business_Profile.py")
+-        return
++        else:
++            st.markdown(
++                '<a class="go-secondary-link" href="#go-features">'
++                "Explore Features"
++                "</a>",
++                unsafe_allow_html=True,
++            )
++
++
++def _resolve_primary_cta(
++    *,
++    state: Any,
++    create_new_business_mode: bool,
++) -> tuple[str, str]:
++    """Return landing page primary CTA label and target page."""
++
++    if create_new_business_mode:
++        return "Continue Setup", "pages/Business_Profile.py"
++
++    if state.dashboard_ready:
++        return "Open Dashboard", "pages/Dashboard.py"
+ 
+     if state.next_step == "products":
+-        st.markdown("### Tambahkan produk")
+-        st.caption("Business sudah ditemukan. Tambahkan produk agar transaksi dapat dicatat.")
+-        col_a, col_b = st.columns(2)
+-        with col_a:
+-            if st.button("Buka Produk", type="primary"):
+-                switch_page(st, "pages/Products.py")
+-        with col_b:
+-            if st.button("Buat Business Baru"):
+-                start_create_new_business_flow(st.session_state)
+-                switch_page(st, "pages/Business_Profile.py")
+-        return
++        return "Add Products", "pages/Products.py"
+ 
+     if state.next_step == "first_transaction":
+-        st.markdown("### Catat transaksi pertama")
+-        st.caption("Transaksi pertama akan disimpan ke backend untuk membuka fitur penuh.")
+-        col_a, col_b = st.columns(2)
+-        with col_a:
+-            if st.button("Catat Transaksi Pertama", type="primary"):
+-                switch_page(st, "pages/First_Transaction.py")
+-        with col_b:
+-            if st.button("Buat Business Baru"):
+-                start_create_new_business_flow(st.session_state)
+-                switch_page(st, "pages/Business_Profile.py")
++        return "Record First Sale", "pages/First_Transaction.py"
++
++    return "Get Started", "pages/Business_Profile.py"
++
++
++def _resolve_state_label(state: Any) -> str:
++    """Return short workspace readiness label."""
++
++    if state.dashboard_ready:
++        return "Workspace ready"
++
++    if state.next_step == "products":
++        return "Product setup needed"
++
++    if state.next_step == "first_transaction":
++        return "First sale needed"
++
++    return "Setup ready"
++
++
++def _landing_html(
++    *,
++    workspace_label: str,
++    workspace_subtitle: str,
++    primary_label: str,
++    state_label: str,
++) -> str:
++    """Build landing page HTML."""
++
++    safe_workspace_label = escape(workspace_label)
++    safe_workspace_subtitle = escape(workspace_subtitle)
++    safe_primary_label = escape(primary_label)
++    safe_state_label = escape(state_label)
++
++    features = _feature_cards_html()
++    stack = _tech_stack_html()
++    why = _why_cards_html()
++
++    return f"""
++    <main class="go-landing">
++      <section class="go-nav">
++        <div class="go-brand">
++          {_logo_mark_svg()}
++          <div>
++            <div class="go-brand__name">Go-UMKM <span>AI</span></div>
++            <div class="go-brand__tagline">Grow Your Business with AI</div>
++          </div>
++        </div>
++        <div class="go-nav__links">
++          <a href="#go-features">Features</a>
++          <a href="#go-stack">Technology</a>
++          <a href="#go-why">Why Go-UMKM AI</a>
++        </div>
++      </section>
++
++      <section class="go-hero">
++        <div class="go-hero__copy">
++          <div class="go-eyebrow">
++            <span class="go-eyebrow__dot"></span>
++            AI-Powered Business Assistant
++          </div>
++          <h1>
++            Grow Indonesian MSMEs with intelligent business insights.
++          </h1>
++          <p class="go-hero__subtitle">
++            AI-powered assistant for Indonesian MSMEs. Analyze transactions.
++            Generate insights. Forecast trends. Receive intelligent
++            recommendations.
++          </p>
++          <div class="go-hero__workspace">
++            <span>{safe_state_label}</span>
++            <strong>{safe_workspace_label}</strong>
++            <small>{safe_workspace_subtitle}</small>
++          </div>
++          <div class="go-hero__cta-visual">
++            <span>{safe_primary_label}</span>
++            <a href="#go-features">Explore Features</a>
++          </div>
++        </div>
++        <div class="go-hero__visual" aria-label="Go-UMKM AI illustration">
++          {_hero_illustration_svg()}
++        </div>
++      </section>
++
++      <section class="go-benefit-strip" aria-label="Core benefits">
++        <article>
++          <div class="go-benefit-strip__icon">📊</div>
++          <strong>AI Insights</strong>
++          <span>Understand your business better</span>
++        </article>
++        <article>
++          <div class="go-benefit-strip__icon">📈</div>
++          <strong>Smart Forecast</strong>
++          <span>Predict trends and demand</span>
++        </article>
++        <article>
++          <div class="go-benefit-strip__icon">💡</div>
++          <strong>Recommendations</strong>
++          <span>Get AI-powered suggestions</span>
++        </article>
++        <article>
++          <div class="go-benefit-strip__icon">🚀</div>
++          <strong>Business Growth</strong>
++          <span>Make better decisions</span>
++        </article>
++      </section>
++
++      <section class="go-section" id="go-features">
++        <div class="go-section__header">
++          <span>Features</span>
++          <h2>Everything MSMEs need to operate smarter</h2>
++          <p>
++            Professional tools for daily sales, inventory awareness, analytics,
++            marketing, and decision support.
++          </p>
++        </div>
++        <div class="go-feature-grid">
++          {features}
++        </div>
++      </section>
++
++      <section class="go-section go-stack-section" id="go-stack">
++        <div class="go-section__header">
++          <span>Technology Stack</span>
++          <h2>Built for production, demos, and resilient AI operations</h2>
++          <p>
++            Go-UMKM AI combines a modern Python SaaS stack with automatic
++            Multi-LLM failover so one provider outage does not stop the app.
++          </p>
++        </div>
++        {stack}
++      </section>
++
++      <section class="go-section" id="go-why">
++        <div class="go-section__header">
++          <span>Why Go-UMKM AI</span>
++          <h2>Designed for MSME users, competition demos, and SaaS growth</h2>
++        </div>
++        <div class="go-why-grid">
++          {why}
++        </div>
++      </section>
++
++      <footer class="go-footer">
++        <div>
++          <strong>Go-UMKM AI</strong>
++          <span>Grow Your Business with AI</span>
++        </div>
++        <p>
++          Built with Python, FastAPI, Streamlit, Supabase, and Multi-LLM
++          Architecture for Indonesian MSMEs.
++        </p>
++      </footer>
++    </main>
++    """
++
++
++def _feature_cards_html() -> str:
++    """Return feature cards."""
++
++    features = [
++        (
++            "📊",
++            "Sales Analytics",
++            "Track sales performance, revenue movement, and daily transactions.",
++        ),
++        (
++            "📦",
++            "Product Insights",
++            "Discover product performance, stock signals, and catalog health.",
++        ),
++        (
++            "🤖",
++            "AI Business Assistant",
++            "Ask business questions and receive practical AI-powered answers.",
++        ),
++        (
++            "📈",
++            "Forecast",
++            "Anticipate demand patterns and business trends more confidently.",
++        ),
++        (
++            "🛡️",
++            "Business Health",
++            "Monitor key signals that indicate operational strength or risk.",
++        ),
++        (
++            "📣",
++            "Marketing",
++            "Generate campaign ideas, captions, and customer-oriented messages.",
++        ),
++        (
++            "📄",
++            "Reports",
++            "Prepare clean summaries for monitoring, evaluation, and planning.",
++        ),
++        (
++            "⬇️",
++            "Export",
++            "Download business data and summaries for external analysis.",
++        ),
++    ]
++
++    return "\n".join(
++        f"""
++        <article class="go-feature-card">
++          <div class="go-feature-card__icon">{icon}</div>
++          <h3>{escape(title)}</h3>
++          <p>{escape(description)}</p>
++          <a href="#go-stack">View details →</a>
++        </article>
++        """
++        for icon, title, description in features
++    )
++
++
++def _tech_stack_html() -> str:
++    """Return technology stack section."""
++
++    stack_items = [
++        "Python",
++        "FastAPI",
++        "Streamlit",
++        "Supabase",
++        "Multi-LLM Architecture",
++    ]
++    providers = [
++        "Gemini",
++        "OpenRouter",
++        "Hugging Face",
++        "OpenAI optional",
++        "Ollama optional",
++    ]
++
++    stack_badges = "".join(
++        f'<span class="go-stack-badge">{escape(item)}</span>'
++        for item in stack_items
++    )
++    provider_steps = "".join(
++        f"""
++        <div class="go-provider-step">
++          <span>{index}</span>
++          <strong>{escape(provider)}</strong>
++        </div>
++        """
++        for index, provider in enumerate(providers, start=1)
++    )
++
++    return f"""
++    <div class="go-stack-layout">
++      <article class="go-stack-card">
++        <h3>Production SaaS Stack</h3>
++        <p>
++          Frontend and backend stay decoupled through the approved FastAPI
++          contract while Streamlit provides a fast, interactive user interface.
++        </p>
++        <div class="go-stack-badges">{stack_badges}</div>
++      </article>
++      <article class="go-stack-card">
++        <h3>Automatic AI Failover</h3>
++        <p>
++          Provider priority is designed for stable demos and production
++          continuity when quota, rate limit, timeout, or temporary failures
++          happen.
++        </p>
++        <div class="go-provider-flow">{provider_steps}</div>
++      </article>
++    </div>
++    """
++
++
++def _why_cards_html() -> str:
++    """Return why cards."""
++
++    cards = [
++        (
++            "MSME-first UX",
++            "Clean flows, practical wording, and simple decisions for daily operators.",
++        ),
++        (
++            "Demo resilient",
++            "The application remains presentable even when AI vendors are rate limited.",
++        ),
++        (
++            "Actionable insights",
++            "Outputs focus on business action, not technical logs or raw JSON.",
++        ),
++        (
++            "SaaS-ready frontend",
++            "Reusable landing sections, cards, spacing, shadows, and brand tokens.",
++        ),
++    ]
++
++    return "\n".join(
++        f"""
++        <article class="go-why-card">
++          <div class="go-check">✓</div>
++          <h3>{escape(title)}</h3>
++          <p>{escape(description)}</p>
++        </article>
++        """
++        for title, description in cards
++    )
++
++
++def _logo_mark_svg() -> str:
++    """Return inline SVG logo mark."""
++
++    return """
++    <svg class="go-logo-mark" viewBox="0 0 96 96" role="img"
++         aria-label="Go-UMKM AI logo">
++      <defs>
++        <linearGradient id="goLogoGradient" x1="12" y1="12" x2="84" y2="84">
++          <stop offset="0%" stop-color="#2563EB"/>
++          <stop offset="100%" stop-color="#10B981"/>
++        </linearGradient>
++      </defs>
++      <path d="M22 38h52l-4 38H26L22 38Z" fill="none"
++            stroke="url(#goLogoGradient)" stroke-width="8"
++            stroke-linejoin="round"/>
++      <path d="M34 38c0-16 7-25 14-25s14 9 14 25" fill="none"
++            stroke="#2563EB" stroke-width="8" stroke-linecap="round"/>
++      <rect x="35" y="61" width="7" height="12" rx="3" fill="#10B981"/>
++      <rect x="47" y="52" width="7" height="21" rx="3" fill="#14B8A6"/>
++      <rect x="59" y="45" width="7" height="28" rx="3" fill="#2563EB"/>
++      <path d="M19 18l4 8 8 4-8 4-4 8-4-8-8-4 8-4 4-8Z"
++            fill="#2563EB"/>
++    </svg>
++    """
++
++
++def _hero_illustration_svg() -> str:
++    """Return inline SVG hero illustration."""
++
++    return """
++    <svg class="go-hero-svg" viewBox="0 0 720 520" role="img"
++         aria-label="AI-powered MSME business assistant illustration">
++      <defs>
++        <linearGradient id="awning" x1="0" y1="0" x2="1" y2="1">
++          <stop offset="0%" stop-color="#14B8A6"/>
++          <stop offset="100%" stop-color="#10B981"/>
++        </linearGradient>
++        <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
++          <feDropShadow dx="0" dy="18" stdDeviation="18"
++                        flood-color="#0F172A" flood-opacity="0.12"/>
++        </filter>
++      </defs>
++
++      <rect x="36" y="42" width="648" height="420" rx="30"
++            fill="#F8FAFC"/>
++      <circle cx="610" cy="104" r="44" fill="#DBEAFE"/>
++      <circle cx="562" cy="94" r="24" fill="#DBEAFE"/>
++      <circle cx="112" cy="118" r="32" fill="#E0F2FE"/>
++
++      <g filter="url(#softShadow)">
++        <rect x="415" y="130" width="214" height="190" rx="18"
++              fill="#FFFFFF"/>
++        <rect x="438" y="153" width="168" height="18" rx="9"
++              fill="#CBD5E1"/>
++        <rect x="438" y="186" width="42" height="92" rx="12"
++              fill="#14B8A6"/>
++        <rect x="494" y="208" width="42" height="70" rx="12"
++              fill="#93C5FD"/>
++        <rect x="550" y="176" width="42" height="102" rx="12"
++              fill="#2563EB"/>
++      </g>
++
++      <g filter="url(#softShadow)">
++        <rect x="88" y="116" width="206" height="152" rx="18"
++              fill="#FFFFFF"/>
++        <path d="M120 220c28-36 48-14 70-48 18-28 36-20 70-54"
++              fill="none" stroke="#14B8A6" stroke-width="9"
++              stroke-linecap="round"/>
++        <path d="M238 121h40v40" fill="none" stroke="#2563EB"
++              stroke-width="8" stroke-linecap="round"
++              stroke-linejoin="round"/>
++      </g>
++
++      <g>
++        <rect x="386" y="88" width="260" height="26" rx="8"
++              fill="#334155"/>
++        <path d="M394 114h52l-17 66c-4 16-27 18-35 4Z"
++              fill="url(#awning)"/>
++        <path d="M446 114h52l-10 68c-3 18-31 18-35 0Z"
++              fill="#E2E8F0"/>
++        <path d="M498 114h52l-2 68c-1 19-30 20-35 2Z"
++              fill="url(#awning)"/>
++        <path d="M550 114h52l7 66c2 18-23 25-35 9Z"
++              fill="#E2E8F0"/>
++        <path d="M602 114h36l18 66c4 16-16 27-30 15Z"
++              fill="url(#awning)"/>
++      </g>
++
++      <rect x="64" y="374" width="592" height="22" rx="8"
++            fill="#8B5E34"/>
++      <rect x="82" y="396" width="556" height="24" rx="8"
++            fill="#6B4423"/>
++
++      <g filter="url(#softShadow)">
++        <rect x="326" y="246" width="138" height="86" rx="16"
++              fill="#FFFFFF"/>
++        <circle cx="360" cy="288" r="22" fill="#2563EB"/>
++        <path d="M348 288h24M360 276v24" stroke="#FFFFFF"
++              stroke-width="6" stroke-linecap="round"/>
++        <rect x="392" y="270" width="52" height="10" rx="5"
++              fill="#CBD5E1"/>
++        <rect x="392" y="294" width="38" height="10" rx="5"
++              fill="#DBEAFE"/>
++      </g>
++
++      <g>
++        <circle cx="476" cy="254" r="52" fill="#FDBA74"/>
++        <path d="M430 360c10-62 82-62 94 0" fill="#10B981"/>
++        <path d="M426 222c16-48 88-38 92 14-22-8-44-9-72 6Z"
++              fill="#0F172A"/>
++        <circle cx="462" cy="252" r="5" fill="#0F172A"/>
++        <circle cx="494" cy="252" r="5" fill="#0F172A"/>
++        <path d="M470 278c12 8 24 8 36 0" fill="none"
++              stroke="#0F172A" stroke-width="5" stroke-linecap="round"/>
++        <rect x="440" y="322" width="76" height="52" rx="10"
++              fill="#059669"/>
++      </g>
++
++      <g filter="url(#softShadow)">
++        <rect x="198" y="292" width="210" height="92" rx="18"
++              fill="#334155"/>
++        <rect x="220" y="312" width="168" height="52" rx="10"
++              fill="#0F172A"/>
++      </g>
++
++      <g>
++        <rect x="560" y="314" width="96" height="64" rx="12"
++              fill="#C08457"/>
++        <text x="578" y="354" font-family="Inter, sans-serif"
++              font-size="22" font-weight="800" fill="#6B4423">UMKM</text>
++      </g>
++    </svg>
++    """
+ 
+ 
+ def _get_streamlit() -> Any:
+-    """Import Streamlit secara lazy."""
++    """Import Streamlit lazily."""
+ 
+     import streamlit as st
+ 
+--- a/app/api/main.py
++++ b/app/api/main.py
+@@ -2,13 +2,24 @@
+ FastAPI Application
+ ===================
+ 
+-Entry point API UMKM Copilot AI.
++Production-ready FastAPI entry point for Go-UMKM AI.
++
++This module only wires the API application. It does not contain business logic
++and does not bypass the approved architecture:
++
++Repository -> Service -> Tools -> Workflow -> Agent -> FastAPI -> Streamlit
+ """
+ 
+ from __future__ import annotations
+ 
+-from fastapi import FastAPI
++from collections.abc import Sequence
++from contextlib import asynccontextmanager
++from typing import Any
++
++from fastapi import FastAPI, HTTPException, Request
++from fastapi.exceptions import RequestValidationError
+ from fastapi.middleware.cors import CORSMiddleware
++from fastapi.responses import JSONResponse
+ 
+ from app.api.routers import analytics
+ from app.api.routers import business
+@@ -19,47 +30,179 @@
+ from app.api.routers import onboarding
+ from app.api.routers import router as router_agent
+ from app.api.routers import transactions
++from app.config.settings import get_settings
++from app.utils.logger import logger
++
++
++API_V1_PREFIX = "/api/v1"
++
++
++@asynccontextmanager
++async def lifespan(app: FastAPI):  # type: ignore[no-untyped-def]
++    """Log startup and graceful shutdown lifecycle events."""
++
++    settings = get_settings()
++    logger.info(
++        "Starting {} version={} environment={} debug={}.",
++        settings.APP_NAME,
++        settings.APP_VERSION,
++        settings.APP_ENV,
++        settings.APP_DEBUG,
++    )
++    logger.info("OpenAPI endpoint enabled at {}.", app.openapi_url)
++    logger.info("Swagger UI endpoint enabled at {}.", app.docs_url)
++
++    try:
++        yield
++    finally:
++        logger.info("Shutting down {} gracefully.", settings.APP_NAME)
+ 
+ 
+ def create_app() -> FastAPI:
+-    """Buat aplikasi FastAPI."""
++    """Create the FastAPI application."""
++
++    settings = get_settings()
+ 
+     app = FastAPI(
+-        title="UMKM Copilot AI API",
+-        description="Backend API untuk UMKM Copilot AI.",
+-        version="1.0.0",
+-    )
++        title=settings.APP_NAME,
++        description="Backend API for Go-UMKM AI.",
++        version=settings.APP_VERSION,
++        debug=settings.APP_DEBUG,
++        docs_url="/docs",
++        redoc_url="/redoc",
++        openapi_url="/openapi.json",
++        lifespan=lifespan,
++    )
++
++    _configure_cors(app, settings.CORS_ALLOWED_ORIGINS)
++    _register_exception_handlers(app)
++    _include_routers(app)
++
++    return app
++
++
++def _configure_cors(app: FastAPI, allowed_origins_raw: str) -> None:
++    """Configure CORS using environment variables."""
++
++    allowed_origins = _parse_allowed_origins(allowed_origins_raw)
++    allow_credentials = "*" not in allowed_origins
+ 
+     app.add_middleware(
+         CORSMiddleware,
+-        allow_origins=["*"],
+-        allow_credentials=True,
++        allow_origins=allowed_origins,
++        allow_credentials=allow_credentials,
+         allow_methods=["*"],
+         allow_headers=["*"],
+     )
+ 
+-    app.include_router(health.router)
+-
+-    # Canonical API v1 routes used by automated tests and the frontend client.
+-    app.include_router(analytics.router, prefix="/api/v1")
+-    app.include_router(business.router, prefix="/api/v1")
+-    app.include_router(transactions.router, prefix="/api/v1")
+-    app.include_router(marketing.router, prefix="/api/v1")
+-    app.include_router(insights.router, prefix="/api/v1")
+-    app.include_router(exports.router, prefix="/api/v1")
+-    app.include_router(router_agent.router, prefix="/api/v1")
+-
+-    # Preserve existing unversioned routes for backward compatibility.
+-    app.include_router(analytics.router)
+-    app.include_router(business.router)
+-    app.include_router(onboarding.router)
+-    app.include_router(transactions.router)
+-    app.include_router(marketing.router)
+-    app.include_router(insights.router)
+-    app.include_router(exports.router)
+-    app.include_router(router_agent.router)
+-
+-    return app
++
++def _parse_allowed_origins(raw_value: str) -> list[str]:
++    """Parse comma-separated CORS origins."""
++
++    if not isinstance(raw_value, str) or not raw_value.strip():
++        return ["*"]
++
++    origins = [origin.strip() for origin in raw_value.split(",") if origin.strip()]
++
++    return origins or ["*"]
++
++
++def _register_exception_handlers(app: FastAPI) -> None:
++    """Register safe API exception handlers."""
++
++    @app.exception_handler(HTTPException)
++    async def http_exception_handler(
++        request: Request,
++        exc: HTTPException,
++    ) -> JSONResponse:
++        logger.warning(
++            "HTTP error path={} status={} detail={}.",
++            request.url.path,
++            exc.status_code,
++            exc.detail,
++        )
++        return JSONResponse(
++            status_code=exc.status_code,
++            content={
++                "success": False,
++                "data": {},
++                "error": {
++                    "type": "HTTPException",
++                    "message": str(exc.detail),
++                },
++            },
++        )
++
++    @app.exception_handler(RequestValidationError)
++    async def validation_exception_handler(
++        request: Request,
++        exc: RequestValidationError,
++    ) -> JSONResponse:
++        logger.warning(
++            "Validation error path={} errors={}.",
++            request.url.path,
++            exc.errors(),
++        )
++        return JSONResponse(
++            status_code=422,
++            content={
++                "success": False,
++                "data": {},
++                "error": {
++                    "type": "RequestValidationError",
++                    "message": "Request validation failed.",
++                    "details": exc.errors(),
++                },
++            },
++        )
++
++    @app.exception_handler(Exception)
++    async def unhandled_exception_handler(
++        request: Request,
++        exc: Exception,
++    ) -> JSONResponse:
++        settings = get_settings()
++        logger.exception("Unhandled API error path={}.", request.url.path)
++        message = (
++            str(exc)
++            if settings.APP_DEBUG
++            else "Internal server error. Please try again later."
++        )
++        return JSONResponse(
++            status_code=500,
++            content={
++                "success": False,
++                "data": {},
++                "error": {
++                    "type": exc.__class__.__name__,
++                    "message": message,
++                },
++            },
++        )
++
++
++def _include_routers(app: FastAPI) -> None:
++    """
++    Register canonical `/api/v1` routes and backward-compatible unversioned routes.
++    """
++
++    routers: Sequence[Any] = (
++        health.router,
++        analytics.router,
++        business.router,
++        onboarding.router,
++        transactions.router,
++        marketing.router,
++        insights.router,
++        exports.router,
++        router_agent.router,
++    )
++
++    for api_router in routers:
++        app.include_router(api_router, prefix=API_V1_PREFIX)
++
++    for api_router in routers:
++        app.include_router(api_router)
+ 
+ 
+ app = create_app()
+--- a/app/api/routers/health.py
++++ b/app/api/routers/health.py
+@@ -2,10 +2,7 @@
+ Health Router
+ =============
+ 
+-Health check endpoint.
+-
+-Author:
+-    UMKM Copilot AI
++Health and readiness endpoints for the API.
+ """
+ 
+ from __future__ import annotations
+@@ -14,21 +11,49 @@
+ 
+ from fastapi import APIRouter
+ 
++from app.config.settings import get_settings
++
+ router = APIRouter(tags=["health"])
+ 
+ 
+ @router.get("/health")
+ def health_check() -> dict[str, Any]:
+-    """
+-    Return API health status.
++    """Return lightweight liveness status."""
+ 
+-    Returns:
+-        Health status response.
+-    """
++    settings = get_settings()
+ 
+     return {
+         "success": True,
+-        "service": "umkm-copilot-ai-api",
++        "service": "go-umkm-ai-api",
+         "status": "healthy",
++        "environment": settings.APP_ENV,
++        "version": settings.APP_VERSION,
+         "error": None,
+     }
++
++
++@router.get("/ready")
++def readiness_check() -> dict[str, Any]:
++    """
++    Return readiness status based on required production configuration.
++
++    The check is intentionally lightweight and validates configuration presence
++    without querying database tables.
++    """
++
++    settings = get_settings()
++    missing: list[str] = []
++
++    if not settings.SUPABASE_URL.strip():
++        missing.append("SUPABASE_URL")
++
++    if not settings.supabase_key_is_configured:
++        missing.append("SUPABASE_KEY")
++
++    return {
++        "success": not missing,
++        "service": "go-umkm-ai-api",
++        "status": "ready" if not missing else "not_ready",
++        "missing": missing,
++        "error": None if not missing else {"message": "Missing required settings."},
++    }
+--- a/app/config/settings.py
++++ b/app/config/settings.py
+@@ -3,21 +3,9 @@
+ ====================
+ 
+ Centralized configuration management using Pydantic Settings.
++"""
+ 
+-Features:
+-- Load environment variables from .env
+-- Type validation
+-- Singleton configuration
+-- Feature flags
+-- Application metadata
+-- Localization settings
+-
+-Author:
+-    UMKM Copilot AI
+-
+-Python:
+-    >=3.11
+-"""
++from __future__ import annotations
+ 
+ from functools import lru_cache
+ from typing import Literal
+@@ -30,7 +18,9 @@
+     """
+     Global application configuration.
+ 
+-    Values are loaded from `.env`.
++    Values are loaded from environment variables and `.env` during local
++    development. Production platforms should provide the same variables through
++    their secrets/environment settings.
+     """
+ 
+     model_config = SettingsConfigDict(
+@@ -40,22 +30,11 @@
+         case_sensitive=True,
+     )
+ 
+-    # ==========================================================
+     # Application
+-    # ==========================================================
+-
+-    APP_NAME: str = "UMKM Copilot AI"
+-
++    APP_NAME: str = "Go-UMKM AI"
+     APP_VERSION: str = "0.1.0"
+-
+-    APP_ENV: Literal[
+-        "development",
+-        "staging",
+-        "production",
+-    ] = "development"
+-
++    APP_ENV: Literal["development", "staging", "production", "testing"] = "development"
+     APP_DEBUG: bool = False
+-
+     LOG_LEVEL: Literal[
+         "TRACE",
+         "DEBUG",
+@@ -65,131 +44,115 @@
+         "ERROR",
+         "CRITICAL",
+     ] = "INFO"
++    LOG_TO_FILE: bool = False
+ 
+-    # ==========================================================
+-    # Gemini
+-    # ==========================================================
++    # Backend deployment
++    PORT: int = 8000
++    CORS_ALLOWED_ORIGINS: str = "*"
++    HEALTHCHECK_INTERVAL: int = 30
++
++    # Supabase
++    SUPABASE_URL: str = ""
++    SUPABASE_KEY: SecretStr = Field(default=SecretStr(""))
++
++    # Multi-LLM provider configuration
++    PRIMARY_LLM_PROVIDER: str = "gemini"
++    LLM_PROVIDER_PRIORITY: str = "gemini,openrouter,huggingface,ollama"
++    ENABLE_PROVIDER_FAILOVER: bool = True
++    MAX_PROVIDER_RETRIES: int = 2
++    RETRY_BACKOFF_SECONDS: float = 0.5
+ 
+     GEMINI_API_KEY: SecretStr = Field(default=SecretStr(""))
++    GEMINI_MODEL: str = "gemini-2.0-flash-lite"
++    GEMINI_MODEL_NAME: str = "gemini-2.0-flash-lite"
+ 
+-    GEMINI_MODEL: str = "gemini-2.5-flash"
++    OPENROUTER_API_KEY: SecretStr = Field(default=SecretStr(""))
++    OPENROUTER_MODEL: str = "google/gemini-2.0-flash-exp:free"
+ 
+-    # ==========================================================
+-    # Supabase
+-    # ==========================================================
++    HUGGINGFACE_API_KEY: SecretStr = Field(default=SecretStr(""))
++    HUGGINGFACE_MODEL: str = "HuggingFaceH4/zephyr-7b-beta"
+ 
+-    SUPABASE_URL: str = ""
++    OPENAI_API_KEY: SecretStr = Field(default=SecretStr(""))
+ 
+-    SUPABASE_KEY: SecretStr = Field(default=SecretStr(""))
++    OLLAMA_BASE_URL: str = "http://localhost:11434"
++    OLLAMA_MODEL: str = "llama3.2"
+ 
+-    # ==========================================================
+-    # Streamlit
+-    # ==========================================================
++    # Streamlit frontend
++    STREAMLIT_SERVER_PORT: int = 8501
++    GO_UMKM_API_BASE_URL: str = "http://localhost:8000"
+ 
+-    STREAMLIT_SERVER_PORT: int = 8501
+-
+-    # ==========================================================
+     # Localization
+-    # ==========================================================
+-
+     DEFAULT_LANGUAGE: str = "id"
+-
+     TIMEZONE: str = "Asia/Jakarta"
+-
+     CURRENCY: str = "IDR"
+ 
+-    # ==========================================================
+-    # Feature Flags
+-    # ==========================================================
+-
++    # Feature flags
+     ENABLE_MARKETING: bool = True
+-
+     ENABLE_INSIGHT: bool = True
+-
+     ENABLE_EXPORT: bool = False
+-
+     ENABLE_ANALYTICS: bool = True
+-
+     ENABLE_AI_ASSISTANT: bool = True
+-
+-    # ==========================================================
+-    # Computed Fields
+-    # ==========================================================
+ 
+     @computed_field
+     @property
+     def is_production(self) -> bool:
+         """Return True if running in production."""
++
+         return self.APP_ENV == "production"
+ 
+     @computed_field
+     @property
+     def is_development(self) -> bool:
+         """Return True if running in development."""
++
+         return self.APP_ENV == "development"
+ 
+     @computed_field
+     @property
+     def app_title(self) -> str:
+         """Application title with version."""
++
+         return f"{self.APP_NAME} v{self.APP_VERSION}"
+ 
+-    # ==========================================================
+-    # Helper Methods
+-    # ==========================================================
++    @computed_field
++    @property
++    def supabase_key_is_configured(self) -> bool:
++        """Return whether Supabase key is configured."""
++
++        return bool(self.SUPABASE_KEY.get_secret_value().strip())
+ 
+     def gemini_key(self) -> str:
+-        """
+-        Return Gemini API Key.
+-
+-        Raises
+-        ------
+-        RuntimeError
+-            If API key is empty.
+-        """
++        """Return Gemini API key."""
+ 
+         key = self.GEMINI_API_KEY.get_secret_value()
+-
+         if not key.strip():
+             raise RuntimeError("GEMINI_API_KEY is not configured.")
+-
+         return key
+ 
+     def supabase_key(self) -> str:
+-        """
+-        Return Supabase API Key.
+-        """
++        """Return Supabase API key."""
+ 
+         key = self.SUPABASE_KEY.get_secret_value()
+-
+         if not key.strip():
+             raise RuntimeError("SUPABASE_KEY is not configured.")
+-
+         return key
+ 
+     def validate_supabase(self) -> None:
+-        """
+-        Validate Supabase configuration.
+-        """
++        """Validate Supabase configuration."""
+ 
+         if not self.SUPABASE_URL.strip():
+             raise RuntimeError("SUPABASE_URL is missing.")
+-
+         self.supabase_key()
+ 
+     def validate_gemini(self) -> None:
+-        """
+-        Validate Gemini configuration.
+-        """
++        """Validate Gemini configuration."""
+ 
+         self.gemini_key()
+ 
+ 
+ @lru_cache(maxsize=1)
+ def get_settings() -> Settings:
+-    """
+-    Return singleton Settings instance.
+-    """
++    """Return singleton Settings instance."""
+ 
+     return Settings()
+ 
+--- a/app/utils/logger.py
++++ b/app/utils/logger.py
+@@ -1,17 +1,11 @@
+ """
+ Global Logger Configuration
++===========================
+ 
+-This module configures Loguru for the entire application.
++Production-safe Loguru configuration.
++"""
+ 
+-Features
+---------
+-- Console logging
+-- File logging
+-- Automatic log rotation
+-- Automatic log retention
+-- Debug/Production mode
+-- UTF-8 support
+-"""
++from __future__ import annotations
+ 
+ from pathlib import Path
+ import sys
+@@ -20,119 +14,93 @@
+ 
+ from app.config.settings import get_settings
+ 
++
+ settings = get_settings()
+-
+-# ==========================================================
+-# Ensure Log Directory Exists
+-# ==========================================================
+-
+-LOG_DIR = Path("logs")
+-LOG_DIR.mkdir(parents=True, exist_ok=True)
+-
+-LOG_FILE = LOG_DIR / "app.log"
+-
+-# ==========================================================
+-# Remove Default Logger
+-# ==========================================================
+ 
+ logger.remove()
+ 
+-# ==========================================================
+-# Console Logger
+-# ==========================================================
++LOG_FORMAT = (
++    "{time:YYYY-MM-DD HH:mm:ss} | "
++    "{level:<8} | "
++    "{name}:{function}:{line} | "
++    "{message}"
++)
+ 
+ logger.add(
+     sys.stdout,
+     level=settings.LOG_LEVEL,
+-    colorize=True,
++    colorize=settings.is_development,
+     enqueue=True,
+     backtrace=settings.APP_DEBUG,
+     diagnose=settings.APP_DEBUG,
+-    format=(
+-        "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
+-        "<level>{level:<8}</level> | "
+-        "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | "
+-        "<level>{message}</level>"
+-    ),
++    format=LOG_FORMAT,
+ )
+ 
+-# ==========================================================
+-# File Logger
+-# ==========================================================
+-
+-logger.add(
+-    LOG_FILE,
+-    level=settings.LOG_LEVEL,
+-    rotation="10 MB",
+-    retention="14 days",
+-    compression="zip",
+-    encoding="utf-8",
+-    enqueue=True,
+-    backtrace=settings.APP_DEBUG,
+-    diagnose=settings.APP_DEBUG,
+-    format=(
+-        "{time:YYYY-MM-DD HH:mm:ss} | "
+-        "{level:<8} | "
+-        "{name}:{function}:{line} | "
+-        "{message}"
+-    ),
+-)
+-
+-# ==========================================================
+-# Startup Information
+-# ==========================================================
++if settings.LOG_TO_FILE:
++    log_dir = Path("logs")
++    log_dir.mkdir(parents=True, exist_ok=True)
++    logger.add(
++        log_dir / "app.log",
++        level=settings.LOG_LEVEL,
++        rotation="10 MB",
++        retention="14 days",
++        compression="zip",
++        encoding="utf-8",
++        enqueue=True,
++        backtrace=settings.APP_DEBUG,
++        diagnose=settings.APP_DEBUG,
++        format=LOG_FORMAT,
++    )
+ 
+ logger.info("=" * 60)
+-logger.info(f"{settings.APP_NAME} starting...")
+-logger.info(f"Environment : {settings.APP_ENV}")
+-logger.info(f"Debug Mode  : {settings.APP_DEBUG}")
+-logger.info(f"Log Level   : {settings.LOG_LEVEL}")
++logger.info("{} starting...", settings.APP_NAME)
++logger.info("Environment : {}", settings.APP_ENV)
++logger.info("Debug Mode  : {}", settings.APP_DEBUG)
++logger.info("Log Level   : {}", settings.LOG_LEVEL)
+ logger.info("=" * 60)
+ 
+ 
+-# ==========================================================
+-# Helper Functions
+-# ==========================================================
++def redact_secret(value: str, *, visible_prefix: int = 4) -> str:
++    """Redact secret values for logging."""
++
++    if not value:
++        return ""
++
++    if len(value) <= visible_prefix:
++        return "***"
++
++    return f"{value[:visible_prefix]}***"
+ 
+ 
+ def log_success(message: str) -> None:
+-    """
+-    Log successful operation.
+-    """
++    """Log successful operation."""
++
+     logger.success(message)
+ 
+ 
+ def log_info(message: str) -> None:
+-    """
+-    Log informational message.
+-    """
++    """Log informational message."""
++
+     logger.info(message)
+ 
+ 
+ def log_warning(message: str) -> None:
+-    """
+-    Log warning message.
+-    """
++    """Log warning message."""
++
+     logger.warning(message)
+ 
+ 
+ def log_error(message: str) -> None:
+-    """
+-    Log error message.
+-    """
++    """Log error message."""
++
+     logger.error(message)
+ 
+ 
+ def log_exception(exception: Exception) -> None:
+-    """
+-    Log exception with traceback.
+-    """
++    """Log exception with traceback."""
++
+     logger.exception(exception)
+ 
+-
+-# ==========================================================
+-# Export
+-# ==========================================================
+ 
+ __all__ = [
+     "logger",
+@@ -141,4 +109,5 @@
+     "log_warning",
+     "log_error",
+     "log_exception",
++    "redact_secret",
+ ]
+--- a/app/database/connection.py
++++ b/app/database/connection.py
+@@ -3,19 +3,6 @@
+ ===================
+ 
+ Centralized Supabase connection.
+-
+-Responsibilities
+-----------------
+-- Create Supabase client
+-- Validate configuration
+-- Singleton connection
+-- Health check
+-
+-This module MUST NOT know anything about database tables.
+-Repositories are responsible for interacting with tables.
+-
+-Author:
+-    UMKM Copilot AI
+ """
+ 
+ from __future__ import annotations
+@@ -35,23 +22,14 @@
+     """
+     Return singleton Supabase client.
+ 
+-    Returns
+-    -------
+-    Client
+-        Configured Supabase client.
+-
+-    Raises
+-    ------
+-    RuntimeError
+-        If Supabase configuration is invalid.
++    Repositories are responsible for database table access.
+     """
+ 
+     settings.validate_supabase()
+ 
+-    logger.info("Connecting to Supabase...")
+-
+-    logger.info(f"SUPABASE_URL = {settings.SUPABASE_URL}")
+-    logger.info(f"SUPABASE_KEY prefix = {settings.supabase_key()[:20]}")
++    logger.info("Connecting to Supabase.")
++    logger.info("SUPABASE_URL configured: {}", bool(settings.SUPABASE_URL.strip()))
++    logger.info("SUPABASE_KEY configured: {}", settings.supabase_key_is_configured)
+ 
+     client = create_client(
+         supabase_url=settings.SUPABASE_URL,
+@@ -64,30 +42,14 @@
+ 
+ 
+ def health_check() -> bool:
+-    """
+-    Verify that the Supabase client can be initialized.
+-
+-    This function intentionally does NOT query any tables.
+-    Repository classes are responsible for database operations.
+-
+-    Returns
+-    -------
+-    bool
+-        True if the client is initialized successfully.
+-    """
++    """Verify that the Supabase client can be initialized."""
+ 
+     try:
+-
+         get_supabase()
+-
+         logger.success("Supabase health check passed.")
+-
+         return True
+-
+     except Exception as exc:
+-
+         logger.exception(exc)
+-
+         return False
+ 
+ 
+--- a/app/frontend/config.py
++++ b/app/frontend/config.py
+@@ -0,0 +1,80 @@
++"""
++Frontend Configuration
++======================
++
++Streamlit deployment configuration helpers.
++
++Priority:
++1. Streamlit Secrets
++2. Environment Variables
++3. Local development fallback
++"""
++
++from __future__ import annotations
++
++import os
++from typing import Mapping
++
++
++DEFAULT_LOCAL_API_BASE_URL = "http://localhost:8000"
++API_BASE_URL_KEYS = (
++    "GO_UMKM_API_BASE_URL",
++    "BACKEND_API_URL",
++    "API_BASE_URL",
++)
++
++
++def get_frontend_api_base_url() -> str:
++    """Return backend API base URL for the Streamlit frontend."""
++
++    from_secrets = _get_from_streamlit_secrets()
++    if from_secrets:
++        return _normalize_base_url(from_secrets)
++
++    for key in API_BASE_URL_KEYS:
++        value = os.getenv(key)
++        if value and value.strip():
++            return _normalize_base_url(value)
++
++    return DEFAULT_LOCAL_API_BASE_URL
++
++
++def _get_from_streamlit_secrets() -> str:
++    """Read API base URL from Streamlit secrets when available."""
++
++    try:
++        import streamlit as st
++
++        secrets = st.secrets
++    except Exception:
++        return ""
++
++    for key in API_BASE_URL_KEYS:
++        try:
++            value = secrets.get(key)
++        except Exception:
++            value = None
++
++        if isinstance(value, str) and value.strip():
++            return value.strip()
++
++    try:
++        api_section = secrets.get("api")
++    except Exception:
++        api_section = None
++
++    if isinstance(api_section, Mapping):
++        value = api_section.get("base_url")
++        if isinstance(value, str) and value.strip():
++            return value.strip()
++
++    return ""
++
++
++def _normalize_base_url(value: str) -> str:
++    """Normalize API base URL."""
++
++    if not isinstance(value, str) or not value.strip():
++        return DEFAULT_LOCAL_API_BASE_URL
++
++    return value.strip().rstrip("/")
+--- a/app/frontend/session.py
++++ b/app/frontend/session.py
+@@ -11,9 +11,10 @@
+ from uuid import UUID, uuid4
+ 
+ from app.frontend.api_client import FrontendApiClient
+-
+-
+-DEFAULT_API_BASE_URL = "http://127.0.0.1:8000"
++from app.frontend.config import DEFAULT_LOCAL_API_BASE_URL, get_frontend_api_base_url
++
++
++DEFAULT_API_BASE_URL = DEFAULT_LOCAL_API_BASE_URL
+ DEFAULT_BUSINESS_ID = ""
+ DEFAULT_LIMIT = 1000
+ DEFAULT_CURRENCY = "IDR"
+@@ -25,7 +26,7 @@
+ def ensure_frontend_session(session_state: MutableMapping[str, Any]) -> None:
+     """Pastikan semua kunci session tersedia."""
+ 
+-    session_state.setdefault("api_base_url", DEFAULT_API_BASE_URL)
++    session_state.setdefault("api_base_url", get_frontend_api_base_url())
+     session_state.setdefault("business_id", DEFAULT_BUSINESS_ID)
+     session_state.setdefault("dashboard_limit", DEFAULT_LIMIT)
+     session_state.setdefault("business_name", "")
+--- a/app/frontend/api_client.py
++++ b/app/frontend/api_client.py
+@@ -31,7 +31,7 @@
+ 
+     def __init__(
+         self,
+-        api_base_url: str = "http://127.0.0.1:8000",
++        api_base_url: str = "http://localhost:8000",
+         *,
+         timeout: float = 20.0,
+         transport: Transport | None = None,
+@@ -492,18 +492,21 @@
+ 
+         except HTTPError as exc:
+             return self._handle_http_error(exc)
+-        except URLError as exc:
++        except URLError:
+             return self._failure_response(
+                 "ConnectionError",
+-                f"Tidak dapat terhubung ke layanan: {exc.reason}",
++                "Layanan backend belum dapat dijangkau. Periksa konfigurasi API base URL.",
+             )
+         except TimeoutError:
+             return self._failure_response(
+                 "TimeoutError",
+-                "Permintaan melewati batas waktu.",
++                "Permintaan melewati batas waktu. Silakan coba lagi.",
+             )
+         except Exception as exc:
+-            return self._failure_response(exc.__class__.__name__, str(exc))
++            return self._failure_response(
++                exc.__class__.__name__,
++                "Layanan belum dapat memproses permintaan. Silakan coba lagi.",
++            )
+ 
+     def _urllib_transport(
+         self,
+@@ -535,7 +538,7 @@
+         except Exception:
+             return self._failure_response(
+                 "HTTPError",
+-                f"Layanan mengembalikan status {error.code}.",
++                "Layanan mengembalikan respons yang belum dapat diproses.",
+                 status_code=int(error.code),
+             )
+ 
+--- a/requirements.txt
++++ b/requirements.txt
+@@ -1,5 +1,6 @@
++fastapi
++uvicorn[standard]
+ streamlit
+-google-genai
+ supabase
+ python-dotenv
+ pydantic
+@@ -9,6 +10,8 @@
+ openpyxl
+ pillow
+ loguru
++google-genai
++google-generativeai==0.8.6
++httpx
+ pytest
+-fastapi
+-uvicorn
++ruff
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -1,13 +1,20 @@
+ [project]
+-name = "umkm-copilot-ai"
++name = "go-umkm-ai"
+ version = "0.1.0"
+-requires-python = ">=3.11"
++requires-python = ">=3.12"
+ 
+-[tool.mypy]
+-python_version = "3.12"
++[tool.ruff]
++target-version = "py312"
++line-length = 100
++src = ["app", "pages", "tests"]
+ 
+-show_error_codes = true
+-pretty = true
+-warn_unused_configs = true
++[tool.ruff.lint]
++select = ["E", "F", "I", "B", "UP"]
++ignore = ["B008"]
+ 
+-disable_error_code = ["prop-decorator"]
++[tool.ruff.lint.isort]
++known-first-party = ["app"]
++
++[tool.pytest.ini_options]
++testpaths = ["tests"]
++pythonpath = ["."]
+--- a/.env.example
++++ b/.env.example
+@@ -1,45 +1,58 @@
+ # ==========================================================
++# Go-UMKM AI Environment Example
++# ==========================================================
++# Copy this file to .env for local development.
++# Never commit real secrets.
++
+ # Application
+-# ==========================================================
+-
+-APP_NAME=UMKM Copilot AI
++APP_NAME="Go-UMKM AI"
+ APP_VERSION=0.1.0
+ APP_ENV=development
+ APP_DEBUG=False
+ LOG_LEVEL=INFO
++LOG_TO_FILE=False
+ 
+-# ==========================================================
+-# Gemini
+-# ==========================================================
++# Backend deployment
++PORT=8000
++HEALTHCHECK_INTERVAL=30
++CORS_ALLOWED_ORIGINS=http://localhost:8501
+ 
+-GEMINI_API_KEY= 
+-GEMINI_MODEL=gemini-2.5-flash
+-
+-# ==========================================================
+ # Supabase
+-# ==========================================================
+-
+ SUPABASE_URL=
+ SUPABASE_KEY=
+ 
+-# ==========================================================
+-# Streamlit
+-# ==========================================================
+-
++# Streamlit frontend
++GO_UMKM_API_BASE_URL=http://localhost:8000
+ STREAMLIT_SERVER_PORT=8501
+ 
+-# ==========================================================
++# Multi-LLM providers
++PRIMARY_LLM_PROVIDER=gemini
++LLM_PROVIDER_PRIORITY=gemini,openrouter,huggingface,ollama
++ENABLE_PROVIDER_FAILOVER=True
++MAX_PROVIDER_RETRIES=2
++RETRY_BACKOFF_SECONDS=0.5
++
++GEMINI_API_KEY=
++GEMINI_MODEL=gemini-2.0-flash-lite
++GEMINI_MODEL_NAME=gemini-2.0-flash-lite
++
++OPENROUTER_API_KEY=
++OPENROUTER_MODEL=google/gemini-2.0-flash-exp:free
++
++HUGGINGFACE_API_KEY=
++HUGGINGFACE_MODEL=HuggingFaceH4/zephyr-7b-beta
++
++OPENAI_API_KEY=
++
++OLLAMA_BASE_URL=http://localhost:11434
++OLLAMA_MODEL=llama3.2
++
+ # Localization
+-# ==========================================================
+-
+ DEFAULT_LANGUAGE=id
+ TIMEZONE=Asia/Jakarta
+ CURRENCY=IDR
+ 
+-# ==========================================================
+-# Feature Flags
+-# ==========================================================
+-
++# Feature flags
+ ENABLE_MARKETING=True
+ ENABLE_INSIGHT=True
+ ENABLE_EXPORT=False
+--- a/.gitignore
++++ b/.gitignore
+@@ -13,7 +13,9 @@
+ # ==========================================
+ # Streamlit
+ # ==========================================
+-.streamlit/
++.streamlit/*
++!.streamlit/config.toml
++!.streamlit/secrets.example.toml
+ 
+ # ==========================================
+ # Logs
+@@ -47,3 +49,7 @@
+ # ==========================================
+ .DS_Store
+ Thumbs.db
++
++# Tool caches
++.ruff_cache/
++.mypy_cache/
+--- a/render.yaml
++++ b/render.yaml
+@@ -0,0 +1,34 @@
++services:
++  - type: web
++    name: go-umkm-ai-backend
++    runtime: python
++    plan: free
++    region: singapore
++    buildCommand: "pip install --upgrade pip && pip install -r requirements.txt"
++    startCommand: "uvicorn app.api.main:app --host 0.0.0.0 --port $PORT"
++    healthCheckPath: "/health"
++    envVars:
++      - key: APP_ENV
++        value: production
++      - key: APP_DEBUG
++        value: "False"
++      - key: LOG_LEVEL
++        value: INFO
++      - key: CORS_ALLOWED_ORIGINS
++        sync: false
++      - key: SUPABASE_URL
++        sync: false
++      - key: SUPABASE_KEY
++        sync: false
++      - key: LLM_PROVIDER_PRIORITY
++        value: gemini,openrouter,huggingface,ollama
++      - key: GEMINI_API_KEY
++        sync: false
++      - key: OPENROUTER_API_KEY
++        sync: false
++      - key: HUGGINGFACE_API_KEY
++        sync: false
++      - key: OPENAI_API_KEY
++        sync: false
++      - key: OLLAMA_BASE_URL
++        value: http://localhost:11434
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -0,0 +1,21 @@
++FROM python:3.12-slim
++
++ENV PYTHONDONTWRITEBYTECODE=1
++ENV PYTHONUNBUFFERED=1
++
++WORKDIR /app
++
++RUN apt-get update \
++    && apt-get install -y --no-install-recommends build-essential curl \
++    && rm -rf /var/lib/apt/lists/*
++
++COPY requirements.txt .
++
++RUN pip install --upgrade pip \
++    && pip install --no-cache-dir -r requirements.txt
++
++COPY . .
++
++EXPOSE 8000
++
++CMD ["sh", "-c", "uvicorn app.api.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+--- a/Procfile
++++ b/Procfile
+@@ -0,0 +1 @@
++web: uvicorn app.api.main:app --host 0.0.0.0 --port ${PORT:-8000}
+--- a/runtime.txt
++++ b/runtime.txt
+@@ -0,0 +1 @@
++python-3.12.1
+--- a/.streamlit/config.toml
++++ b/.streamlit/config.toml
+@@ -0,0 +1,12 @@
++[server]
++headless = true
++
++[browser]
++gatherUsageStats = false
++
++[theme]
++primaryColor = "#2563EB"
++backgroundColor = "#F8FAFC"
++secondaryBackgroundColor = "#FFFFFF"
++textColor = "#0F172A"
++font = "sans serif"
+--- a/.streamlit/secrets.example.toml
++++ b/.streamlit/secrets.example.toml
+@@ -0,0 +1,8 @@
++# Streamlit Community Cloud secrets example.
++# Configure these in Streamlit Cloud Secrets UI.
++# Do not commit real secrets.
++
++GO_UMKM_API_BASE_URL = "https://your-render-backend.onrender.com"
++
++[api]
++base_url = "https://your-render-backend.onrender.com"
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -0,0 +1,58 @@
++name: CI
++
++on:
++  push:
++    branches: [main]
++  pull_request:
++    branches: [main]
++
++jobs:
++  quality:
++    name: Ruff and Pytest
++    runs-on: ubuntu-latest
++
++    env:
++      APP_ENV: testing
++      APP_DEBUG: "False"
++      LOG_LEVEL: INFO
++      SUPABASE_URL: https://example.supabase.co
++      SUPABASE_KEY: test-supabase-key
++      GEMINI_API_KEY: test-gemini-key
++      CORS_ALLOWED_ORIGINS: http://localhost:8501
++
++    steps:
++      - name: Checkout
++        uses: actions/checkout@v4
++
++      - name: Set up Python
++        uses: actions/setup-python@v5
++        with:
++          python-version: "3.12"
++
++      - name: Install dependencies
++        run: |
++          python -m pip install --upgrade pip
++          python -m pip install -r requirements.txt
++
++      - name: Ruff check
++        run: ruff check app pages tests
++
++      - name: Ruff format check
++        run: ruff format app pages tests --check
++
++      - name: Pytest
++        run: pytest
++
++      - name: Build verification
++        run: |
++          python -m py_compile app/api/main.py
++          python -m py_compile app.py
++          python - <<'PY'
++          from app.api.main import create_app
++          app = create_app()
++          routes = {route.path for route in app.routes}
++          assert "/health" in routes
++          assert "/api/v1/health" in routes
++          assert "/openapi.json" in routes
++          print("Build verification passed.")
++          PY
+--- a/DEPLOYMENT.md
++++ b/DEPLOYMENT.md
+@@ -0,0 +1,142 @@
++# Go-UMKM AI Deployment Guide
++
++## Architecture
++
++```text
++GitHub
++  -> Render Web Service (FastAPI backend)
++  -> Streamlit Community Cloud (frontend)
++  -> Supabase PostgreSQL
++  -> Multi-LLM Providers
++```
++
++The application remains cloud-agnostic. Render can be replaced by Railway,
++Fly.io, Google Cloud Run, Azure App Service, or AWS App Runner using the same
++start command.
++
++## Backend Deployment on Render
++
++Recommended Render settings:
++
++```text
++Runtime: Python
++Build Command: pip install --upgrade pip && pip install -r requirements.txt
++Start Command: uvicorn app.api.main:app --host 0.0.0.0 --port $PORT
++Health Check Path: /health
++Python: 3.12
++```
++
++You may also use `render.yaml`.
++
++## Frontend Deployment on Streamlit Community Cloud
++
++Deploy `app.py`.
++
++Configure Streamlit Secrets:
++
++```toml
++GO_UMKM_API_BASE_URL = "https://your-render-backend.onrender.com"
++
++[api]
++base_url = "https://your-render-backend.onrender.com"
++```
++
++Configuration priority:
++
++1. Streamlit Secrets
++2. Environment Variables
++3. Local fallback
++
++## Backend Environment Variables
++
++```env
++APP_ENV=production
++APP_DEBUG=False
++LOG_LEVEL=INFO
++SUPABASE_URL=
++SUPABASE_KEY=
++CORS_ALLOWED_ORIGINS=https://your-streamlit-app.streamlit.app
++```
++
++LLM variables:
++
++```env
++PRIMARY_LLM_PROVIDER=gemini
++LLM_PROVIDER_PRIORITY=gemini,openrouter,huggingface,ollama
++ENABLE_PROVIDER_FAILOVER=True
++MAX_PROVIDER_RETRIES=2
++RETRY_BACKOFF_SECONDS=0.5
++
++GEMINI_API_KEY=
++OPENROUTER_API_KEY=
++HUGGINGFACE_API_KEY=
++OPENAI_API_KEY=
++OLLAMA_BASE_URL=http://localhost:11434
++```
++
++Frontend:
++
++```env
++GO_UMKM_API_BASE_URL=https://your-render-backend.onrender.com
++```
++
++## Health Verification
++
++```bash
++curl https://your-render-backend.onrender.com/health
++curl https://your-render-backend.onrender.com/ready
++curl https://your-render-backend.onrender.com/openapi.json
++```
++
++Swagger:
++
++```text
++https://your-render-backend.onrender.com/docs
++```
++
++## Common Troubleshooting
++
++### Frontend cannot reach backend
++
++Check Streamlit Secrets:
++
++```toml
++GO_UMKM_API_BASE_URL = "https://your-render-backend.onrender.com"
++```
++
++Check backend CORS:
++
++```env
++CORS_ALLOWED_ORIGINS=https://your-streamlit-app.streamlit.app
++```
++
++### Supabase connection fails
++
++Verify `SUPABASE_URL` and `SUPABASE_KEY` on Render.
++
++### Gemini quota exceeded
++
++Add `OPENROUTER_API_KEY` or `HUGGINGFACE_API_KEY` and keep failover enabled.
++
++## Rollback
++
++1. Revert the latest deployment commit.
++2. Push to `main`.
++3. Render redeploys backend automatically.
++4. Streamlit Community Cloud redeploys frontend automatically.
++5. Verify `/health`, `/docs`, and frontend connectivity.
++
++## Production Checklist
++
++- [ ] `.env` is not committed.
++- [ ] Supabase secrets are configured in Render.
++- [ ] LLM provider secrets are configured in Render.
++- [ ] Streamlit backend URL is configured in Secrets UI.
++- [ ] `CORS_ALLOWED_ORIGINS` contains the Streamlit domain.
++- [ ] `/health` returns healthy.
++- [ ] `/ready` returns ready.
++- [ ] `/docs` opens Swagger.
++- [ ] `/openapi.json` is accessible.
++- [ ] Frontend can load dashboard.
++- [ ] AI Assistant handles provider failure gracefully.
++- [ ] CI passes ruff and pytest.
+--- a/docs/LATEST_GIT_RECONCILIATION.md
++++ b/docs/LATEST_GIT_RECONCILIATION.md
+@@ -0,0 +1,84 @@
++# Latest Git Reconciliation Patch
++
++## Baseline
++
++This patch was generated from the latest uploaded git ZIP:
++
++```text
++umkm-copilot-ai-main (2).zip
++```
++
++The baseline already contains:
++
++- AI Local Business Intelligence Layer
++- Dashboard business switcher
++- API `/api/v1` compatibility
++- Stage 3-5 frontend redesign
++- Sidebar contrast fix
++
++## Reconciled Missing Work
++
++This patch restores the missing parts that were not present in the latest git ZIP:
++
++1. Stage 2 SaaS landing/welcome page in `app.py`
++2. Dicoding meta tag injection in `app.py`
++3. Streamlit Secrets / environment / local fallback frontend config
++4. Production-ready FastAPI app wiring
++5. Environment-driven CORS
++6. Safe API exception handlers
++7. `/ready` readiness endpoint
++8. Render deployment files
++9. Streamlit Cloud config examples
++10. Docker/Procfile/runtime portability files
++11. GitHub Actions CI without mypy
++12. Deployment documentation
++
++## Deliberate Exclusions
++
++`mypy` is not part of this reconciliation patch or CI workflow because the
++current repository has broad historical typing debt. CI runs ruff and pytest.
++
++## Modified Files
++
++- `app.py`
++- `app/api/main.py`
++- `app/api/routers/health.py`
++- `app/config/settings.py`
++- `app/utils/logger.py`
++- `app/database/connection.py`
++- `app/frontend/session.py`
++- `app/frontend/api_client.py`
++- `requirements.txt`
++- `pyproject.toml`
++- `.env.example`
++- `.gitignore`
++
++## New Files
++
++- `app/frontend/config.py`
++- `render.yaml`
++- `Dockerfile`
++- `Procfile`
++- `runtime.txt`
++- `.streamlit/config.toml`
++- `.streamlit/secrets.example.toml`
++- `.github/workflows/ci.yml`
++- `DEPLOYMENT.md`
++
++## Validation
++
++```bash
++python -m py_compile app.py
++python -m py_compile app/api/main.py
++python -m py_compile app/api/routers/health.py
++python -m py_compile app/config/settings.py
++python -m py_compile app/utils/logger.py
++python -m py_compile app/database/connection.py
++python -m py_compile app/frontend/config.py
++python -m py_compile app/frontend/session.py
++python -m py_compile app/frontend/api_client.py
++
++ruff check app pages tests
++ruff format app pages tests --check
++pytest
++```

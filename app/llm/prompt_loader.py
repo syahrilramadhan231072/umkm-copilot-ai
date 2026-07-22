@@ -131,9 +131,7 @@ class PromptLoader:
         candidate = (self._prompt_dir / template_name.strip()).resolve()
 
         if candidate.suffix not in self.ALLOWED_SUFFIXES:
-            raise ValueError(
-                f"template suffix must be one of {sorted(self.ALLOWED_SUFFIXES)}."
-            )
+            raise ValueError(f"template suffix must be one of {sorted(self.ALLOWED_SUFFIXES)}.")
 
         try:
             candidate.relative_to(self._prompt_dir)

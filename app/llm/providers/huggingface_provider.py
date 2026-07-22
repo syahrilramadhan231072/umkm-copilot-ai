@@ -8,7 +8,8 @@ Hugging Face Inference API implementation of BaseLLMProvider.
 from __future__ import annotations
 
 import os
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from app.llm.providers.base import BaseLLMProvider, LLMProviderResponse
 from app.llm.providers.errors import LLMProviderError
@@ -133,6 +134,6 @@ class HuggingFaceProvider(BaseLLMProvider):
         clean_prompt = prompt.strip()
 
         if clean_generated.startswith(clean_prompt):
-            return clean_generated[len(clean_prompt):].strip()
+            return clean_generated[len(clean_prompt) :].strip()
 
         return clean_generated
